@@ -1,5 +1,5 @@
 global:
-  imageTag: "<DEV_COMMIT_SHA>"
+  imageTag: "b71cff905f5bd8201cef5d3f80ff127c17b896c4"
   registry: "registry.digitalocean.com/dbr-cr"
 
 directus:
