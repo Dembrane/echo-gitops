@@ -9,10 +9,16 @@ terraform {
       source  = "vercel/vercel"
       version = "~> 2.0"
     }
-    # helm = {
-    #   source  = "hashicorp/helm"
-    #   version = "~> 2.0"
-    # }
+    kubernetes = {
+      source = "hashicorp/kubernetes"
+    }
+    helm = {
+      source = "hashicorp/helm"
+    }
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = ">= 1.14.0"
+    }
   }
 
   backend "s3" {
@@ -42,19 +48,3 @@ provider "vercel" {
   # Optional default team for all resources
   team = "dembrane"
 }
-
-# provider "helm" {
-#   kubernetes {
-#     host                   = digitalocean_kubernetes_cluster.doks.kube_config.0.host
-#     client_certificate     = digitalocean_kubernetes_cluster.doks.kube_config.0.client_certificate
-#     client_key             = digitalocean_kubernetes_cluster.doks.kube_config.0.client_key
-#     cluster_ca_certificate = digitalocean_kubernetes_cluster.doks.kube_config.0.cluster_ca_certificate
-#   }
-# }
-
-# provider "kubernetes" {
-#   host                   = digitalocean_kubernetes_cluster.doks.kube_config.0.host
-#   client_certificate     = digitalocean_kubernetes_cluster.doks.kube_config.0.client_certificate
-#   client_key             = digitalocean_kubernetes_cluster.doks.kube_config.0.client_key
-#   cluster_ca_certificate = digitalocean_kubernetes_cluster.doks.kube_config.0.cluster_ca_certificate
-# }

@@ -1,0 +1,7 @@
+digitalocean_container_registry.registry
+digitalocean_database_cluster.postgres
+digitalocean_database_cluster.redis
+digitalocean_database_db.app_db
+digitalocean_database_user.app_user
+digitalocean_kubernetes_cluster.doks
+digitalocean_spaces_bucket.uploads

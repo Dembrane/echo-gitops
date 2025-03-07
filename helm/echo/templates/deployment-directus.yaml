@@ -18,6 +18,8 @@ spec:
         app: echo
         component: directus
     spec:
+      imagePullSecrets:
+        - name: do-registry-secret
       containers:
         - name: directus
           image: {{ printf "%s/%s:%s" .Values.global.registry .Values.directus.image.repository .Values.global.imageTag | quote }}

@@ -1,7 +1,7 @@
 resource "digitalocean_kubernetes_cluster" "doks" {
   name    = "dbr-echo-${var.env}-k8s-cluster"
   region  = var.do_region
-  version = "1.32.1-do.0"
+  version = "1.32.2-do.0"
   node_pool {
     name       = "default-pool"
     size       = "s-2vcpu-4gb" # 2vCPU 4GB nodes
@@ -54,4 +54,29 @@ resource "digitalocean_container_registry" "registry" {
   name                   = "dbr-cr"
   subscription_tier_slug = "basic"
   region                 = var.do_region
+}
+
+resource "digitalocean_container_registry_docker_credentials" "registry_credentials" {
+  registry_name = digitalocean_container_registry.registry.name
+}
+
+resource "kubernetes_namespace" "echo_ns" {
+  metadata {
+    name = "echo-${var.env}"
+  }
+}
+
+resource "kubernetes_secret" "registry_credentials" {
+  depends_on = [digitalocean_kubernetes_cluster.doks]
+
+  metadata {
+    name      = "do-registry-secret"
+    namespace = kubernetes_namespace.echo_ns.metadata[0].name
+  }
+
+  data = {
+    ".dockerconfigjson" = digitalocean_container_registry_docker_credentials.registry_credentials.docker_credentials
+  }
+
+  type = "kubernetes.io/dockerconfigjson"
 }

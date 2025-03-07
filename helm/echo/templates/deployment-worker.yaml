@@ -17,6 +17,8 @@ spec:
         app: echo
         component: worker
     spec:
+      imagePullSecrets:
+        - name: do-registry-secret
       containers:
         - name: worker
           image: {{ printf "%s/%s:%s" .Values.global.registry .Values.worker.image.repository .Values.global.imageTag | quote }}
