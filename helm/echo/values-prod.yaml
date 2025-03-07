@@ -7,8 +7,8 @@ global:
 directus:
   replicaCount: 2
   image:
-    repository: "{{ .Values.global.registry }}/dbr-echo-directus"
-    tag: "{{ .Values.global.imageTag }}"
+    repository: "dbr-echo-directus"
+    tag: {{ .Values.global.imageTag }}
   service:
     port: 8055
   env:
@@ -30,8 +30,8 @@ directus:
 apiServer:
   replicaCount: 1
   image:
-    repository: "{{ .Values.global.registry }}/dbr-echo-server"
-    tag: "{{ .Values.global.imageTag }}"
+    repository: "dbr-echo-server"
+    tag: {{ .Values.global.imageTag }}
   service:
     port: 8000
   env:
@@ -46,8 +46,8 @@ apiServer:
 worker:
   replicaCount: 1
   image:
-    repository: "{{ .Values.global.registry }}/dbr-echo-server"
-    tag: "{{ .Values.global.imageTag }}"
+    repository: "dbr-echo-server"
+    tag: {{ .Values.global.imageTag }}
   env:
     DIRECTUS_PUBLIC_URL: "https://directus.echo.dembrane.eu"
     ADMIN_BASE_URL: "https://dashboard.echo.dembrane.eu"

@@ -5,8 +5,8 @@ global:
 directus:
   replicaCount: 1
   image:
-    repository: "{{ .Values.global.registry }}/dbr-echo-directus"
-    tag: "{{ .Values.global.imageTag }}"
+    repository: "dbr-echo-directus"
+    tag: {{ .Values.global.imageTag }}
   service:
     port: 8055
   env:
@@ -35,8 +35,8 @@ directus:
 apiServer:
   replicaCount: 1
   image:
-    repository: "{{ .Values.global.registry }}/dbr-echo-server"
-    tag: "{{ .Values.global.imageTag }}"
+    repository: "dbr-echo-server"
+    tag: {{ .Values.global.imageTag }}
   service:
     port: 8000
   env:
@@ -58,8 +58,8 @@ apiServer:
 worker:
   replicaCount: 1
   image:
-    repository: "{{ .Values.global.registry }}/dbr-echo-server"
-    tag: "{{ .Values.global.imageTag }}"
+    repository: "dbr-echo-server"
+    tag: {{ .Values.global.imageTag }}
   # the deployment uses the same tags as the api server
   # only the command is different
 
