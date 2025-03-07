@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: api-server
-          image: '{{ .Values.apiServer.image.repository }}:{{ .Values.apiServer.image.tag }}'
+          image: "{{ .Values.apiServer.image.repository }}:{{ .Values.apiServer.image.tag }}"
           imagePullPolicy: Always
           command:
             - '/bin/sh'
@@ -28,7 +28,7 @@ spec:
             - containerPort: {{ .Values.apiServer.service.port }}
           env:
             - name: DIRECTUS_PUBLIC_URL
-              value: '{{ .Values.apiServer.env.DIRECTUS_PUBLIC_URL }}'
+              value: "{{ .Values.apiServer.env.DIRECTUS_PUBLIC_URL }}"
 
             - name: DIRECTUS_TOKEN
               valueFrom:
@@ -43,16 +43,16 @@ spec:
                   key: DIRECTUS_SECRET
 
             - name: DIRECTUS_SESSION_COOKIE_NAME
-              value: '{{ .Values.directus.env.SESSION_COOKIE_NAME }}'
+              value: "{{ .Values.directus.env.SESSION_COOKIE_NAME }}"
 
             - name: ADMIN_BASE_URL
-              value: '{{ .Values.apiServer.env.ADMIN_BASE_URL }}'
+              value: "{{ .Values.apiServer.env.ADMIN_BASE_URL }}"
 
             - name: PARTICIPANT_BASE_URL
-              value: '{{ .Values.apiServer.env.PARTICIPANT_BASE_URL }}'
+              value: "{{ .Values.apiServer.env.PARTICIPANT_BASE_URL }}"
 
             - name: BUILD_VERSION
-              value: '{{ .Values.apiServer.env.BUILD_VERSION }}'
+              value: "{{ .Values.apiServer.env.BUILD_VERSION }}"
 
             - name: OPENAI_API_KEY
               valueFrom:
@@ -79,18 +79,18 @@ spec:
                   key: DATABASE_URL
 
             - name: DISABLE_REDACTION
-              value: '{{ .Values.apiServer.env.DISABLE_REDACTION }}'
+              value: "{{ .Values.apiServer.env.DISABLE_REDACTION }}"
 
             - name: DISABLE_SENTRY
-              value: '{{ .Values.apiServer.env.DISABLE_SENTRY }}'
+              value: "{{ .Values.apiServer.env.DISABLE_SENTRY }}"
 
             - name: SERVE_API_DOCS
-              value: '{{ .Values.apiServer.env.SERVE_API_DOCS }}'
+              value: "{{ .Values.apiServer.env.SERVE_API_DOCS }}"
 
           resources:
             requests:
-              cpu: '250m'
-              memory: '256Mi'
+              cpu: "250m"
+              memory: "256Mi"
             limits:
-              cpu: '500m'
-              memory: '512Mi'
+              cpu: "500m"
+              memory: "512Mi"
