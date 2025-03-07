@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: worker
-          image: {{ printf "%s/%s:%s" .Values.global.registry .Values.worker.image.repository .Values.worker.image.tag | quote }}
+          image: {{ printf "%s/%s:%s" .Values.global.registry .Values.worker.image.repository .Values.global.imageTag | quote }}
           imagePullPolicy: Always
           command:
             - '/bin/sh'

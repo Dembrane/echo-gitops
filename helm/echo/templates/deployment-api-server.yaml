@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: api-server
-          image: {{ printf "%s/%s:%s" .Values.global.registry .Values.apiServer.image.repository .Values.apiServer.image.tag | quote }}
+          image: {{ printf "%s/%s:%s" .Values.global.registry .Values.apiServer.image.repository .Values.global.imageTag | quote }}
           imagePullPolicy: Always
           command:
             - '/bin/sh'

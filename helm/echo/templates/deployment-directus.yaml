@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: directus
-          image: {{ printf "%s/%s:%s" .Values.global.registry .Values.directus.image.repository .Values.directus.image.tag | quote }}
+          image: {{ printf "%s/%s:%s" .Values.global.registry .Values.directus.image.repository .Values.global.imageTag | quote }}
           imagePullPolicy: Always
           ports:
             - containerPort: {{ .Values.directus.service.port }}

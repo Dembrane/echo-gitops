@@ -6,7 +6,6 @@ directus:
   replicaCount: 1
   image:
     repository: "dbr-echo-directus"
-    tag: {{ .Values.global.imageTag }}
   service:
     port: 8055
   env:
@@ -36,7 +35,6 @@ apiServer:
   replicaCount: 1
   image:
     repository: "dbr-echo-server"
-    tag: {{ .Values.global.imageTag }}
   service:
     port: 8000
   env:
@@ -45,8 +43,6 @@ apiServer:
     # DIRECTUS_SECRET:
     ADMIN_BASE_URL: "https://dashboard.echo-next.dembrane.eu"
     PARTICIPANT_BASE_URL: "https://portal.echo-next.dembrane.eu"
-    BUILD_VERSION: "{{ .Values.global.imageTag }}"
-    REDIS_URL: "{{ .Values.global.redisUrl }}"
     # OPENAI_API_KEY:
     # ANTHROPIC_API_KEY:
     # REDIS_URL:
@@ -59,7 +55,6 @@ worker:
   replicaCount: 1
   image:
     repository: "dbr-echo-server"
-    tag: {{ .Values.global.imageTag }}
   # the deployment uses the same tags as the api server
   # only the command is different
 
