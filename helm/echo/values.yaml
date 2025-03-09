@@ -30,6 +30,12 @@ directus:
     AUTH_GOOGLE_ALLOW_PUBLIC_REGISTRATION: "true"
     AUTH_GOOGLE_DEFAULT_ROLE_ID: 2446660a-ab6c-4801-ad69-5711030cba83
     AUTH_GOOGLE_REDIRECT_ALLOW_LIST: "https://dashboard.echo-next.dembrane.eu/en-US/projects,https://dashboard.echo-next.dembrane.eu/nl-NL/projects,https://dashboard.echo-next.dembrane.eu/es-ES/projects,https://dashboard.echo-next.dembrane.eu/fr-FR/projects,https://dashboard.echo-next.dembrane.eu/de-DE/projects"
+    # STORAGE_S3_KEY
+    # STORAGE_S3_SECRET
+    # dummy for compat of DO with S3
+    STORAGE_S3_REGION: "us-east-1"
+    STORAGE_S3_ENDPOINT: "https://ams3.digitaloceanspaces.com"
+    STORAGE_S3_BUCKET: "dbr-echo-dev-uploads"
 
 apiServer:
   replicaCount: 1
@@ -50,13 +56,19 @@ apiServer:
     DISABLE_REDACTION: "1"
     DISABLE_SENTRY: "0"
     SERVE_API_DOCS: "1"
+    # S3_ACCESS_KEY
+    # S3_SECRET_KEY
+    # dummy for compat of DO with S3
+    STORAGE_S3_REGION: "us-east-1"
+    STORAGE_S3_ENDPOINT: "https://ams3.digitaloceanspaces.com"
+    STORAGE_S3_BUCKET: "dbr-echo-dev-uploads"
 
 worker:
+  # the deployment uses the same tags as the api server
+  # only the command is different
   replicaCount: 1
   image:
     repository: "dbr-echo-server"
-  # the deployment uses the same tags as the api server
-  # only the command is different
 
 ingress:
   enabled: true

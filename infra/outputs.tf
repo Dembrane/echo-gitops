@@ -15,6 +15,16 @@ output "registry_url" {
   description = "Container registry URL"
 }
 
+output "spaces_endpoint" {
+  value       = digitalocean_spaces_bucket.uploads.endpoint
+  description = "Spaces endpoint"
+}
+
+# spaces doesn't allow to create keys yet
+# so create them manually
+# https://github.com/digitalocean/terraform-provider-digitalocean/issues/880
+# https://github.com/digitalocean/doctl/issues/936
+
 // spaces output
 // ams3.digitaloceanspaces.com
 // bucket name (dev)  : dbr-echo-dev-uploads.ams3.digitaloceanspaces.com

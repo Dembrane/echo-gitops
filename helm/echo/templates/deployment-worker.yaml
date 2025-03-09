@@ -88,6 +88,27 @@ spec:
 
             - name: SERVE_API_DOCS
               value: '{{ .Values.apiServer.env.SERVE_API_DOCS }}'
+            
+            - name: STORAGE_S3_REGION
+              value: "{{ .Values.apiServer.env.STORAGE_S3_REGION }}"
+
+            - name: STORAGE_S3_ENDPOINT
+              value: "{{ .Values.apiServer.env.STORAGE_S3_ENDPOINT }}"
+            
+            - name: STORAGE_S3_BUCKET
+              value: "{{ .Values.apiServer.env.STORAGE_S3_BUCKET }}"
+            
+            - name: STORAGE_S3_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: STORAGE_S3_KEY
+            
+            - name: STORAGE_S3_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: STORAGE_S3_SECRET
 
           resources:
             requests:
