@@ -102,13 +102,13 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: echo-backend-secrets
-                  key: STORAGE_S3_KEY
-            
+                  key: S3_ACCESS_KEY
+
             - name: STORAGE_S3_SECRET
               valueFrom:
                 secretKeyRef:
                   name: echo-backend-secrets
-                  key: STORAGE_S3_SECRET
+                  key: S3_SECRET_KEY
 
           resources:
             requests:

@@ -189,7 +189,7 @@ spec:
             - name: STORAGE_LOCATIONS
               value: 's3'
             
-            - name: STORAGE_DO_DRIVER
+            - name: STORAGE_S3_DRIVER
               value: 's3'
 
             - name: STORAGE_S3_KEY
