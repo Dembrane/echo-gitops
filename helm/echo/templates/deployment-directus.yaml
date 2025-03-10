@@ -205,13 +205,13 @@ spec:
                   key: S3_SECRET_KEY
             
             - name: STORAGE_S3_BUCKET
-              value: {{ .Values.global.env.STORAGE_S3_BUCKET }}
+              value: {{ .Values.directus.env.STORAGE_S3_BUCKET }}
             
             - name: STORAGE_S3_REGION
-              value: {{ .Values.global.env.STORAGE_S3_REGION }}
+              value: {{ .Values.directus.env.STORAGE_S3_REGION }}
             
             - name: STORAGE_S3_ENDPOINT
-              value: {{ .Values.global.env.STORAGE_S3_ENDPOINT }}
+              value: {{ .Values.directus.env.STORAGE_S3_ENDPOINT }}
 
           resources:
             requests:
