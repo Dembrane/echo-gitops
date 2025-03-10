@@ -212,6 +212,9 @@ spec:
             
             - name: STORAGE_S3_ENDPOINT
               value: {{ .Values.directus.env.STORAGE_S3_ENDPOINT }}
+            
+            - name: DB_SSL_REJECT_UNAUTHORIZED
+              value: "false"
 
           resources:
             requests:
