@@ -215,6 +215,9 @@ spec:
             
             - name: DB_SSL_REJECT_UNAUTHORIZED
               value: "false"
+            
+            - name: NODE_TLS_REJECT_UNAUTHORIZED
+              value: "0"
 
           resources:
             requests:
