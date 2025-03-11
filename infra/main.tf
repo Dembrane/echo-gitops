@@ -1,7 +1,18 @@
+resource "digitalocean_vpc" "echo_vpc" {
+  name     = "echo-${var.env}-vpc"
+  region   = var.do_region
+  ip_range = var.env == "prod" ? "10.10.10.0/24" : "10.10.11.0/24" # RFC1918 private IP ranges, /24 subnet
+}
+
+resource "digitalocean_reserved_ip" "echo_lb_ip" {
+  region = var.do_region
+}
+
 resource "digitalocean_kubernetes_cluster" "doks" {
-  name    = "dbr-echo-${var.env}-k8s-cluster"
-  region  = var.do_region
-  version = "1.32.2-do.0"
+  name     = "dbr-echo-${var.env}-k8s-cluster"
+  region   = var.do_region
+  vpc_uuid = digitalocean_vpc.echo_vpc.id
+  version  = "1.32.2-do.0"
   node_pool {
     name       = "default-pool"
     size       = "s-2vcpu-4gb" # 2vCPU 4GB nodes
@@ -14,35 +25,25 @@ resource "digitalocean_kubernetes_cluster" "doks" {
 
 # Managed Postgres for the environment
 resource "digitalocean_database_cluster" "postgres" {
-  name       = "dbr-echo-${var.env}-postgres"
-  engine     = "pg" # Postgres
-  version    = "16" # e.g., Postgres version
-  size       = var.env == "prod" ? "db-s-2vcpu-4gb" : "db-s-1vcpu-1gb"
-  region     = var.do_region
-  node_count = 1 # single node (for simplicity; prod could use HA with 2+ nodes)
-  tags       = ["dbr-echo", var.env, "postgres"]
-}
-
-# Create an application user with a strong random password
-resource "digitalocean_database_user" "app_user" {
-  cluster_id = digitalocean_database_cluster.postgres.id
-  name       = "dembrane" # username
-}
-
-# Create a database in the cluster (optional, defaultdb exists by default)
-resource "digitalocean_database_db" "app_db" {
-  cluster_id = digitalocean_database_cluster.postgres.id
-  name       = "dembrane" # name of the database
+  name                 = "dbr-echo-${var.env}-postgres"
+  private_network_uuid = digitalocean_vpc.echo_vpc.id
+  engine               = "pg" # Postgres
+  version              = "16" # e.g., Postgres version
+  size                 = var.env == "prod" ? "db-s-2vcpu-4gb" : "db-s-1vcpu-1gb"
+  region               = var.do_region
+  node_count           = 1 # single node (for simplicity; prod could use HA with 2+ nodes)
+  tags                 = ["dbr-echo", var.env, "postgres"]
 }
 
 resource "digitalocean_database_cluster" "redis" {
-  name       = "dbr-echo-${var.env}-redis"
-  engine     = "redis"
-  version    = "7" # Redis version
-  size       = var.env == "prod" ? "db-s-2vcpu-4gb" : "db-s-1vcpu-1gb"
-  region     = var.do_region
-  node_count = 1
-  tags       = ["dbr-echo", var.env, "redis"]
+  name                 = "dbr-echo-${var.env}-redis"
+  private_network_uuid = digitalocean_vpc.echo_vpc.id
+  engine               = "redis"
+  version              = "7" # Redis version
+  size                 = var.env == "prod" ? "db-s-2vcpu-4gb" : "db-s-1vcpu-1gb"
+  region               = var.do_region
+  node_count           = 1
+  tags                 = ["dbr-echo", var.env, "redis"]
 }
 
 resource "digitalocean_spaces_bucket" "uploads" {
@@ -74,7 +75,8 @@ resource "kubernetes_namespace" "echo_ns" {
 }
 
 data "digitalocean_kubernetes_cluster" "doks_data" {
-  name = "dbr-echo-${var.env}-k8s-cluster" # Use the same name as your resource
+  name       = "dbr-echo-${var.env}-k8s-cluster" # Use the same name as your resource
+  depends_on = [time_sleep.wait_for_kubernetes]
 }
 
 resource "kubernetes_secret" "registry_credentials" {
@@ -115,55 +117,126 @@ provider "kubectl" {
   load_config_file       = false
 }
 
-### ArgoCD
-resource "kubernetes_namespace" "argocd" {
-  metadata {
-    name = "argocd"
+# TODO: automate this later
+
+# doctl k8s c list
+# doctl k8s c kubeconfig save dbr-echo-dev-k8s-cluster
+
+# secrets:
+# - kubectl apply -n kube-system -f https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.20.2/controller.yaml
+# kubectl apply -f echo-dev-secrets.yaml
+
+# argo:
+# - kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+# kubectl apply -f echo-dev.yaml
+# kubectl port-forward svc/argocd-server -n argocd 8080:443
+# username: admin
+# password: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+# settings -> repositories -> add repository -> https://github.com/dembrane/echo-gitops.git 
+
+resource "helm_release" "sealed_secrets" {
+  name             = "sealed-secrets"
+  repository       = "https://bitnami-labs.github.io/sealed-secrets"
+  chart            = "sealed-secrets"
+  version          = "2.17.1"
+  namespace        = "kube-system"
+  create_namespace = true
+}
+
+
+resource "helm_release" "argocd" {
+  name             = "argocd"
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-cd"
+  version          = "7.8.9"
+  namespace        = "argocd"
+  create_namespace = true
+}
+
+resource "helm_release" "ingress_nginx" {
+  name             = "ingress-nginx"
+  repository       = "https://kubernetes.github.io/ingress-nginx"
+  chart            = "ingress-nginx"
+  version          = "4.7.1"
+  namespace        = "ingress-nginx"
+  create_namespace = true
+
+  set {
+    name  = "controller.service.type"
+    value = "LoadBalancer"
+  }
+
+  set {
+    name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/do-loadbalancer-name"
+    value = "echo-${var.env}-ingress-lb"
+  }
+
+  set {
+    name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/do-loadbalancer-size-unit"
+    value = "1" # Smallest size
+  }
+
+  # Use the reserved IP for the ingress controller
+  set {
+    name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/do-loadbalancer-floating-ip"
+    value = "true"
+  }
+
+  # Assign the reserved IP to the load balancer
+  set {
+    name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/do-loadbalancer-floating-ip-assignment"
+    value = digitalocean_reserved_ip.echo_lb_ip.ip_address
+  }
+
+  # Important: Use TLS passthrough instead of DO certificate
+  set {
+    name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/do-loadbalancer-tls-passthrough"
+    value = "true"
+  }
+
+  # Remove these annotations:
+  # - do-loadbalancer-certificate-id
+  # - do-loadbalancer-redirect-http-to-https (handled by ingress controller)
+
+  depends_on = [time_sleep.wait_for_kubernetes]
+}
+
+resource "helm_release" "cert_manager" {
+  name             = "cert-manager"
+  repository       = "https://charts.jetstack.io"
+  chart            = "cert-manager"
+  version          = "1.13.1"
+  namespace        = "cert-manager"
+  create_namespace = true
+
+  set {
+    name  = "installCRDs"
+    value = "true"
   }
 
   depends_on = [time_sleep.wait_for_kubernetes]
 }
 
-# this doesnt work just do 
-# kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-# username: admin
-# kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
-# kubectl apply -f echo-dev.yaml
+resource "kubectl_manifest" "cluster_issuer" {
+  yaml_body = <<YAML
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: your-email@example.com  # Change to your email address
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+YAML
 
-# resource "helm_release" "argocd" {
-#   depends_on = [kubernetes_namespace.argocd]
-
-#   name       = "argocd"
-#   repository = "https://argoproj.github.io/argo-helm"
-#   chart      = "argo-cd"
-#   version    = "5.51.4" # Specify your desired version
-#   namespace  = kubernetes_namespace.argocd.metadata[0].name
-
-#   # Basic configuration values
-#   set {
-#     name  = "server.service.type"
-#     value = "LoadBalancer" # Or ClusterIP if you plan to use an Ingress
-#   }
-
-#   set {
-#     name  = "server.service.port"
-#     value = "80"
-#   }
-
-#   # Optional: Set admin password 
-#   set_sensitive {
-#     name = "configs.secret.argocdServerAdminPassword"
-#     # This is the bcrypted hash of your password - generate using:
-#     # htpasswd -nbBC 10 "" yourpassword | tr -d ':\n' | sed 's/$2y/$2a/'
-#     value = "$2a$10$hI2iRa4C5AFgG/pAytvKz.e6rXgLUYjL4.GA8HyMIrUEGC/VSBjue"
-#   }
-
-#   # Additional configurations can be set here
-#   values = [
-#     <<-EOT
-#     server:
-#       extraArgs:
-#         - --insecure
-#     EOT
-#   ]
-# }
+  depends_on = [
+    helm_release.cert_manager,
+    helm_release.ingress_nginx
+  ]
+}

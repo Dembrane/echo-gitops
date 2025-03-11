@@ -1,12 +1,17 @@
-output "db_uri" {
-  value       = digitalocean_database_cluster.postgres.uri
-  description = "Postgres connection URI"
-  sensitive   = true
+output "vpc_id" {
+  value       = digitalocean_vpc.echo_vpc.id
+  description = "VPC ID"
 }
 
 output "redis_uri" {
-  value       = digitalocean_database_cluster.redis.uri
+  value       = digitalocean_database_cluster.redis.private_uri
   description = "Redis connection URI"
+  sensitive   = true
+}
+
+output "postgres_uri" {
+  value       = digitalocean_database_cluster.postgres.private_uri
+  description = "Postgres connection URI"
   sensitive   = true
 }
 
@@ -44,4 +49,8 @@ output "vercel_portal_project_id" {
 
 output "vercel_portal_staging_environment_id" {
   value = vercel_custom_environment.portal_env_staging.id
+}
+
+output "ingress_lb_ip" {
+  value = digitalocean_reserved_ip.echo_lb_ip.ip_address
 }

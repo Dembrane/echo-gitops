@@ -74,7 +74,7 @@ ingress:
   enabled: true
   className: "nginx"
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
   hosts:
     directus: "directus.echo-next.dembrane.eu"
     api: "api.echo-next.dembrane.eu"
