@@ -216,27 +216,3 @@ resource "helm_release" "cert_manager" {
 
   depends_on = [time_sleep.wait_for_kubernetes]
 }
-
-resource "kubectl_manifest" "cluster_issuer" {
-  yaml_body = <<YAML
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: letsencrypt-prod
-spec:
-  acme:
-    server: https://acme-v02.api.letsencrypt.org/directory
-    email: your-email@example.com  # Change to your email address
-    privateKeySecretRef:
-      name: letsencrypt-prod
-    solvers:
-    - http01:
-        ingress:
-          class: nginx
-YAML
-
-  depends_on = [
-    helm_release.cert_manager,
-    helm_release.ingress_nginx
-  ]
-}

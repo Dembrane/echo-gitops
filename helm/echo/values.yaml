@@ -73,6 +73,7 @@ worker:
 ingress:
   enabled: true
   className: "nginx"
+  email: "admin@dembrane.com"
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
   hosts:
