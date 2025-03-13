@@ -153,6 +153,7 @@ resource "helm_release" "argocd" {
   create_namespace = true
 }
 
+# Update the ingress-nginx configuration to explicitly set the loadBalancerIP
 resource "helm_release" "ingress_nginx" {
   name             = "ingress-nginx"
   repository       = "https://kubernetes.github.io/ingress-nginx"
@@ -164,6 +165,11 @@ resource "helm_release" "ingress_nginx" {
   set {
     name  = "controller.service.type"
     value = "LoadBalancer"
+  }
+
+  set {
+    name  = "controller.service.loadBalancerIP" # Explicitly set the loadBalancerIP
+    value = digitalocean_reserved_ip.echo_lb_ip.ip_address
   }
 
   set {
@@ -193,10 +199,6 @@ resource "helm_release" "ingress_nginx" {
     name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/do-loadbalancer-tls-passthrough"
     value = "true"
   }
-
-  # Remove these annotations:
-  # - do-loadbalancer-certificate-id
-  # - do-loadbalancer-redirect-http-to-https (handled by ingress controller)
 
   depends_on = [time_sleep.wait_for_kubernetes]
 }

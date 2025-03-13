@@ -3,13 +3,25 @@ output "vpc_id" {
   description = "VPC ID"
 }
 
-output "redis_uri" {
+output "redis_public_uri" {
+  value       = digitalocean_database_cluster.redis.uri
+  description = "Redis connection URI"
+  sensitive   = true
+}
+
+output "redis_private_uri" {
   value       = digitalocean_database_cluster.redis.private_uri
   description = "Redis connection URI"
   sensitive   = true
 }
 
-output "postgres_uri" {
+output "postgres_public_uri" {
+  value       = digitalocean_database_cluster.postgres.uri
+  description = "Postgres connection URI"
+  sensitive   = true
+}
+
+output "postgres_private_uri" {
   value       = digitalocean_database_cluster.postgres.private_uri
   description = "Postgres connection URI"
   sensitive   = true
