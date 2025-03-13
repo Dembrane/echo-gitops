@@ -63,6 +63,6 @@ output "vercel_portal_staging_environment_id" {
   value = vercel_custom_environment.portal_env_staging.id
 }
 
-output "ingress_lb_ip" {
-  value = digitalocean_reserved_ip.echo_lb_ip.ip_address
-}
+# output "ingress_lb_ip" {
+#   value = digitalocean_reserved_ip.echo_lb_ip.ip_address
+# }

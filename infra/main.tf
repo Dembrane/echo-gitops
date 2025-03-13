@@ -163,10 +163,10 @@ resource "helm_release" "ingress_nginx" {
     value = "LoadBalancer"
   }
 
-  set {
-    name  = "controller.service.loadBalancerIP" # Explicitly set the loadBalancerIP
-    value = digitalocean_reserved_ip.echo_lb_ip.ip_address
-  }
+  # set {
+  #   name  = "controller.service.loadBalancerIP" # Explicitly set the loadBalancerIP
+  #   value = digitalocean_reserved_ip.echo_lb_ip.ip_address
+  # }
 
   set {
     name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/do-loadbalancer-name"
@@ -185,10 +185,10 @@ resource "helm_release" "ingress_nginx" {
   }
 
   # Assign the reserved IP to the load balancer
-  set {
-    name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/do-loadbalancer-floating-ip-assignment"
-    value = digitalocean_reserved_ip.echo_lb_ip.ip_address
-  }
+  # set {
+  #   name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/do-loadbalancer-floating-ip-assignment"
+  #   value = digitalocean_reserved_ip.echo_lb_ip.ip_address
+  # }
 
   # Important: Use TLS passthrough instead of DO certificate
   set {
