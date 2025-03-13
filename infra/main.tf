@@ -4,10 +4,6 @@ resource "digitalocean_vpc" "echo_vpc" {
   ip_range = var.env == "prod" ? "10.10.10.0/24" : "10.10.11.0/24" # RFC1918 private IP ranges, /24 subnet
 }
 
-resource "digitalocean_reserved_ip" "echo_lb_ip" {
-  region = var.do_region
-}
-
 resource "digitalocean_kubernetes_cluster" "doks" {
   name     = "dbr-echo-${var.env}-k8s-cluster"
   region   = var.do_region

@@ -76,6 +76,7 @@ ingress:
   email: "admin@dembrane.com"
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  clusterIssuerName: "letsencrypt-prod"
   hosts:
     directus: "directus.echo-next.dembrane.eu"
     api: "api.echo-next.dembrane.eu"
