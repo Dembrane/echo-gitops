@@ -60,7 +60,7 @@ apiServer:
       cpu: "800m"
       memory: "1Gi"
   env:
-    DIRECTUS_PUBLIC_URL: "https://directus.echo-next.dembrane.eu"
+    DIRECTUS_BASE_URL: "https://directus.echo-next.dembrane.eu"
     # DIRECTUS_TOKEN:
     # DIRECTUS_SECRET:
     ADMIN_BASE_URL: "https://dashboard.echo-next.dembrane.eu"
