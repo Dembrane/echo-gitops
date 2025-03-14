@@ -1,12 +1,7 @@
-data.digitalocean_kubernetes_cluster.doks_data
-digitalocean_container_registry.registry
-digitalocean_container_registry_docker_credentials.registry_credentials
-digitalocean_database_cluster.postgres
-digitalocean_database_cluster.redis
-digitalocean_kubernetes_cluster.doks
-digitalocean_vpc.echo_vpc
 helm_release.argocd
-kubernetes_namespace.argocd
+helm_release.cert_manager
+helm_release.ingress_nginx
+helm_release.sealed_secrets
 kubernetes_namespace.echo_ns
 kubernetes_secret.registry_credentials
 time_sleep.wait_for_kubernetes
