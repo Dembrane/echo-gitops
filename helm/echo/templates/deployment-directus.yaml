@@ -28,10 +28,10 @@ spec:
             - containerPort: {{ .Values.directus.service.port }}
           env:
             - name: PUBLIC_URL
-              value: {{ .Values.directus.env.PUBLIC_URL }}
+              value: {{ .Values.directus.env.PUBLIC_URL | quote }}
 
             - name: PORT
-              value: '8055'
+              value: "8055"
 
             - name: SECRET
               valueFrom:
@@ -40,7 +40,7 @@ spec:
                   key: DIRECTUS_SECRET
 
             - name: ADMIN_EMAIL
-              value: 'admin@dembrane.com'
+              value: "admin@dembrane.com"
 
             - name: ADMIN_PASSWORD
               valueFrom:
@@ -55,10 +55,10 @@ spec:
                   key: DIRECTUS_ADMIN_TOKEN
 
             - name: WEBSOCKETS_ENABLED
-              value: 'true'
+              value: "true"
 
             - name: DB_CLIENT
-              value: 'pg'
+              value: "pg"
 
             - name: DB_CONNECTION_STRING
               valueFrom:
@@ -67,10 +67,10 @@ spec:
                   key: DATABASE_URL
 
             - name: TELEMETRY
-              value: 'false'
+              value: "false"
 
             - name: REDIS_ENABLED
-              value: 'true'
+              value: "true"
 
             - name: REDIS
               valueFrom:
@@ -79,28 +79,28 @@ spec:
                   key: REDIS_URL
 
             - name: CORS_ENABLED
-              value: 'true'
+              value: "true"
 
             - name: CORS_ORIGINS
-              value: {{ .Values.directus.env.CORS_ORIGINS }}
+              value: {{ .Values.directus.env.CORS_ORIGINS | quote }}
 
             - name: CORS_CREDENTIALS
-              value: 'true'
+              value: "true"
 
             - name: SESSION_COOKIE_NAME
-              value: {{ .Values.directus.env.SESSION_COOKIE_NAME }}
+              value: {{ .Values.directus.env.SESSION_COOKIE_NAME | quote }}
 
             - name: SESSION_COOKIE_DOMAIN
-              value: {{ .Values.directus.env.SESSION_COOKIE_DOMAIN }}
+              value: {{ .Values.directus.env.SESSION_COOKIE_DOMAIN | quote }}
 
             - name: SESSION_COOKIE_SAME_SITE
-              value: 'lax'
+              value: "lax"
 
             - name: SESSION_COOKIE_SECURE
-              value: 'lax'
+              value: "lax"
 
             - name: EMAIL_TRANSPORT
-              value: 'smtp'
+              value: "smtp"
 
             - name: EMAIL_FROM
               valueFrom:
@@ -133,19 +133,19 @@ spec:
                   key: DIRECTUS_EMAIL_SMTP_PASSWORD
 
             - name: USER_REGISTER_URL_ALLOW_LIST
-              value: {{ .Values.directus.env.USER_REGISTER_URL_ALLOW_LIST }}
+              value: {{ .Values.directus.env.USER_REGISTER_URL_ALLOW_LIST | quote }}
 
             - name: PASSWORD_RESET_URL_ALLOW_LIST
-              value: {{ .Values.directus.env.PASSWORD_RESET_URL_ALLOW_LIST }}
+              value: {{ .Values.directus.env.PASSWORD_RESET_URL_ALLOW_LIST | quote }}
 
             - name: USER_INVITE_URL_ALLOW_LIST
-              value: {{ .Values.directus.env.USER_INVITE_URL_ALLOW_LIST }}
+              value: {{ .Values.directus.env.USER_INVITE_URL_ALLOW_LIST | quote }}
 
             - name: AUTH_PROVIDERS
-              value: 'google'
+              value: "google"
 
             - name: AUTH_GOOGLE_DRIVER
-              value: 'openid'
+              value: "openid"
 
             - name: AUTH_GOOGLE_CLIENT_ID
               valueFrom:
@@ -160,37 +160,37 @@ spec:
                   key: AUTH_GOOGLE_CLIENT_SECRET
 
             - name: AUTH_GOOGLE_ISSUER_URL
-              value: 'https://accounts.google.com'
+              value: "https://accounts.google.com"
 
             - name: AUTH_GOOGLE_IDENTIFIER_KEY
-              value: 'email'
+              value: "email"
 
             - name: AUTH_GOOGLE_FIRST_NAME_KEY
-              value: 'given_name'
+              value: "given_name"
 
             - name: AUTH_GOOGLE_LAST_NAME_KEY
-              value: 'family_name'
+              value: "family_name"
 
             - name: AUTH_GOOGLE_ICON
-              value: 'google'
+              value: "google"
 
             - name: AUTH_GOOGLE_LABEL
-              value: 'Google'
+              value: "Google"
 
             - name: AUTH_GOOGLE_ALLOW_PUBLIC_REGISTRATION
-              value: {{ .Values.directus.env.AUTH_GOOGLE_ALLOW_PUBLIC_REGISTRATION }}
+              value: {{ .Values.directus.env.AUTH_GOOGLE_ALLOW_PUBLIC_REGISTRATION | quote }}
 
             - name: AUTH_GOOGLE_DEFAULT_ROLE_ID
-              value: {{ .Values.directus.env.AUTH_GOOGLE_DEFAULT_ROLE_ID }}
+              value: {{ .Values.directus.env.AUTH_GOOGLE_DEFAULT_ROLE_ID | quote }}
 
             - name: AUTH_GOOGLE_REDIRECT_ALLOW_LIST
-              value: {{ .Values.directus.env.AUTH_GOOGLE_REDIRECT_ALLOW_LIST }}
+              value: {{ .Values.directus.env.AUTH_GOOGLE_REDIRECT_ALLOW_LIST | quote }}
             
             - name: STORAGE_LOCATIONS
-              value: 's3'
+              value: "s3"
             
             - name: STORAGE_S3_DRIVER
-              value: 's3'
+              value: "s3"
 
             - name: STORAGE_S3_KEY
               valueFrom:
@@ -205,13 +205,13 @@ spec:
                   key: S3_SECRET_KEY
             
             - name: STORAGE_S3_BUCKET
-              value: {{ .Values.directus.env.STORAGE_S3_BUCKET }}
+              value: {{ .Values.directus.env.STORAGE_S3_BUCKET | quote }}
             
             - name: STORAGE_S3_REGION
-              value: {{ .Values.directus.env.STORAGE_S3_REGION }}
+              value: {{ .Values.directus.env.STORAGE_S3_REGION | quote }}
             
             - name: STORAGE_S3_ENDPOINT
-              value: {{ .Values.directus.env.STORAGE_S3_ENDPOINT }}
+              value: {{ .Values.directus.env.STORAGE_S3_ENDPOINT | quote }}
             
             - name: DB_SSL_REJECT_UNAUTHORIZED
               value: "false"
@@ -221,8 +221,8 @@ spec:
 
           resources:
             requests:
-              cpu: '250m'
-              memory: '256Mi'
+              cpu: {{ .Values.directus.resources.requests.cpu | quote }}
+              memory: {{ .Values.directus.resources.requests.memory | quote }}
             limits:
-              cpu: '500m'
-              memory: '512Mi'
+              cpu: {{ .Values.directus.resources.limits.cpu | quote }}
+              memory: {{ .Values.directus.resources.limits.memory | quote }}
