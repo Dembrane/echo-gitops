@@ -2,12 +2,7 @@ resource "vercel_project" "portal" {
   name                                 = "echo-portal"
   auto_assign_custom_domains           = false
   enable_affected_projects_deployments = false
-
-  environment = [{
-    key    = "VITE_USE_PARTICIPANT_ROUTER"
-    value  = "1"
-    target = ["production", "preview", "development"]
-  }]
+  framework                            = "vite"
 }
 
 resource "vercel_custom_environment" "portal_env_staging" {
@@ -19,12 +14,7 @@ resource "vercel_project" "dashboard" {
   name                                 = "echo-dashboard"
   auto_assign_custom_domains           = false
   enable_affected_projects_deployments = false
-
-  environment = [{
-    key    = "VITE_USE_PARTICIPANT_ROUTER"
-    value  = "0"
-    target = ["production", "preview", "development"]
-  }]
+  framework                            = "vite"
 }
 
 resource "vercel_custom_environment" "dashboard_env_staging" {

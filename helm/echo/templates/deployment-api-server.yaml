@@ -30,7 +30,7 @@ spec:
             - containerPort: {{ .Values.apiServer.service.port }}
           env:
             - name: DIRECTUS_PUBLIC_URL
-              value: "{{ .Values.apiServer.env.DIRECTUS_PUBLIC_URL }}"
+              value: {{ .Values.apiServer.env.DIRECTUS_PUBLIC_URL }}
 
             - name: DIRECTUS_TOKEN
               valueFrom:
@@ -45,16 +45,16 @@ spec:
                   key: DIRECTUS_SECRET
 
             - name: DIRECTUS_SESSION_COOKIE_NAME
-              value: "{{ .Values.directus.env.SESSION_COOKIE_NAME }}"
+              value: {{ .Values.directus.env.SESSION_COOKIE_NAME }}
 
             - name: ADMIN_BASE_URL
-              value: "{{ .Values.apiServer.env.ADMIN_BASE_URL }}"
+              value: {{ .Values.apiServer.env.ADMIN_BASE_URL }}
 
             - name: PARTICIPANT_BASE_URL
-              value: "{{ .Values.apiServer.env.PARTICIPANT_BASE_URL }}"
+              value: {{ .Values.apiServer.env.PARTICIPANT_BASE_URL }}
 
             - name: BUILD_VERSION
-              value: "{{ .Values.apiServer.env.BUILD_VERSION }}"
+              value: {{ .Values.apiServer.env.BUILD_VERSION }}
 
             - name: OPENAI_API_KEY
               valueFrom:
@@ -81,22 +81,22 @@ spec:
                   key: DATABASE_URL
 
             - name: DISABLE_REDACTION
-              value: "{{ .Values.apiServer.env.DISABLE_REDACTION }}"
+              value: {{ .Values.apiServer.env.DISABLE_REDACTION }}
 
             - name: DISABLE_SENTRY
-              value: "{{ .Values.apiServer.env.DISABLE_SENTRY }}"
+              value: {{ .Values.apiServer.env.DISABLE_SENTRY }}
 
             - name: SERVE_API_DOCS
-              value: "{{ .Values.apiServer.env.SERVE_API_DOCS }}"
+              value: {{ .Values.apiServer.env.SERVE_API_DOCS }}
 
             - name: STORAGE_S3_REGION
-              value: "{{ .Values.apiServer.env.STORAGE_S3_REGION }}"
+              value: {{ .Values.apiServer.env.STORAGE_S3_REGION }}
 
             - name: STORAGE_S3_ENDPOINT
-              value: "{{ .Values.apiServer.env.STORAGE_S3_ENDPOINT }}"
+              value: {{ .Values.apiServer.env.STORAGE_S3_ENDPOINT }}
             
             - name: STORAGE_S3_BUCKET
-              value: "{{ .Values.apiServer.env.STORAGE_S3_BUCKET }}"
+              value: {{ .Values.apiServer.env.STORAGE_S3_BUCKET }}
             
             - name: STORAGE_S3_KEY
               valueFrom:

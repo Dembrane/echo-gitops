@@ -28,7 +28,7 @@ spec:
             - containerPort: {{ .Values.directus.service.port }}
           env:
             - name: PUBLIC_URL
-              value: '{{ .Values.directus.env.PUBLIC_URL }}'
+              value: {{ .Values.directus.env.PUBLIC_URL }}
 
             - name: PORT
               value: '8055'
@@ -82,16 +82,16 @@ spec:
               value: 'true'
 
             - name: CORS_ORIGINS
-              value: '{{ .Values.directus.env.CORS_ORIGINS }}'
+              value: {{ .Values.directus.env.CORS_ORIGINS }}
 
             - name: CORS_CREDENTIALS
               value: 'true'
 
             - name: SESSION_COOKIE_NAME
-              value: '{{ .Values.directus.env.SESSION_COOKIE_NAME }}'
+              value: {{ .Values.directus.env.SESSION_COOKIE_NAME }}
 
             - name: SESSION_COOKIE_DOMAIN
-              value: '{{ .Values.directus.env.SESSION_COOKIE_DOMAIN }}'
+              value: {{ .Values.directus.env.SESSION_COOKIE_DOMAIN }}
 
             - name: SESSION_COOKIE_SAME_SITE
               value: 'lax'
@@ -133,13 +133,13 @@ spec:
                   key: DIRECTUS_EMAIL_SMTP_PASSWORD
 
             - name: USER_REGISTER_URL_ALLOW_LIST
-              value: '{{ .Values.directus.env.USER_REGISTER_URL_ALLOW_LIST }}'
+              value: {{ .Values.directus.env.USER_REGISTER_URL_ALLOW_LIST }}
 
             - name: PASSWORD_RESET_URL_ALLOW_LIST
-              value: '{{ .Values.directus.env.PASSWORD_RESET_URL_ALLOW_LIST }}'
+              value: {{ .Values.directus.env.PASSWORD_RESET_URL_ALLOW_LIST }}
 
             - name: USER_INVITE_URL_ALLOW_LIST
-              value: '{{ .Values.directus.env.USER_INVITE_URL_ALLOW_LIST }}'
+              value: {{ .Values.directus.env.USER_INVITE_URL_ALLOW_LIST }}
 
             - name: AUTH_PROVIDERS
               value: 'google'
@@ -178,13 +178,13 @@ spec:
               value: 'Google'
 
             - name: AUTH_GOOGLE_ALLOW_PUBLIC_REGISTRATION
-              value: '{{ .Values.directus.env.AUTH_GOOGLE_ALLOW_PUBLIC_REGISTRATION }}'
+              value: {{ .Values.directus.env.AUTH_GOOGLE_ALLOW_PUBLIC_REGISTRATION }}
 
             - name: AUTH_GOOGLE_DEFAULT_ROLE_ID
-              value: '{{ .Values.directus.env.AUTH_GOOGLE_DEFAULT_ROLE_ID }}'
+              value: {{ .Values.directus.env.AUTH_GOOGLE_DEFAULT_ROLE_ID }}
 
             - name: AUTH_GOOGLE_REDIRECT_ALLOW_LIST
-              value: '{{ .Values.directus.env.AUTH_GOOGLE_REDIRECT_ALLOW_LIST }}'
+              value: {{ .Values.directus.env.AUTH_GOOGLE_REDIRECT_ALLOW_LIST }}
             
             - name: STORAGE_LOCATIONS
               value: 's3'
