@@ -84,6 +84,9 @@ spec:
             - name: CORS_ORIGIN
               value: {{ .Values.directus.env.CORS_ORIGIN | quote }}
 
+            - name: CORS_ORIGINS
+              value: {{ .Values.directus.env.CORS_ORIGIN | quote }}            
+
             - name: CORS_CREDENTIALS
               value: "true"
 
