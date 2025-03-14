@@ -84,11 +84,20 @@ spec:
             - name: CORS_ORIGIN
               value: {{ .Values.directus.env.CORS_ORIGIN | quote }}
 
-            - name: CORS_ORIGINS
-              value: {{ .Values.directus.env.CORS_ORIGIN | quote }}            
-
             - name: CORS_CREDENTIALS
               value: "true"
+            
+            - name: CORS_METHODS
+              value: "GET,POST,PUT,PATCH,DELETE,OPTIONS,SEARCH"
+
+            - name: CORS_ALLOW_HEADERS
+              value: "Content-Type,Authorization"
+            
+            - name: CORS_EXPOSED_HEADERS
+              value: "Content-Type,Content-Range,X-Total-Count"
+            
+            - name: CORS_MAX_AGE
+              value: "18000"
 
             - name: SESSION_COOKIE_NAME
               value: {{ .Values.directus.env.SESSION_COOKIE_NAME | quote }}
