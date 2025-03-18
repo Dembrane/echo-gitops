@@ -1,8 +1,3 @@
-variable "env" {
-  type        = string
-  description = "Environment name (dev or prod)"
-}
-
 variable "do_region" {
   type    = string
   default = "ams3" # DigitalOcean region for all resources

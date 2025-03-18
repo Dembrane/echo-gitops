@@ -22,7 +22,8 @@ directus:
     # ADMIN_TOKEN:
     # DB_CONNECTION_STRING:
     # REDIS:
-    CORS_ORIGIN: "https://dashboard.echo-next.dembrane.eu,https://portal.echo-next.dembrane.eu"
+    # CORS_ORIGIN: "https://dashboard.echo-next.dembrane.eu,https://portal.echo-next.dembrane.eu"
+    CORS_ORIGIN: "*"
     SESSION_COOKIE_NAME: "dembrane_session_token_dev"
     SESSION_COOKIE_DOMAIN: "echo-next.dembrane.eu"
     # EMAIL_FROM
@@ -70,6 +71,7 @@ apiServer:
     # ANTHROPIC_API_KEY:
     # REDIS_URL:
     # DATABASE_URL:
+    DISABLE_CORS: "1"
     DISABLE_REDACTION: "1"
     DISABLE_SENTRY: "0"
     SERVE_API_DOCS: "1"

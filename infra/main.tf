@@ -1,11 +1,30 @@
+# before running terraform apply, run:
+# for dev: terraform workspace select default
+# for prod: terraform workspace select prod
+# use different .tfvars if needed
+
+# terraform workspace select default
+# terraform plan -var-file=./terraform-dev.tfvars
+# terraform apply -var-file=./terraform-dev.tfvars
+
+# terraform workspace select prod
+# terraform plan -var-file=./terraform-prod.tfvars
+# terraform apply -var-file=./terraform-prod.tfvars
+
+locals {
+  # If workspace is default, use "dev" as the environment name
+  # env: "dev" | "prod"
+  env = terraform.workspace == "default" ? "dev" : "prod"
+}
+
 resource "digitalocean_vpc" "echo_vpc" {
-  name     = "echo-${var.env}-vpc"
+  name     = "echo-${local.env}-vpc"
   region   = var.do_region
-  ip_range = var.env == "prod" ? "10.10.10.0/24" : "10.10.11.0/24" # RFC1918 private IP ranges, /24 subnet
+  ip_range = local.env == "prod" ? "10.10.10.0/24" : "10.10.11.0/24" # RFC1918 private IP ranges, /24 subnet
 }
 
 resource "digitalocean_kubernetes_cluster" "doks" {
-  name     = "dbr-echo-${var.env}-k8s-cluster"
+  name     = "dbr-echo-${local.env}-k8s-cluster"
   region   = var.do_region
   vpc_uuid = digitalocean_vpc.echo_vpc.id
   version  = "1.32.2-do.0"
@@ -14,36 +33,36 @@ resource "digitalocean_kubernetes_cluster" "doks" {
     size       = "s-4vcpu-8gb" # 4vCPU 8GB nodes
     auto_scale = true
     min_nodes  = 1
-    max_nodes  = var.env == "prod" ? 6 : 2 # max 2 nodes for dev, 4 for prod
-    tags       = ["dbr-echo", var.env, "k8s"]
+    max_nodes  = local.env == "prod" ? 6 : 2 # max 2 nodes for dev, 4 for prod
+    tags       = ["dbr-echo", local.env, "k8s"]
   }
 }
 
 # Managed Postgres for the environment
 resource "digitalocean_database_cluster" "postgres" {
-  name                 = "dbr-echo-${var.env}-postgres"
+  name                 = "dbr-echo-${local.env}-postgres"
   private_network_uuid = digitalocean_vpc.echo_vpc.id
   engine               = "pg" # Postgres
   version              = "16" # e.g., Postgres version
-  size                 = var.env == "prod" ? "db-s-2vcpu-4gb" : "db-s-1vcpu-1gb"
+  size                 = local.env == "prod" ? "db-s-2vcpu-4gb" : "db-s-1vcpu-1gb"
   region               = var.do_region
   node_count           = 1 # single node (for simplicity; prod could use HA with 2+ nodes)
-  tags                 = ["dbr-echo", var.env, "postgres"]
+  tags                 = ["dbr-echo", local.env, "postgres"]
 }
 
 resource "digitalocean_database_cluster" "redis" {
-  name                 = "dbr-echo-${var.env}-redis"
+  name                 = "dbr-echo-${local.env}-redis"
   private_network_uuid = digitalocean_vpc.echo_vpc.id
   engine               = "redis"
   version              = "7" # Redis version
-  size                 = var.env == "prod" ? "db-s-2vcpu-4gb" : "db-s-1vcpu-1gb"
+  size                 = local.env == "prod" ? "db-s-2vcpu-4gb" : "db-s-1vcpu-1gb"
   region               = var.do_region
   node_count           = 1
-  tags                 = ["dbr-echo", var.env, "redis"]
+  tags                 = ["dbr-echo", local.env, "redis"]
 }
 
 resource "digitalocean_spaces_bucket" "uploads" {
-  name   = "dbr-echo-${var.env}-uploads"
+  name   = "dbr-echo-${local.env}-uploads"
   region = var.do_region
 }
 
@@ -64,14 +83,14 @@ resource "time_sleep" "wait_for_kubernetes" {
 
 resource "kubernetes_namespace" "echo_ns" {
   metadata {
-    name = "echo-${var.env}"
+    name = "echo-${local.env}"
   }
 
   depends_on = [time_sleep.wait_for_kubernetes]
 }
 
 data "digitalocean_kubernetes_cluster" "doks_data" {
-  name       = "dbr-echo-${var.env}-k8s-cluster" # Use the same name as your resource
+  name       = "dbr-echo-${local.env}-k8s-cluster" # Use the same name as your resource
   depends_on = [time_sleep.wait_for_kubernetes]
 }
 
@@ -170,7 +189,7 @@ resource "helm_release" "ingress_nginx" {
 
   set {
     name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/do-loadbalancer-name"
-    value = "echo-${var.env}-ingress-lb"
+    value = "echo-${local.env}-ingress-lb"
   }
 
   set {

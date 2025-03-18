@@ -79,6 +79,9 @@ spec:
                 secretKeyRef:
                   name: echo-backend-secrets
                   key: DATABASE_URL
+                
+            - name: DISABLE_CORS
+              value: {{ .Values.apiServer.env.DISABLE_CORS | quote }}
 
             - name: DISABLE_REDACTION
               value: {{ .Values.apiServer.env.DISABLE_REDACTION | quote }}
