@@ -1,67 +1,108 @@
 global:
-  imageTag: ""
+  imageTag: "bc92e4c5c40b6e2c36ef55cd41bf6a95533f144f"
   registry: "registry.digitalocean.com/dbr-cr"
-  dbConnectionString: ""
-  redisUrl: ""
 
 directus:
-  replicaCount: 2
+  replicaCount: 1
+  maxReplicaCount: 4
   image:
     repository: "dbr-echo-directus"
-    tag: {{ .Values.global.imageTag }}
   service:
     port: 8055
+  resources:
+    requests:
+      cpu: "300m"
+      memory: "512Mi"
+    limits:
+      cpu: "600m"
+      memory: "768Mi"
   env:
-    SESSION_COOKIE_NAME: "dembrane_session_token_prod"
     PUBLIC_URL: "https://directus.echo.dembrane.eu"
-    PORT: "8055"
-    ADMIN_EMAIL: "admin@dembrane.com"
-    WEBSOCKETS_ENABLED: "true"
-    DB_CLIENT: "pg"
-    DB_DATABASE: "dembrane"
-    TELEMETRY: "false"
-    REDIS_ENABLED: "true"
-    CORS_ENABLED: "true"
-    CORS_CREDENTIALS: "true"
-    SESSION_COOKIE_SAME_SITE: "lax"
-    SESSION_COOKIE_SECURE: "lax"
-    EMAIL_TRANSPORT: "smtp"
+    # ADMIN_PASSWORD: 
+    # ADMIN_TOKEN:
+    # DB_CONNECTION_STRING:
+    # REDIS:
+    CORS_ORIGIN: "https://dashboard.echo.dembrane.eu,https://portal.echo.dembrane.eu"
+    SESSION_COOKIE_NAME: "dembrane_session_token"
+    SESSION_COOKIE_DOMAIN: "echo.dembrane.eu"
+    # EMAIL_FROM
+    # EMAIL_SMTP_HOST
+    # EMAIL_SMTP_PORT
+    # EMAIL_SMTP_USER
+    # EMAIL_SMTP_PASSWORD
+    USER_REGISTER_URL_ALLOW_LIST: "https://dashboard.echo.dembrane.eu/verify-email"
+    PASSWORD_RESET_URL_ALLOW_LIST: "https://dashboard.echo.dembrane.eu/password-reset"
+    USER_INVITE_URL_ALLOW_LIST: "https://dashboard.echo.dembrane.eu/invite"
+    # AUTH_GOOGLE_CLIENT_ID
+    # AUTH_GOOGLE_CLIENT_SECRET
+    AUTH_GOOGLE_ALLOW_PUBLIC_REGISTRATION: "true"
+    AUTH_GOOGLE_DEFAULT_ROLE_ID: 2446660a-ab6c-4801-ad69-5711030cba83
+    AUTH_GOOGLE_REDIRECT_ALLOW_LIST: "https://dashboard.echo.dembrane.eu/en-US/projects,https://dashboard.echo.dembrane.eu/nl-NL/projects,https://dashboard.echo.dembrane.eu/es-ES/projects,https://dashboard.echo.dembrane.eu/fr-FR/projects,https://dashboard.echo.dembrane.eu/de-DE/projects"
+    # STORAGE_S3_KEY
+    # STORAGE_S3_SECRET
+    # dummy for compat of DO with S3
+    STORAGE_S3_REGION: "us-east-1"
+    STORAGE_S3_ENDPOINT: "https://ams3.digitaloceanspaces.com"
+    STORAGE_S3_BUCKET: "dbr-echo-prod-uploads"
 
 apiServer:
   replicaCount: 1
+  maxReplicaCount: 6
   image:
     repository: "dbr-echo-server"
-    tag: {{ .Values.global.imageTag }}
   service:
     port: 8000
+  resources:
+    requests:
+      cpu: "400m"
+      memory: "512Mi"
+    limits:
+      cpu: "800m"
+      memory: "1Gi"
   env:
-    DIRECTUS_PUBLIC_URL: "https://directus.echo.dembrane.eu"
+    DEBUG_MODE: "1"
+    DIRECTUS_BASE_URL: "https://directus.echo.dembrane.eu"
+    # DIRECTUS_TOKEN:
+    # DIRECTUS_SECRET:
     ADMIN_BASE_URL: "https://dashboard.echo.dembrane.eu"
     PARTICIPANT_BASE_URL: "https://portal.echo.dembrane.eu"
-    BUILD_VERSION: "{{ .Values.global.imageTag }}"
-    DISABLE_REDACTION: "1"
-    DISABLE_SENTRY: "0"
-    SERVE_API_DOCS: "1"
-
-worker:
-  replicaCount: 1
-  image:
-    repository: "dbr-echo-server"
-    tag: {{ .Values.global.imageTag }}
-  env:
-    DIRECTUS_PUBLIC_URL: "https://directus.echo.dembrane.eu"
-    ADMIN_BASE_URL: "https://dashboard.echo.dembrane.eu"
-    PARTICIPANT_BASE_URL: "https://portal.echo.dembrane.eu"
-    BUILD_VERSION: "{{ .Values.global.imageTag }}"
+    # OPENAI_API_KEY:
+    # ANTHROPIC_API_KEY:
+    # REDIS_URL:
+    # DATABASE_URL:
+    DISABLE_CORS: "0"
     DISABLE_REDACTION: "1"
     DISABLE_SENTRY: "0"
     SERVE_API_DOCS: "0"
+    # S3_ACCESS_KEY
+    # S3_SECRET_KEY
+    # dummy for compat of DO with S3
+    STORAGE_S3_REGION: "us-east-1"
+    STORAGE_S3_ENDPOINT: "https://ams3.digitaloceanspaces.com"
+    STORAGE_S3_BUCKET: "dbr-echo-prod-uploads"
+
+worker:
+  # the deployment uses the same tags as the api server
+  # only the command is different
+  replicaCount: 1
+  maxReplicaCount: 2
+  image:
+    repository: "dbr-echo-server"
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1000m"
+      memory: "1.5Gi"
 
 ingress:
   enabled: true
   className: "nginx"
+  email: "admin@dembrane.com"
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  clusterIssuerName: "letsencrypt-prod"
   hosts:
     directus: "directus.echo.dembrane.eu"
     api: "api.echo.dembrane.eu"

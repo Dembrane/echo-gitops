@@ -1,11 +1,12 @@
 # before running terraform apply, run:
+# terraform workspace show 
 # for dev: terraform workspace select default
-# for prod: terraform workspace select prod
+# for prod: terraform workspace select -or-create prod 
 # use different .tfvars if needed
 
 # terraform workspace select default
-# terraform plan -var-file=./terraform-dev.tfvars
-# terraform apply -var-file=./terraform-dev.tfvars
+# terraform plan -var-file=./terraform.tfvars
+# terraform apply -var-file=./terraform.tfvars
 
 # terraform workspace select prod
 # terraform plan -var-file=./terraform-prod.tfvars
@@ -48,6 +49,10 @@ resource "digitalocean_database_cluster" "postgres" {
   region               = var.do_region
   node_count           = 1 # single node (for simplicity; prod could use HA with 2+ nodes)
   tags                 = ["dbr-echo", local.env, "postgres"]
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "digitalocean_database_cluster" "redis" {
@@ -64,16 +69,27 @@ resource "digitalocean_database_cluster" "redis" {
 resource "digitalocean_spaces_bucket" "uploads" {
   name   = "dbr-echo-${local.env}-uploads"
   region = var.do_region
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "digitalocean_container_registry" "registry" {
+  # already created in dev
+  count = local.env == "prod" ? 0 : 1
+
   name                   = "dbr-cr"
   subscription_tier_slug = "basic"
   region                 = var.do_region
 }
 
+data "digitalocean_container_registry" "shared_registry" {
+  name = "dbr-cr"
+}
+
 resource "digitalocean_container_registry_docker_credentials" "registry_credentials" {
-  registry_name = digitalocean_container_registry.registry.name
+  registry_name = local.env == "prod" ? data.digitalocean_container_registry.shared_registry.name : digitalocean_container_registry.registry[0].name
 }
 
 resource "time_sleep" "wait_for_kubernetes" {
@@ -136,18 +152,38 @@ provider "kubectl" {
 
 # doctl k8s c list
 # doctl k8s c kubeconfig save dbr-echo-dev-k8s-cluster
+# doctl k8s c kubeconfig save dbr-echo-prod-k8s-cluster
 
-# secrets:
-# - kubectl apply -n kube-system -f https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.20.2/controller.yaml
-# kubectl apply -f echo-dev-secrets.yaml
+
+/**
+secrets:
+
+kubeseal --context=do-ams3-dbr-echo-dev-k8s-cluster \
+  --controller-namespace=kube-system \
+  --controller-name=sealed-secrets \
+  < dev.yaml > echo-backend-secrets-dev.yaml
+
+kubectl apply -f echo-backend-secrets-dev.yaml
+
+kubeseal --context=do-ams3-dbr-echo-prod-k8s-cluster \
+  --controller-namespace=kube-system \
+  --controller-name=sealed-secrets \
+  < prod.yaml > echo-backend-secrets-prod.yaml
+
+kubectl apply -f echo-backend-secrets-prod.yaml
+
+*/
 
 # argo:
-# - kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
 # kubectl apply -f echo-dev.yaml
+# kubectl apply -f echo-prod.yaml
+
 # kubectl port-forward svc/argocd-server -n argocd 8080:443
 # username: admin
 # password: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 # settings -> repositories -> add repository -> https://github.com/dembrane/echo-gitops.git 
+
 
 resource "helm_release" "sealed_secrets" {
   name             = "sealed-secrets"
