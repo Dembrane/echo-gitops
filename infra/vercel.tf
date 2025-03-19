@@ -5,9 +5,13 @@ resource "vercel_project" "portal" {
   count = local.env == "prod" ? 0 : 1
 
   name                                 = "echo-portal"
-  auto_assign_custom_domains           = false
+  auto_assign_custom_domains           = true
   enable_affected_projects_deployments = false
   framework                            = "vite"
+
+  vercel_authentication = {
+    deployment_type = "none"
+  }
 }
 
 resource "vercel_custom_environment" "portal_env_staging" {
@@ -21,9 +25,13 @@ resource "vercel_project" "dashboard" {
   count = local.env == "prod" ? 0 : 1
 
   name                                 = "echo-dashboard"
-  auto_assign_custom_domains           = false
+  auto_assign_custom_domains           = true
   enable_affected_projects_deployments = false
   framework                            = "vite"
+
+  vercel_authentication = {
+    deployment_type = "none"
+  }
 }
 
 resource "vercel_custom_environment" "dashboard_env_staging" {
