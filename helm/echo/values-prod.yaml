@@ -17,27 +17,27 @@ directus:
       cpu: "900m"
       memory: "1Gi"
   env:
-    PUBLIC_URL: "https://directus.echo.dembrane.eu"
+    PUBLIC_URL: "https://directus.dembrane.com"
     # ADMIN_PASSWORD: 
     # ADMIN_TOKEN:
     # DB_CONNECTION_STRING:
     # REDIS:
-    CORS_ORIGIN: "https://dashboard.echo.dembrane.eu,https://portal.echo.dembrane.eu"
+    CORS_ORIGIN: "https://dashboard.dembrane.com,https://portal.dembrane.com"
     SESSION_COOKIE_NAME: "dembrane_session_token"
-    SESSION_COOKIE_DOMAIN: "echo.dembrane.eu"
+    SESSION_COOKIE_DOMAIN: "dembrane.com"
     # EMAIL_FROM
     # EMAIL_SMTP_HOST
     # EMAIL_SMTP_PORT
     # EMAIL_SMTP_USER
     # EMAIL_SMTP_PASSWORD
-    USER_REGISTER_URL_ALLOW_LIST: "https://dashboard.echo.dembrane.eu/verify-email"
-    PASSWORD_RESET_URL_ALLOW_LIST: "https://dashboard.echo.dembrane.eu/password-reset"
-    USER_INVITE_URL_ALLOW_LIST: "https://dashboard.echo.dembrane.eu/invite"
+    USER_REGISTER_URL_ALLOW_LIST: "https://dashboard.dembrane.com/verify-email"
+    PASSWORD_RESET_URL_ALLOW_LIST: "https://dashboard.dembrane.com/password-reset"
+    USER_INVITE_URL_ALLOW_LIST: "https://dashboard.dembrane.com/invite"
     # AUTH_GOOGLE_CLIENT_ID
     # AUTH_GOOGLE_CLIENT_SECRET
     AUTH_GOOGLE_ALLOW_PUBLIC_REGISTRATION: "true"
     AUTH_GOOGLE_DEFAULT_ROLE_ID: 2446660a-ab6c-4801-ad69-5711030cba83
-    AUTH_GOOGLE_REDIRECT_ALLOW_LIST: "https://dashboard.echo.dembrane.eu/en-US/projects,https://dashboard.echo.dembrane.eu/nl-NL/projects,https://dashboard.echo.dembrane.eu/es-ES/projects,https://dashboard.echo.dembrane.eu/fr-FR/projects,https://dashboard.echo.dembrane.eu/de-DE/projects"
+    AUTH_GOOGLE_REDIRECT_ALLOW_LIST: "https://dashboard.dembrane.com/en-US/projects,https://dashboard.dembrane.com/nl-NL/projects,https://dashboard.dembrane.com/es-ES/projects,https://dashboard.dembrane.com/fr-FR/projects,https://dashboard.dembrane.com/de-DE/projects"
     # STORAGE_S3_KEY
     # STORAGE_S3_SECRET
     # dummy for compat of DO with S3
@@ -61,11 +61,11 @@ apiServer:
       memory: "1Gi"
   env:
     DEBUG_MODE: "1"
-    DIRECTUS_BASE_URL: "https://directus.echo.dembrane.eu"
+    DIRECTUS_BASE_URL: "https://directus.dembrane.com"
     # DIRECTUS_TOKEN:
     # DIRECTUS_SECRET:
-    ADMIN_BASE_URL: "https://dashboard.echo.dembrane.eu"
-    PARTICIPANT_BASE_URL: "https://portal.echo.dembrane.eu"
+    ADMIN_BASE_URL: "https://dashboard.dembrane.com"
+    PARTICIPANT_BASE_URL: "https://portal.dembrane.com"
     # OPENAI_API_KEY:
     # ANTHROPIC_API_KEY:
     # REDIS_URL:
@@ -84,7 +84,7 @@ apiServer:
 worker:
   # the deployment uses the same tags as the api server
   # only the command is different
-  replicaCount: 2
+  replicaCount: 4
   maxReplicaCount: 6
   image:
     repository: "dbr-echo-server"
@@ -104,10 +104,10 @@ ingress:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
   clusterIssuerName: "letsencrypt-prod"
   hosts:
-    directus: "directus.echo.dembrane.eu"
-    api: "api.echo.dembrane.eu"
+    directus: "directus.dembrane.com"
+    api: "api.dembrane.com"
   tls:
     - secretName: "echo-tls"
       hosts:
-        - "directus.echo.dembrane.eu"
-        - "api.echo.dembrane.eu"
+        - "directus.dembrane.com"
+        - "api.dembrane.com"
