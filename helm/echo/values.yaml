@@ -14,7 +14,7 @@ directus:
       cpu: "300m"
       memory: "512Mi"
     limits:
-      cpu: "600m"
+      cpu: "500m"
       memory: "768Mi"
   env:
     PUBLIC_URL: "https://directus.echo-next.dembrane.eu"
@@ -54,11 +54,11 @@ apiServer:
     port: 8000
   resources:
     requests:
-      cpu: "400m"
+      cpu: "300m"
       memory: "512Mi"
     limits:
-      cpu: "800m"
-      memory: "1Gi"
+      cpu: "500m"
+      memory: "800Mi"
   env:
     DEBUG_MODE: "1"
     DIRECTUS_BASE_URL: "https://directus.echo-next.dembrane.eu"
@@ -90,11 +90,11 @@ worker:
     repository: "dbr-echo-server"
   resources:
     requests:
+      cpu: "300m"
+      memory: "800Mi"
+    limits:
       cpu: "500m"
       memory: "1Gi"
-    limits:
-      cpu: "1000m"
-      memory: "1.5Gi"
 
 ingress:
   enabled: true

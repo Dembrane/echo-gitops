@@ -55,10 +55,10 @@ apiServer:
   resources:
     requests:
       cpu: "300m"
-      memory: "1Gi"
+      memory: "800Mi"
     limits:
       cpu: "800m"
-      memory: "1.5Gi"
+      memory: "1Gi"
   env:
     DEBUG_MODE: "1"
     DIRECTUS_BASE_URL: "https://directus.echo.dembrane.eu"
