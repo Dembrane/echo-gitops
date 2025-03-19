@@ -33,7 +33,7 @@ resource "digitalocean_kubernetes_cluster" "doks" {
     name       = "default-pool"
     size       = "s-4vcpu-8gb" # 4vCPU 8GB nodes
     auto_scale = true
-    min_nodes  = 1
+    min_nodes  = local.env == "prod" ? 2 : 1
     max_nodes  = local.env == "prod" ? 6 : 2 # max 2 nodes for dev, 4 for prod
     tags       = ["dbr-echo", local.env, "k8s"]
   }
