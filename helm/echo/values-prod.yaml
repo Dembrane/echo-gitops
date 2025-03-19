@@ -11,10 +11,10 @@ directus:
     port: 8055
   resources:
     requests:
-      cpu: "300m"
+      cpu: "500m"
       memory: "512Mi"
     limits:
-      cpu: "500m"
+      cpu: "900m"
       memory: "1Gi"
   env:
     PUBLIC_URL: "https://directus.echo.dembrane.eu"
