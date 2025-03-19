@@ -269,3 +269,15 @@ resource "helm_release" "cert_manager" {
 
   depends_on = [time_sleep.wait_for_kubernetes]
 }
+
+
+resource "helm_release" "metrics_server" {
+  name             = "metrics-server"
+  repository       = "https://kubernetes-sigs.github.io/metrics-server/"
+  chart            = "metrics-server"
+  version          = "3.12.2" # Use the latest version or pin as needed
+  namespace        = "kube-system"
+  create_namespace = false # kube-system already exists
+
+  depends_on = [time_sleep.wait_for_kubernetes]
+}

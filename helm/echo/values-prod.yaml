@@ -3,8 +3,8 @@ global:
   registry: "registry.digitalocean.com/dbr-cr"
 
 directus:
-  replicaCount: 1
-  maxReplicaCount: 4
+  replicaCount: 2
+  maxReplicaCount: 3
   image:
     repository: "dbr-echo-directus"
   service:
@@ -14,8 +14,8 @@ directus:
       cpu: "300m"
       memory: "512Mi"
     limits:
-      cpu: "600m"
-      memory: "768Mi"
+      cpu: "500m"
+      memory: "1Gi"
   env:
     PUBLIC_URL: "https://directus.echo.dembrane.eu"
     # ADMIN_PASSWORD: 
@@ -46,19 +46,19 @@ directus:
     STORAGE_S3_BUCKET: "dbr-echo-prod-uploads"
 
 apiServer:
-  replicaCount: 1
-  maxReplicaCount: 6
+  replicaCount: 2
+  maxReplicaCount: 4
   image:
     repository: "dbr-echo-server"
   service:
     port: 8000
   resources:
     requests:
-      cpu: "400m"
-      memory: "512Mi"
+      cpu: "300m"
+      memory: "1Gi"
     limits:
       cpu: "800m"
-      memory: "1Gi"
+      memory: "1.5Gi"
   env:
     DEBUG_MODE: "1"
     DIRECTUS_BASE_URL: "https://directus.echo.dembrane.eu"
@@ -84,16 +84,16 @@ apiServer:
 worker:
   # the deployment uses the same tags as the api server
   # only the command is different
-  replicaCount: 1
-  maxReplicaCount: 2
+  replicaCount: 2
+  maxReplicaCount: 6
   image:
     repository: "dbr-echo-server"
   resources:
     requests:
-      cpu: "500m"
+      cpu: "300m"
       memory: "1Gi"
     limits:
-      cpu: "1000m"
+      cpu: "800m"
       memory: "1.5Gi"
 
 ingress:
