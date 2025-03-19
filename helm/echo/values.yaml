@@ -17,27 +17,27 @@ directus:
       cpu: "900m"
       memory: "768Mi"
   env:
-    PUBLIC_URL: "https://directus.echo-next.dembrane.eu"
+    PUBLIC_URL: "https://directus.echo-next.dembrane.com"
     # ADMIN_PASSWORD: 
     # ADMIN_TOKEN:
     # DB_CONNECTION_STRING:
     # REDIS:
-    CORS_ORIGIN: "https://dashboard.echo-next.dembrane.eu,https://portal.echo-next.dembrane.eu"
+    CORS_ORIGIN: "https://dashboard.echo-next.dembrane.com,https://portal.echo-next.dembrane.com"
     SESSION_COOKIE_NAME: "dembrane_session_token_dev"
-    SESSION_COOKIE_DOMAIN: "echo-next.dembrane.eu"
+    SESSION_COOKIE_DOMAIN: "echo-next.dembrane.com"
     # EMAIL_FROM
     # EMAIL_SMTP_HOST
     # EMAIL_SMTP_PORT
     # EMAIL_SMTP_USER
     # EMAIL_SMTP_PASSWORD
-    USER_REGISTER_URL_ALLOW_LIST: "https://dashboard.echo-next.dembrane.eu/verify-email"
-    PASSWORD_RESET_URL_ALLOW_LIST: "https://dashboard.echo-next.dembrane.eu/password-reset"
-    USER_INVITE_URL_ALLOW_LIST: "https://dashboard.echo-next.dembrane.eu/invite"
+    USER_REGISTER_URL_ALLOW_LIST: "https://dashboard.echo-next.dembrane.com/verify-email"
+    PASSWORD_RESET_URL_ALLOW_LIST: "https://dashboard.echo-next.dembrane.com/password-reset"
+    USER_INVITE_URL_ALLOW_LIST: "https://dashboard.echo-next.dembrane.com/invite"
     # AUTH_GOOGLE_CLIENT_ID
     # AUTH_GOOGLE_CLIENT_SECRET
     AUTH_GOOGLE_ALLOW_PUBLIC_REGISTRATION: "true"
     AUTH_GOOGLE_DEFAULT_ROLE_ID: 2446660a-ab6c-4801-ad69-5711030cba83
-    AUTH_GOOGLE_REDIRECT_ALLOW_LIST: "https://dashboard.echo-next.dembrane.eu/en-US/projects,https://dashboard.echo-next.dembrane.eu/nl-NL/projects,https://dashboard.echo-next.dembrane.eu/es-ES/projects,https://dashboard.echo-next.dembrane.eu/fr-FR/projects,https://dashboard.echo-next.dembrane.eu/de-DE/projects"
+    AUTH_GOOGLE_REDIRECT_ALLOW_LIST: "https://dashboard.echo-next.dembrane.com/en-US/projects,https://dashboard.echo-next.dembrane.com/nl-NL/projects,https://dashboard.echo-next.dembrane.com/es-ES/projects,https://dashboard.echo-next.dembrane.com/fr-FR/projects,https://dashboard.echo-next.dembrane.com/de-DE/projects"
     # STORAGE_S3_KEY
     # STORAGE_S3_SECRET
     # dummy for compat of DO with S3
@@ -61,11 +61,11 @@ apiServer:
       memory: "800Mi"
   env:
     DEBUG_MODE: "1"
-    DIRECTUS_BASE_URL: "https://directus.echo-next.dembrane.eu"
+    DIRECTUS_BASE_URL: "https://directus.echo-next.dembrane.com"
     # DIRECTUS_TOKEN:
     # DIRECTUS_SECRET:
-    ADMIN_BASE_URL: "https://dashboard.echo-next.dembrane.eu"
-    PARTICIPANT_BASE_URL: "https://portal.echo-next.dembrane.eu"
+    ADMIN_BASE_URL: "https://dashboard.echo-next.dembrane.com"
+    PARTICIPANT_BASE_URL: "https://portal.echo-next.dembrane.com"
     # OPENAI_API_KEY:
     # ANTHROPIC_API_KEY:
     # REDIS_URL:
@@ -104,10 +104,10 @@ ingress:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
   clusterIssuerName: "letsencrypt-prod"
   hosts:
-    directus: "directus.echo-next.dembrane.eu"
-    api: "api.echo-next.dembrane.eu"
+    directus: "directus.echo-next.dembrane.com"
+    api: "api.echo-next.dembrane.com"
   tls:
     - secretName: "echo-next-tls"
       hosts:
-        - "directus.echo-next.dembrane.eu"
-        - "api.echo-next.dembrane.eu"
+        - "directus.echo-next.dembrane.com"
+        - "api.echo-next.dembrane.com"
