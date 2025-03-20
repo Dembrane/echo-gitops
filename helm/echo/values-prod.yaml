@@ -85,15 +85,15 @@ worker:
   # the deployment uses the same tags as the api server
   # only the command is different
   replicaCount: 3
-  maxReplicaCount: 6
+  maxReplicaCount: 12
   image:
     repository: "dbr-echo-server"
   resources:
     requests:
-      cpu: "500m"
+      cpu: "800m"
       memory: "1Gi"
     limits:
-      cpu: "1000m"
+      cpu: "2000m"
       memory: "2Gi"
 
 ingress:
