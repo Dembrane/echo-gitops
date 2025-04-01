@@ -24,6 +24,7 @@ spec:
           imagePullPolicy: IfNotPresent
           args:
             - -config.file=/etc/loki/loki.yaml
+            - -config.expand-env=true
           ports:
             - name: http-metrics
               containerPort: 3100
