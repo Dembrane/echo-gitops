@@ -2,10 +2,6 @@
 clusterIssuerName: "letsencrypt-prod"
 domain: "echo-next.dembrane.com"  # Default domain for development
 
-# Basic auth for monitoring ingress - must be provided via SealedSecret
-# Do not set plaintext passwords in this file
-basicAuthValue: ""
-
 # Storage settings
 storage:
   storageClassName: "do-block-storage"
@@ -65,4 +61,4 @@ ingress:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
   basicAuth:
-    enabled: true
+    enabled: false
