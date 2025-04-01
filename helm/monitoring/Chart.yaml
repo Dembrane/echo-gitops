@@ -1,0 +1,5 @@
+apiVersion: v2
+name: monitoring
+description: "Helm chart for deploying monitoring stack (Prometheus, Grafana, Loki, AlertManager)"
+version: 0.1.0
+appVersion: "0.1.0" 

@@ -4,8 +4,8 @@ variable "do_region" {
 }
 
 variable "do_token" {
+  description = "DigitalOcean API token for CSI driver"
   type        = string
-  description = "DigitalOcean API Token"
   sensitive   = true
 }
 

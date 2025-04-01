@@ -35,7 +35,7 @@ resource "digitalocean_kubernetes_cluster" "doks" {
     auto_scale = true
     min_nodes  = local.env == "prod" ? 2 : 1
     max_nodes  = local.env == "prod" ? 6 : 2 # max 2 nodes for dev, 4 for prod
-    tags       = ["dbr-echo", local.env, "k8s"]
+    tags       = ["dbr-echo", local.env]
   }
 }
 
@@ -61,6 +61,7 @@ resource "digitalocean_database_cluster" "redis" {
   engine               = "redis"
   version              = "7" # Redis version
   size                 = local.env == "prod" ? "db-s-2vcpu-4gb" : "db-s-1vcpu-1gb"
+  eviction_policy      = local.env == "prod" ? "volatile_lru" : "volatile_lru"
   region               = var.do_region
   node_count           = 1
   tags                 = ["dbr-echo", local.env, "redis"]
@@ -281,3 +282,48 @@ resource "helm_release" "metrics_server" {
 
   depends_on = [time_sleep.wait_for_kubernetes]
 }
+
+# Create secret for DigitalOcean CSI driver
+resource "kubernetes_secret" "do_csi_secret" {
+  metadata {
+    name      = "digitalocean"
+    namespace = "kube-system"
+  }
+
+  data = {
+    "access-token" = base64encode(var.do_token)
+  }
+
+  depends_on = [time_sleep.wait_for_kubernetes]
+}
+
+data "http" "do_csi_manifests" {
+  for_each = {
+    "crds"                = "https://raw.githubusercontent.com/digitalocean/csi-digitalocean/master/deploy/kubernetes/releases/csi-digitalocean-v4.13.0/crds.yaml"
+    "driver"              = "https://raw.githubusercontent.com/digitalocean/csi-digitalocean/master/deploy/kubernetes/releases/csi-digitalocean-v4.13.0/driver.yaml"
+    "snapshot-controller" = "https://raw.githubusercontent.com/digitalocean/csi-digitalocean/master/deploy/kubernetes/releases/csi-digitalocean-v4.13.0/snapshot-controller.yaml"
+  }
+
+  url = each.value
+}
+
+resource "kubectl_manifest" "do_csi_driver" {
+  depends_on = [kubernetes_secret.do_csi_secret]
+
+  for_each = {
+    "crds"                = "https://raw.githubusercontent.com/digitalocean/csi-digitalocean/master/deploy/kubernetes/releases/csi-digitalocean-v4.13.0/crds.yaml"
+    "driver"              = "https://raw.githubusercontent.com/digitalocean/csi-digitalocean/master/deploy/kubernetes/releases/csi-digitalocean-v4.13.0/driver.yaml"
+    "snapshot-controller" = "https://raw.githubusercontent.com/digitalocean/csi-digitalocean/master/deploy/kubernetes/releases/csi-digitalocean-v4.13.0/snapshot-controller.yaml"
+  }
+
+  yaml_body = data.http.do_csi_manifests[each.key].response_body
+}
+
+resource "kubernetes_namespace" "monitoring" {
+  metadata {
+    name = "monitoring"
+  }
+
+  depends_on = [time_sleep.wait_for_kubernetes]
+}
+

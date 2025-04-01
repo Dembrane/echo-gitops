@@ -1,0 +1,68 @@
+# Production configuration for the monitoring stack
+clusterIssuerName: "letsencrypt-prod"
+domain: "dembrane.com"  # Production domain
+
+# Basic auth for monitoring ingress - will be overridden by SealedSecret
+basicAuthValue: "admin:$apr1$z9Tl9AAN$WLoDGwQTFU7GULw05NVqk."
+
+# Storage settings
+storage:
+  storageClassName: "do-block-storage"
+  prometheus:
+    size: "50Gi"
+  loki:
+    size: "100Gi"
+  grafana:
+    size: "10Gi"
+
+# Prometheus settings
+prometheus:
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "2Gi"
+    limits:
+      cpu: "1000m"
+      memory: "4Gi"
+
+# Grafana settings
+grafana:
+  # This will be overridden by the SealedSecret in production
+  adminPassword: "admin"
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+# Loki settings
+loki:
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "2Gi"
+    limits:
+      cpu: "1000m"
+      memory: "4Gi"
+
+# Promtail settings
+promtail:
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "400m"
+      memory: "512Mi"
+
+# Ingress settings
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  basicAuth:
+    enabled: true 

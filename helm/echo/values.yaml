@@ -90,11 +90,25 @@ worker:
     repository: "dbr-echo-server"
   resources:
     requests:
-      cpu: "300m"
-      memory: "800Mi"
+      cpu: "500m"     # Moderate CPU for network operations
+      memory: "800Mi" # Sufficient memory for network buffers
     limits:
-      cpu: "500m"
-      memory: "1.5Gi"
+      cpu: "1000m"    # 1 CPU core max
+      memory: "1.5Gi" # 1.5GB max for network operations
+
+workerCpu:
+  # CPU-bound worker with higher CPU allocation
+  replicaCount: 1
+  maxReplicaCount: 2
+  image:
+    repository: "dbr-echo-server"
+  resources:
+    requests:
+      cpu: "1000m"  # 1 CPU core
+      memory: "1Gi"
+    limits:
+      cpu: "2000m"  # 2 CPU cores
+      memory: "2Gi"
 
 ingress:
   enabled: true
@@ -103,6 +117,7 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
   clusterIssuerName: "letsencrypt-prod"
+  domain: "echo-next.dembrane.com"
   hosts:
     directus: "directus.echo-next.dembrane.com"
     api: "api.echo-next.dembrane.com"
@@ -111,3 +126,10 @@ ingress:
       hosts:
         - "directus.echo-next.dembrane.com"
         - "api.echo-next.dembrane.com"
+
+monitoring:
+  grafana:
+    adminPassword: "admin"  # Change this in production
+  alertmanager:
+    slackWebhook: "https://hooks.slack.com/services/REPLACE_WITH_YOUR_SLACK_WEBHOOK"
+    slackChannel: "#alerts"

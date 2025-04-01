@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+  labels:
+    app: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      serviceAccountName: prometheus
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.45.0
+          args:
+            - '--config.file=/etc/prometheus/prometheus.yml'
+            - '--storage.tsdb.path=/prometheus'
+            - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+            - '--web.console.templates=/usr/share/prometheus/consoles'
+          ports:
+            - containerPort: 9090
+          volumeMounts:
+            - name: prometheus-config
+              mountPath: /etc/prometheus/prometheus.yml
+              subPath: prometheus.yml
+            - name: prometheus-rules-node
+              mountPath: /etc/prometheus/rules/node-alerts.yml
+              subPath: node-alerts.yml
+            - name: prometheus-rules-app
+              mountPath: /etc/prometheus/rules/app-alerts.yml
+              subPath: app-alerts.yml
+            - name: prometheus-storage
+              mountPath: /prometheus
+          resources:
+            requests:
+              cpu: {{ .Values.prometheus.resources.requests.cpu | quote }}
+              memory: {{ .Values.prometheus.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.prometheus.resources.limits.cpu | quote }}
+              memory: {{ .Values.prometheus.resources.limits.memory | quote }}
+      volumes:
+        - name: prometheus-config
+          configMap:
+            name: prometheus-config
+            items:
+              - key: prometheus.yml
+                path: prometheus.yml
+        - name: prometheus-rules-node
+          configMap:
+            name: prometheus-config
+            items:
+              - key: rules/node-alerts.yml
+                path: node-alerts.yml
+        - name: prometheus-rules-app
+          configMap:
+            name: prometheus-config
+            items:
+              - key: rules/app-alerts.yml
+                path: app-alerts.yml
+        - name: prometheus-storage
+          persistentVolumeClaim:
+            claimName: prometheus-data 

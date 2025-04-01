@@ -1,0 +1,47 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: monitoring-ingress
+  namespace: monitoring
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingress.className }}
+    cert-manager.io/cluster-issuer: {{ .Values.clusterIssuerName }}
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    {{- if .Values.ingress.basicAuth.enabled }}
+    # Basic auth protection
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: monitoring-basic-auth
+    nginx.ingress.kubernetes.io/auth-realm: "Authentication Required"
+    {{- end }}
+    {{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  tls:
+    - hosts:
+        - grafana-{{ .Release.Namespace }}.{{ .Values.domain }}
+        - prometheus-{{ .Release.Namespace }}.{{ .Values.domain }}
+      secretName: monitoring-tls
+  rules:
+    - host: grafana-{{ .Release.Namespace }}.{{ .Values.domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 3000
+    - host: prometheus-{{ .Release.Namespace }}.{{ .Values.domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: prometheus
+                port:
+                  number: 9090
+{{- end }}

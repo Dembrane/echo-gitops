@@ -85,12 +85,25 @@ worker:
   # the deployment uses the same tags as the api server
   # only the command is different
   replicaCount: 3
-  maxReplicaCount: 12
+  maxReplicaCount: 8
   image:
     repository: "dbr-echo-server"
   resources:
     requests:
-      cpu: "800m"
+      cpu: "500m"
+      memory: "800Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1.5Gi"
+
+workerCpu:
+  replicaCount: 2
+  maxReplicaCount: 6
+  image:
+    repository: "dbr-echo-server"
+  resources:
+    requests:
+      cpu: "1000m"
       memory: "1Gi"
     limits:
       cpu: "2000m"
@@ -103,6 +116,7 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
   clusterIssuerName: "letsencrypt-prod"
+  domain: "dembrane.com"
   hosts:
     directus: "directus.dembrane.com"
     api: "api.dembrane.com"
@@ -111,3 +125,10 @@ ingress:
       hosts:
         - "directus.dembrane.com"
         - "api.dembrane.com"
+
+monitoring:
+  grafana:
+    adminPassword: "admin"  # Change this in production
+  alertmanager:
+    slackWebhook: "https://hooks.slack.com/services/REPLACE_WITH_YOUR_SLACK_WEBHOOK"
+    slackChannel: "#alerts"

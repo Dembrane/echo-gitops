@@ -1,12 +1,12 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: echo-worker
+  name: echo-worker-cpu
   labels:
     app: echo
-    component: worker
+    component: worker-cpu
 spec:
-  replicas: {{ .Values.worker.replicaCount }}
+  replicas: {{ .Values.workerCpu.replicaCount }}
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -15,23 +15,23 @@ spec:
   selector:
     matchLabels:
       app: echo
-      component: worker
+      component: worker-cpu
   template:
     metadata:
       labels:
         app: echo
-        component: worker
+        component: worker-cpu
     spec:
       imagePullSecrets:
         - name: do-registry-secret
       containers:
-        - name: worker
-          image: {{ printf "%s/%s:%s" .Values.global.registry .Values.worker.image.repository .Values.global.imageTag | quote }}
+        - name: worker-cpu
+          image: {{ printf "%s/%s:%s" .Values.global.registry .Values.workerCpu.image.repository .Values.global.imageTag | quote }}
           imagePullPolicy: Always
           terminationGracePeriodSeconds: 90
           command:
             - '/bin/sh'
-            - '/code/server/prod-worker.sh'
+            - '/code/server/prod-worker-cpu.sh'
           ports:
             - containerPort: {{ .Values.apiServer.service.port }}
           env:
@@ -121,11 +121,12 @@ spec:
 
           resources:
             requests:
-              cpu: {{ .Values.worker.resources.requests.cpu | quote }}
-              memory: {{ .Values.worker.resources.requests.memory | quote }}
+              cpu: {{ .Values.workerCpu.resources.requests.cpu | quote }}
+              memory: {{ .Values.workerCpu.resources.requests.memory | quote }}
             limits:
-              cpu: {{ .Values.worker.resources.limits.cpu | quote }}
-              memory: {{ .Values.worker.resources.limits.memory | quote }}
+              cpu: {{ .Values.workerCpu.resources.limits.cpu | quote }}
+              memory: {{ .Values.workerCpu.resources.limits.memory | quote }} 
+
           readinessProbe:
             exec:
               command:
@@ -137,6 +138,7 @@ spec:
             timeoutSeconds: 5
             successThreshold: 1
             failureThreshold: 3
+            
           livenessProbe:
             exec:
               command:

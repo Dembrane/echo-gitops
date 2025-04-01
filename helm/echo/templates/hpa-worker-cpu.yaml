@@ -1,24 +1,24 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: echo-worker-hpa
+  name: echo-worker-cpu-hpa
   labels:
     app: echo
-    component: worker-hpa
+    component: worker-cpu-hpa
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: echo-worker
-  minReplicas: {{ .Values.worker.replicaCount }}
-  maxReplicas: {{ .Values.worker.maxReplicaCount }}
+    name: echo-worker-cpu
+  minReplicas: {{ .Values.workerCpu.replicaCount }}
+  maxReplicas: {{ .Values.workerCpu.maxReplicaCount }}
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 70
+          averageUtilization: 75
     - type: Resource
       resource:
         name: memory
