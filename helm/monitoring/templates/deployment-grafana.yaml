@@ -24,6 +24,18 @@ spec:
           image: grafana/grafana:10.0.3
           ports:
             - containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 60
+            timeoutSeconds: 5
           env:
             - name: GF_SECURITY_ADMIN_PASSWORD
               valueFrom:
@@ -34,6 +46,14 @@ spec:
               value: "false"
             - name: GF_AUTH_ANONYMOUS_ENABLED
               value: "false"
+            - name: GF_SECURITY_COOKIE_SECURE
+              value: "true"
+            - name: GF_SECURITY_COOKIE_SAMESITE
+              value: "lax"
+            - name: GF_SECURITY_DISABLE_GRAVATAR
+              value: "true"
+            - name: GF_DASHBOARDS_MIN_REFRESH_INTERVAL
+              value: "10s"
           volumeMounts:
             - name: grafana-storage
               mountPath: /var/lib/grafana
@@ -68,4 +88,14 @@ spec:
             name: grafana-dashboards-config
             items:
               - key: kubernetes-dashboard.json
-                path: kubernetes-dashboard.json 
+                path: kubernetes-dashboard.json
+              - key: k8s-cluster-monitoring.json
+                path: k8s-cluster-monitoring.json
+              - key: node-exporter-dashboard.json
+                path: node-exporter-dashboard.json
+              - key: nginx-ingress-dashboard.json
+                path: nginx-ingress-dashboard.json
+              - key: loki-logs-dashboard.json
+                path: loki-logs-dashboard.json
+              - key: echo-application-dashboard.json
+                path: echo-application-dashboard.json 

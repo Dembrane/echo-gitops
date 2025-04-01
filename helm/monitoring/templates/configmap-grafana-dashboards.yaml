@@ -131,4 +131,606 @@ data:
       "uid": "kubernetes-overview",
       "version": 1,
       "weekStart": ""
+    }
+  k8s-cluster-monitoring.json: |
+    {
+      "annotations": {
+        "list": []
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "id": 315,
+      "links": [],
+      "liveNow": false,
+      "panels": [
+        {
+          "title": "Cluster Filesystem Usage",
+          "type": "graph",
+          "datasource": "Prometheus",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 0
+          },
+          "targets": [
+            {
+              "expr": "sum (container_fs_usage_bytes{name=~\".+\"}) / sum (container_fs_limit_bytes{name=~\".+\"}) * 100",
+              "legendFormat": "Filesystem Usage"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent"
+            }
+          }
+        }
+      ],
+      "schemaVersion": 38,
+      "style": "dark",
+      "tags": ["kubernetes", "monitoring"],
+      "title": "Kubernetes Cluster Monitoring",
+      "uid": "k8s-cluster-monitoring",
+      "version": 1
+    }
+  node-exporter-dashboard.json: |
+    {
+      "annotations": {
+        "list": []
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "id": 1860,
+      "title": "Node Exporter Full",
+      "uid": "node-exporter-full",
+      "version": 1,
+      "panels": [
+        {
+          "title": "CPU Usage",
+          "type": "timeseries",
+          "datasource": "Prometheus",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 0
+          },
+          "targets": [
+            {
+              "expr": "100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+              "legendFormat": "CPU Usage"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent"
+            }
+          }
+        },
+        {
+          "title": "Memory Usage",
+          "type": "timeseries",
+          "datasource": "Prometheus",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 8
+          },
+          "targets": [
+            {
+              "expr": "(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100",
+              "legendFormat": "Memory Usage"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent"
+            }
+          }
+        },
+        {
+          "title": "Disk Usage",
+          "type": "timeseries",
+          "datasource": "Prometheus",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 16
+          },
+          "targets": [
+            {
+              "expr": "100 - ((node_filesystem_avail_bytes{mountpoint=\"/\"} * 100) / node_filesystem_size_bytes{mountpoint=\"/\"})",
+              "legendFormat": "Disk Usage"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent"
+            }
+          }
+        }
+      ],
+      "schemaVersion": 38,
+      "style": "dark",
+      "tags": ["node-exporter"]
+    }
+  nginx-ingress-dashboard.json: |
+    {
+      "annotations": {
+        "list": []
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "id": 9614,
+      "title": "Nginx Ingress Controller",
+      "uid": "nginx-ingress",
+      "version": 1,
+      "panels": [
+        {
+          "title": "Request Rate",
+          "type": "timeseries",
+          "datasource": "Prometheus",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 0
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(nginx_ingress_controller_requests{namespace=~\".*\"}[5m])) by (namespace, ingress)",
+              "legendFormat": "{{namespace}} - {{ingress}}"
+            }
+          ]
+        },
+        {
+          "title": "Response Times",
+          "type": "timeseries",
+          "datasource": "Prometheus",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 8
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(nginx_ingress_controller_request_duration_seconds_sum{namespace=~\".*\"}[5m])) by (namespace, ingress) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{namespace=~\".*\"}[5m])) by (namespace, ingress)",
+              "legendFormat": "{{namespace}} - {{ingress}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "seconds"
+            }
+          }
+        }
+      ],
+      "schemaVersion": 38,
+      "style": "dark",
+      "tags": ["nginx"]
+    }
+  loki-logs-dashboard.json: |
+    {
+      "annotations": {
+        "list": []
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "id": 12019,
+      "title": "Loki Logs",
+      "uid": "loki-logs",
+      "version": 1,
+      "panels": [
+        {
+          "title": "Log Volume",
+          "type": "timeseries",
+          "datasource": "Prometheus",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 0
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(loki_distributor_bytes_received_total[5m])) by (tenant)",
+              "legendFormat": "Log Volume"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes"
+            }
+          }
+        },
+        {
+          "title": "Logs by Namespace",
+          "type": "logs",
+          "datasource": "Loki",
+          "gridPos": {
+            "h": 12,
+            "w": 24,
+            "x": 0,
+            "y": 8
+          },
+          "targets": [
+            {
+              "expr": "{namespace=~\".+\"}"
+            }
+          ]
+        }
+      ],
+      "schemaVersion": 38,
+      "style": "dark",
+      "tags": ["loki", "logs"]
+    }
+  echo-application-dashboard.json: |
+    {
+      "annotations": {
+        "list": []
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "id": 20000,
+      "title": "Echo Application Dashboard",
+      "uid": "echo-app",
+      "version": 1,
+      "panels": [
+        {
+          "title": "API Server CPU Usage",
+          "type": "timeseries",
+          "datasource": "Prometheus",
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 0,
+            "y": 0
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"echo-.*\", pod=~\"echo-api.*\"}[5m])) by (pod)",
+              "legendFormat": "{{pod}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "custom": {
+                "fillOpacity": 10,
+                "lineWidth": 1
+              }
+            }
+          }
+        },
+        {
+          "title": "Directus CPU Usage",
+          "type": "timeseries",
+          "datasource": "Prometheus",
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 8,
+            "y": 0
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"echo-.*\", pod=~\"echo-directus.*\"}[5m])) by (pod)",
+              "legendFormat": "{{pod}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "custom": {
+                "fillOpacity": 10,
+                "lineWidth": 1
+              }
+            }
+          }
+        },
+        {
+          "title": "Worker CPU Usage",
+          "type": "timeseries",
+          "datasource": "Prometheus",
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 0
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"echo-.*\", pod=~\"echo-worker.*\"}[5m])) by (pod)",
+              "legendFormat": "{{pod}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "custom": {
+                "fillOpacity": 10,
+                "lineWidth": 1
+              }
+            }
+          }
+        },
+        {
+          "title": "API Server Memory Usage",
+          "type": "timeseries",
+          "datasource": "Prometheus",
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 0,
+            "y": 8
+          },
+          "targets": [
+            {
+              "expr": "sum(container_memory_usage_bytes{namespace=~\"echo-.*\", pod=~\"echo-api.*\"}) by (pod)",
+              "legendFormat": "{{pod}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "custom": {
+                "fillOpacity": 10,
+                "lineWidth": 1
+              }
+            }
+          }
+        },
+        {
+          "title": "Directus Memory Usage",
+          "type": "timeseries",
+          "datasource": "Prometheus",
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 8,
+            "y": 8
+          },
+          "targets": [
+            {
+              "expr": "sum(container_memory_usage_bytes{namespace=~\"echo-.*\", pod=~\"echo-directus.*\"}) by (pod)",
+              "legendFormat": "{{pod}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "custom": {
+                "fillOpacity": 10,
+                "lineWidth": 1
+              }
+            }
+          }
+        },
+        {
+          "title": "Worker Memory Usage",
+          "type": "timeseries",
+          "datasource": "Prometheus",
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 8
+          },
+          "targets": [
+            {
+              "expr": "sum(container_memory_usage_bytes{namespace=~\"echo-.*\", pod=~\"echo-worker.*\"}) by (pod)",
+              "legendFormat": "{{pod}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "custom": {
+                "fillOpacity": 10,
+                "lineWidth": 1
+              }
+            }
+          }
+        },
+        {
+          "title": "API HTTP Request Rate",
+          "type": "timeseries",
+          "datasource": "Prometheus",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 16
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(nginx_ingress_controller_requests{ingress=\"echo-ingress\", host=~\"api.*\"}[5m])) by (status)",
+              "legendFormat": "API - {{status}}"
+            }
+          ]
+        },
+        {
+          "title": "Directus HTTP Request Rate",
+          "type": "timeseries",
+          "datasource": "Prometheus",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 16
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(nginx_ingress_controller_requests{ingress=\"echo-ingress\", host=~\"directus.*\"}[5m])) by (status)",
+              "legendFormat": "Directus - {{status}}"
+            }
+          ]
+        },
+        {
+          "title": "Worker Activity (Tasks Processing)",
+          "type": "timeseries",
+          "datasource": "Prometheus",
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 24
+          },
+          "targets": [
+            {
+              "expr": "rate(process_cpu_seconds_total{namespace=~\"echo-.*\", pod=~\"echo-worker.*\"}[5m])",
+              "legendFormat": "{{pod}} - CPU Activity"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "custom": {
+                "fillOpacity": 10,
+                "lineWidth": 1
+              }
+            }
+          }
+        },
+        {
+          "title": "API Response Time",
+          "type": "timeseries",
+          "datasource": "Prometheus",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 32
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(nginx_ingress_controller_request_duration_seconds_sum{ingress=\"echo-ingress\", host=~\"api.*\"}[5m])) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{ingress=\"echo-ingress\", host=~\"api.*\"}[5m]))",
+              "legendFormat": "API Response Time"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            }
+          }
+        },
+        {
+          "title": "Directus Response Time",
+          "type": "timeseries",
+          "datasource": "Prometheus",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 32
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(nginx_ingress_controller_request_duration_seconds_sum{ingress=\"echo-ingress\", host=~\"directus.*\"}[5m])) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{ingress=\"echo-ingress\", host=~\"directus.*\"}[5m]))",
+              "legendFormat": "Directus Response Time"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            }
+          }
+        },
+        {
+          "title": "Echo Application Error Logs",
+          "type": "logs",
+          "datasource": "Loki",
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 40
+          },
+          "targets": [
+            {
+              "expr": "{namespace=~\"echo-.*\"} |~ \"error|ERROR|Error|Exception|exception|EXCEPTION\""
+            }
+          ],
+          "options": {
+            "showLabels": false,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "wrapLogMessage": true
+          }
+        },
+        {
+          "title": "Worker-Specific Logs",
+          "type": "logs",
+          "datasource": "Loki",
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 48
+          },
+          "targets": [
+            {
+              "expr": "{namespace=~\"echo-.*\", pod=~\"echo-worker.*\"}"
+            }
+          ],
+          "options": {
+            "showLabels": false,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "wrapLogMessage": true
+          }
+        }
+      ],
+      "schemaVersion": 38,
+      "style": "dark",
+      "tags": ["echo", "application"],
+      "templating": {
+        "list": [
+          {
+            "current": {
+              "selected": true,
+              "text": "All",
+              "value": "$__all"
+            },
+            "hide": 0,
+            "includeAll": true,
+            "label": "Environment",
+            "multi": false,
+            "name": "environment",
+            "options": [
+              {
+                "selected": true,
+                "text": "All",
+                "value": "$__all"
+              },
+              {
+                "selected": false,
+                "text": "Development",
+                "value": "echo-dev"
+              },
+              {
+                "selected": false,
+                "text": "Production",
+                "value": "echo-prod"
+              }
+            ],
+            "query": "echo-dev,echo-prod",
+            "skipUrlSync": false,
+            "type": "custom"
+          }
+        ]
+      },
+      "refresh": "10s",
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      }
     } 

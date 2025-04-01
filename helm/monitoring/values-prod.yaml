@@ -29,7 +29,7 @@ grafana:
   resources:
     requests:
       cpu: "200m"
-      memory: "512Mi"
+      memory: "750Mi"
     limits:
       cpu: "500m"
       memory: "1Gi"
