@@ -20,11 +20,11 @@ metadata:
 spec:
   tls:
     - hosts:
-        - grafana-{{ .Release.Namespace }}.{{ .Values.domain }}
-        - prometheus-{{ .Release.Namespace }}.{{ .Values.domain }}
+        - grafana.{{ .Values.domain }}
+        - prometheus.{{ .Values.domain }}
       secretName: monitoring-tls
   rules:
-    - host: grafana-{{ .Release.Namespace }}.{{ .Values.domain }}
+    - host: grafana.{{ .Values.domain }}
       http:
         paths:
           - path: /
@@ -34,7 +34,7 @@ spec:
                 name: grafana
                 port:
                   number: 3000
-    - host: prometheus-{{ .Release.Namespace }}.{{ .Values.domain }}
+    - host: prometheus.{{ .Values.domain }}
       http:
         paths:
           - path: /

@@ -23,6 +23,7 @@ spec:
           volumeMounts:
             - name: loki-config
               mountPath: /etc/loki
+              subPath: loki.yaml
             - name: loki-storage
               mountPath: /data
           resources:

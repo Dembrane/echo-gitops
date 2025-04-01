@@ -56,13 +56,13 @@ spec:
           configMap:
             name: prometheus-config
             items:
-              - key: rules/node-alerts.yml
+              - key: node-alerts.yml
                 path: node-alerts.yml
         - name: prometheus-rules-app
           configMap:
             name: prometheus-config
             items:
-              - key: rules/app-alerts.yml
+              - key: app-alerts.yml
                 path: app-alerts.yml
         - name: prometheus-storage
           persistentVolumeClaim:
