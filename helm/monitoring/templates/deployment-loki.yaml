@@ -22,7 +22,7 @@ spec:
             - containerPort: 3100
           volumeMounts:
             - name: loki-config
-              mountPath: /etc/loki
+              mountPath: /etc/loki/local-config.yaml
               subPath: loki.yaml
             - name: loki-storage
               mountPath: /data
