@@ -83,6 +83,11 @@ data:
             regex: (.+)
             replacement: $1
             
+      # Scrape node-exporter metrics
+      - job_name: 'node-exporter'
+        static_configs:
+          - targets: ['node-exporter:9100']
+
   rules/node-alerts.yml: |
     groups:
     - name: node

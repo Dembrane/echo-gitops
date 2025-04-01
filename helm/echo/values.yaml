@@ -126,10 +126,3 @@ ingress:
       hosts:
         - "directus.echo-next.dembrane.com"
         - "api.echo-next.dembrane.com"
-
-monitoring:
-  grafana:
-    adminPassword: "admin"  # Change this in production
-  alertmanager:
-    slackWebhook: "https://hooks.slack.com/services/REPLACE_WITH_YOUR_SLACK_WEBHOOK"
-    slackChannel: "#alerts"
