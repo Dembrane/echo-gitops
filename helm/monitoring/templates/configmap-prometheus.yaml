@@ -98,8 +98,8 @@ data:
         labels:
           severity: warning
         annotations:
-          summary: "High CPU usage on {{ $labels.instance }}"
-          description: "CPU usage is above 80% on {{ $labels.instance }} for more than 5 minutes"
+          summary: "High CPU usage on {{ "{{" }} $labels.instance {{ "}}" }}"
+          description: "CPU usage is above 80% on {{ "{{" }} $labels.instance {{ "}}" }} for more than 5 minutes"
 
       - alert: HighNodeMemory
         expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
@@ -107,8 +107,8 @@ data:
         labels:
           severity: warning
         annotations:
-          summary: "High memory usage on {{ $labels.instance }}"
-          description: "Memory usage is above 85% on {{ $labels.instance }} for more than 5 minutes"
+          summary: "High memory usage on {{ "{{" }} $labels.instance {{ "}}" }}"
+          description: "Memory usage is above 85% on {{ "{{" }} $labels.instance {{ "}}" }} for more than 5 minutes"
 
       - alert: NodeDiskFillingSoon
         expr: predict_linear(node_filesystem_free_bytes{mountpoint="/"}[6h], 24 * 3600) < 0
@@ -116,8 +116,8 @@ data:
         labels:
           severity: warning
         annotations:
-          summary: "Disk filling up on {{ $labels.instance }}"
-          description: "Disk is predicted to fill up within 24 hours on {{ $labels.instance }}"
+          summary: "Disk filling up on {{ "{{" }} $labels.instance {{ "}}" }}"
+          description: "Disk is predicted to fill up within 24 hours on {{ "{{" }} $labels.instance {{ "}}" }}"
 
   rules/app-alerts.yml: |
     groups:
@@ -129,8 +129,8 @@ data:
         labels:
           severity: warning
         annotations:
-          summary: "High request latency on {{ $labels.service }}"
-          description: "{{ $labels.service }} has a latency of {{ $value }}s"
+          summary: "High request latency on {{ "{{" }} $labels.service {{ "}}" }}"
+          description: "{{ "{{" }} $labels.service {{ "}}" }} has a latency of {{ "{{" }} $value {{ "}}" }}s"
 
       - alert: HighErrorRate
         expr: sum(rate(http_request_total{status_code=~"5.."}[5m])) by (service) / sum(rate(http_request_total[5m])) by (service) > 0.05
@@ -138,5 +138,5 @@ data:
         labels:
           severity: warning
         annotations:
-          summary: "High error rate on {{ $labels.service }}"
-          description: "Error rate is above 5% on {{ $labels.service }} ({{ $value }})" 
+          summary: "High error rate on {{ "{{" }} $labels.service {{ "}}" }}"
+          description: "Error rate is above 5% on {{ "{{" }} $labels.service {{ "}}" }} ({{ "{{" }} $value {{ "}}" }})" 
