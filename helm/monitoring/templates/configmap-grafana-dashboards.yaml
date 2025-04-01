@@ -284,7 +284,7 @@ data:
           "targets": [
             {
               "expr": "sum(rate(nginx_ingress_controller_requests{namespace=~\".*\"}[5m])) by (namespace, ingress)",
-              "legendFormat": "{{namespace}} - {{ingress}}"
+              "legendFormat": "{{ "{{" }}namespace{{ "}}" }} - {{ "{{" }}ingress{{ "}}" }}"
             }
           ]
         },
@@ -301,7 +301,7 @@ data:
           "targets": [
             {
               "expr": "sum(rate(nginx_ingress_controller_request_duration_seconds_sum{namespace=~\".*\"}[5m])) by (namespace, ingress) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{namespace=~\".*\"}[5m])) by (namespace, ingress)",
-              "legendFormat": "{{namespace}} - {{ingress}}"
+              "legendFormat": "{{ "{{" }}namespace{{ "}}" }} - {{ "{{" }}ingress{{ "}}" }}"
             }
           ],
           "fieldConfig": {
@@ -397,7 +397,7 @@ data:
           "targets": [
             {
               "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"echo-.*\", pod=~\"echo-api.*\"}[5m])) by (pod)",
-              "legendFormat": "{{pod}}"
+              "legendFormat": "{{ "{{" }}pod{{ "}}" }}"
             }
           ],
           "fieldConfig": {
@@ -423,7 +423,7 @@ data:
           "targets": [
             {
               "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"echo-.*\", pod=~\"echo-directus.*\"}[5m])) by (pod)",
-              "legendFormat": "{{pod}}"
+              "legendFormat": "{{ "{{" }}pod{{ "}}" }}"
             }
           ],
           "fieldConfig": {
@@ -449,7 +449,7 @@ data:
           "targets": [
             {
               "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"echo-.*\", pod=~\"echo-worker.*\"}[5m])) by (pod)",
-              "legendFormat": "{{pod}}"
+              "legendFormat": "{{ "{{" }}pod{{ "}}" }}"
             }
           ],
           "fieldConfig": {
@@ -475,7 +475,7 @@ data:
           "targets": [
             {
               "expr": "sum(container_memory_usage_bytes{namespace=~\"echo-.*\", pod=~\"echo-api.*\"}) by (pod)",
-              "legendFormat": "{{pod}}"
+              "legendFormat": "{{ "{{" }}pod{{ "}}" }}"
             }
           ],
           "fieldConfig": {
@@ -501,7 +501,7 @@ data:
           "targets": [
             {
               "expr": "sum(container_memory_usage_bytes{namespace=~\"echo-.*\", pod=~\"echo-directus.*\"}) by (pod)",
-              "legendFormat": "{{pod}}"
+              "legendFormat": "{{ "{{" }}pod{{ "}}" }}"
             }
           ],
           "fieldConfig": {
@@ -527,7 +527,7 @@ data:
           "targets": [
             {
               "expr": "sum(container_memory_usage_bytes{namespace=~\"echo-.*\", pod=~\"echo-worker.*\"}) by (pod)",
-              "legendFormat": "{{pod}}"
+              "legendFormat": "{{ "{{" }}pod{{ "}}" }}"
             }
           ],
           "fieldConfig": {
@@ -553,7 +553,7 @@ data:
           "targets": [
             {
               "expr": "sum(rate(nginx_ingress_controller_requests{ingress=\"echo-ingress\", host=~\"api.*\"}[5m])) by (status)",
-              "legendFormat": "API - {{status}}"
+              "legendFormat": "API - {{ "{{" }}status{{ "}}" }}"
             }
           ]
         },
@@ -570,7 +570,7 @@ data:
           "targets": [
             {
               "expr": "sum(rate(nginx_ingress_controller_requests{ingress=\"echo-ingress\", host=~\"directus.*\"}[5m])) by (status)",
-              "legendFormat": "Directus - {{status}}"
+              "legendFormat": "Directus - {{ "{{" }}status{{ "}}" }}"
             }
           ]
         },
@@ -587,7 +587,7 @@ data:
           "targets": [
             {
               "expr": "rate(process_cpu_seconds_total{namespace=~\"echo-.*\", pod=~\"echo-worker.*\"}[5m])",
-              "legendFormat": "{{pod}} - CPU Activity"
+              "legendFormat": "{{ "{{" }}pod{{ "}}" }} - CPU Activity"
             }
           ],
           "fieldConfig": {
