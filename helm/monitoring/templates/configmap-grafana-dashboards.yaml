@@ -30,7 +30,7 @@ data:
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "prometheus"
           },
           "fieldConfig": {
             "defaults": {
@@ -106,7 +106,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
+                "uid": "prometheus"
               },
               "expr": "sum(rate(container_cpu_usage_seconds_total{container!=\"\", pod=~\".*\"}[5m])) by (pod)",
               "refId": "A"
@@ -147,7 +147,10 @@ data:
         {
           "title": "Cluster Filesystem Usage",
           "type": "graph",
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "gridPos": {
             "h": 8,
             "w": 12,
@@ -190,7 +193,10 @@ data:
         {
           "title": "CPU Usage",
           "type": "timeseries",
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "gridPos": {
             "h": 8,
             "w": 12,
@@ -212,7 +218,10 @@ data:
         {
           "title": "Memory Usage",
           "type": "timeseries",
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "gridPos": {
             "h": 8,
             "w": 12,
@@ -234,7 +243,10 @@ data:
         {
           "title": "Disk Usage",
           "type": "timeseries",
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "gridPos": {
             "h": 8,
             "w": 12,
@@ -274,7 +286,10 @@ data:
         {
           "title": "Request Rate",
           "type": "timeseries",
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "gridPos": {
             "h": 8,
             "w": 12,
@@ -291,7 +306,10 @@ data:
         {
           "title": "Response Times",
           "type": "timeseries",
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "gridPos": {
             "h": 8,
             "w": 12,
@@ -331,7 +349,10 @@ data:
         {
           "title": "Log Volume",
           "type": "timeseries",
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "gridPos": {
             "h": 8,
             "w": 12,
@@ -353,7 +374,10 @@ data:
         {
           "title": "Logs by Namespace",
           "type": "logs",
-          "datasource": "Loki",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
           "gridPos": {
             "h": 12,
             "w": 24,
@@ -387,7 +411,10 @@ data:
         {
           "title": "API Server CPU Usage",
           "type": "timeseries",
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "gridPos": {
             "h": 8,
             "w": 8,
@@ -413,7 +440,10 @@ data:
         {
           "title": "Directus CPU Usage",
           "type": "timeseries",
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "gridPos": {
             "h": 8,
             "w": 8,
@@ -439,7 +469,10 @@ data:
         {
           "title": "Worker CPU Usage",
           "type": "timeseries",
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "gridPos": {
             "h": 8,
             "w": 8,
@@ -465,7 +498,10 @@ data:
         {
           "title": "API Server Memory Usage",
           "type": "timeseries",
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "gridPos": {
             "h": 8,
             "w": 8,
@@ -491,7 +527,10 @@ data:
         {
           "title": "Directus Memory Usage",
           "type": "timeseries",
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "gridPos": {
             "h": 8,
             "w": 8,
@@ -517,7 +556,10 @@ data:
         {
           "title": "Worker Memory Usage",
           "type": "timeseries",
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "gridPos": {
             "h": 8,
             "w": 8,
@@ -543,7 +585,10 @@ data:
         {
           "title": "API HTTP Request Rate",
           "type": "timeseries",
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "gridPos": {
             "h": 8,
             "w": 12,
@@ -560,7 +605,10 @@ data:
         {
           "title": "Directus HTTP Request Rate",
           "type": "timeseries",
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "gridPos": {
             "h": 8,
             "w": 12,
@@ -577,7 +625,10 @@ data:
         {
           "title": "Worker Activity (Tasks Processing)",
           "type": "timeseries",
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "gridPos": {
             "h": 8,
             "w": 24,
@@ -603,7 +654,10 @@ data:
         {
           "title": "API Response Time",
           "type": "timeseries",
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "gridPos": {
             "h": 8,
             "w": 12,
@@ -625,7 +679,10 @@ data:
         {
           "title": "Directus Response Time",
           "type": "timeseries",
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "gridPos": {
             "h": 8,
             "w": 12,
@@ -647,7 +704,10 @@ data:
         {
           "title": "Echo Application Error Logs",
           "type": "logs",
-          "datasource": "Loki",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
           "gridPos": {
             "h": 8,
             "w": 24,
@@ -669,7 +729,10 @@ data:
         {
           "title": "Worker-Specific Logs",
           "type": "logs",
-          "datasource": "Loki",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
           "gridPos": {
             "h": 8,
             "w": 24,
