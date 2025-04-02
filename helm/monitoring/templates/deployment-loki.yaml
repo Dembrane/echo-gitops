@@ -14,6 +14,9 @@ spec:
     metadata:
       labels:
         app: loki
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3100"
     spec:
       # This ensures the PVC is accessible by Loki
       securityContext:

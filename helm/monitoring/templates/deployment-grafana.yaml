@@ -14,6 +14,9 @@ spec:
     metadata:
       labels:
         app: grafana
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
     spec:
       securityContext:
         fsGroup: 472
@@ -24,6 +27,7 @@ spec:
           image: grafana/grafana:10.0.3
           ports:
             - containerPort: 3000
+              name: http
           readinessProbe:
             httpGet:
               path: /api/health
@@ -54,6 +58,8 @@ spec:
               value: "true"
             - name: GF_DASHBOARDS_MIN_REFRESH_INTERVAL
               value: "10s"
+            - name: GF_METRICS_ENABLED
+              value: "true"
           volumeMounts:
             - name: grafana-storage
               mountPath: /var/lib/grafana
