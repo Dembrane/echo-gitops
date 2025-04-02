@@ -85,8 +85,18 @@ data:
             
       # Scrape node-exporter metrics
       - job_name: 'node-exporter'
-        static_configs:
-          - targets: ['node-exporter:9100']
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+                - monitoring
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: node-exporter
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: metrics
 
   node-alerts.yml: |
     groups:
