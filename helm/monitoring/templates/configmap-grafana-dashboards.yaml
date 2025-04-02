@@ -1159,7 +1159,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(kube_pod_status_phase{namespace=~\"\$namespace\", phase=\"Running\", pod=~\"echo-\$component.*\"}) by \(component\)",
+              "expr": 'sum(kube_pod_status_phase{namespace=~"\$namespace", phase="Running", pod=~"echo-\$component.*"}) by (component)',
               "legendFormat": "{{component}}",
               "instant": true
             }
