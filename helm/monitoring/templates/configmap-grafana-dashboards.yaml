@@ -100,7 +100,7 @@ data:
               "sort": "none"
             }
           },
-          "title": "CPU Usage",
+          "title": "Cluster CPU Usage",
           "type": "timeseries",
           "targets": [
             {
@@ -108,7 +108,93 @@ data:
                 "type": "prometheus",
                 "uid": "prometheus"
               },
-              "expr": "sum(rate(container_cpu_usage_seconds_total{container!=\"\", pod=~\".*\"}[5m])) by (pod)",
+              "expr": "sum(rate(process_cpu_seconds_total[5m])) by (namespace)",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 0
+          },
+          "id": 2,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "title": "Ready Pods by Namespace",
+          "type": "timeseries",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "expr": "sum(kube_pod_status_phase{phase=\"Running\"}) by (namespace)",
               "refId": "A"
             }
           ]
@@ -145,7 +231,7 @@ data:
       "liveNow": false,
       "panels": [
         {
-          "title": "Cluster Filesystem Usage",
+          "title": "Cluster Pod Status",
           "type": "graph",
           "datasource": {
             "type": "prometheus",
@@ -159,13 +245,38 @@ data:
           },
           "targets": [
             {
-              "expr": "sum (container_fs_usage_bytes{name=~\".+\"}) / sum (container_fs_limit_bytes{name=~\".+\"}) * 100",
-              "legendFormat": "Filesystem Usage"
+              "expr": "sum(kube_pod_status_phase) by (phase)",
+              "legendFormat": "{{ "{{" }}phase{{ "}}" }} Pods"
             }
           ],
           "fieldConfig": {
             "defaults": {
-              "unit": "percent"
+              "unit": "none"
+            }
+          }
+        },
+        {
+          "title": "Memory Usage by Namespace",
+          "type": "graph",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 0
+          },
+          "targets": [
+            {
+              "expr": "sum(process_resident_memory_bytes) by (namespace)",
+              "legendFormat": "{{ "{{" }}namespace{{ "}}" }}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes"
             }
           }
         }
@@ -191,7 +302,7 @@ data:
       "version": 1,
       "panels": [
         {
-          "title": "CPU Usage",
+          "title": "Node CPU Usage",
           "type": "timeseries",
           "datasource": {
             "type": "prometheus",
@@ -205,8 +316,8 @@ data:
           },
           "targets": [
             {
-              "expr": "100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
-              "legendFormat": "CPU Usage"
+              "expr": "sum(rate(process_cpu_seconds_total[5m])) by (instance)",
+              "legendFormat": "CPU Usage - {{ "{{" }}instance{{ "}}" }}"
             }
           ],
           "fieldConfig": {
@@ -230,18 +341,18 @@ data:
           },
           "targets": [
             {
-              "expr": "(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100",
-              "legendFormat": "Memory Usage"
+              "expr": "process_resident_memory_bytes",
+              "legendFormat": "Memory - {{ "{{" }}instance{{ "}}" }}"
             }
           ],
           "fieldConfig": {
             "defaults": {
-              "unit": "percent"
+              "unit": "bytes"
             }
           }
         },
         {
-          "title": "Disk Usage",
+          "title": "Node Status",
           "type": "timeseries",
           "datasource": {
             "type": "prometheus",
@@ -255,13 +366,13 @@ data:
           },
           "targets": [
             {
-              "expr": "100 - ((node_filesystem_avail_bytes{mountpoint=\"/\"} * 100) / node_filesystem_size_bytes{mountpoint=\"/\"})",
-              "legendFormat": "Disk Usage"
+              "expr": "kube_node_status_condition{condition=\"Ready\", status=\"true\"}",
+              "legendFormat": "Node Ready - {{ "{{" }}node{{ "}}" }}"
             }
           ],
           "fieldConfig": {
             "defaults": {
-              "unit": "percent"
+              "unit": "none"
             }
           }
         }
@@ -284,7 +395,7 @@ data:
       "version": 1,
       "panels": [
         {
-          "title": "Request Rate",
+          "title": "Pod Status",
           "type": "timeseries",
           "datasource": {
             "type": "prometheus",
@@ -298,13 +409,13 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(nginx_ingress_controller_requests{namespace=~\".*\"}[5m])) by (namespace, ingress)",
-              "legendFormat": "{{ "{{" }}namespace{{ "}}" }} - {{ "{{" }}ingress{{ "}}" }}"
+              "expr": "kube_pod_status_phase{namespace=\"ingress-nginx\", phase=\"Running\"}",
+              "legendFormat": "Running Pods"
             }
           ]
         },
         {
-          "title": "Response Times",
+          "title": "Controller CPU Usage",
           "type": "timeseries",
           "datasource": {
             "type": "prometheus",
@@ -318,13 +429,13 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(nginx_ingress_controller_request_duration_seconds_sum{namespace=~\".*\"}[5m])) by (namespace, ingress) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{namespace=~\".*\"}[5m])) by (namespace, ingress)",
-              "legendFormat": "{{ "{{" }}namespace{{ "}}" }} - {{ "{{" }}ingress{{ "}}" }}"
+              "expr": "sum(rate(process_cpu_seconds_total{namespace=\"ingress-nginx\"}[5m]))",
+              "legendFormat": "CPU Usage"
             }
           ],
           "fieldConfig": {
             "defaults": {
-              "unit": "seconds"
+              "unit": "none"
             }
           }
         }
@@ -597,8 +708,8 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(nginx_ingress_controller_requests{ingress=\"echo-ingress\", host=~\"api.*\"}[5m])) by (status)",
-              "legendFormat": "API - {{ "{{" }}status{{ "}}" }}"
+              "expr": "sum(rate(process_cpu_seconds_total{namespace=~\"echo-.*\", pod=~\"echo-api.*\"}[5m]))",
+              "legendFormat": "API - CPU Activity"
             }
           ]
         },
@@ -617,8 +728,8 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(nginx_ingress_controller_requests{ingress=\"echo-ingress\", host=~\"directus.*\"}[5m])) by (status)",
-              "legendFormat": "Directus - {{ "{{" }}status{{ "}}" }}"
+              "expr": "sum(rate(process_cpu_seconds_total{namespace=~\"echo-.*\", pod=~\"echo-directus.*\"}[5m]))",
+              "legendFormat": "Directus - CPU Activity"
             }
           ]
         },
@@ -652,7 +763,7 @@ data:
           }
         },
         {
-          "title": "API Response Time",
+          "title": "Pods Ready Status",
           "type": "timeseries",
           "datasource": {
             "type": "prometheus",
@@ -666,18 +777,18 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(nginx_ingress_controller_request_duration_seconds_sum{ingress=\"echo-ingress\", host=~\"api.*\"}[5m])) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{ingress=\"echo-ingress\", host=~\"api.*\"}[5m]))",
-              "legendFormat": "API Response Time"
+              "expr": "kube_pod_status_phase{namespace=~\"echo-.*\", phase=\"Running\"} > 0",
+              "legendFormat": "{{ "{{" }}pod{{ "}}" }} - Ready"
             }
           ],
           "fieldConfig": {
             "defaults": {
-              "unit": "s"
+              "unit": "none"
             }
           }
         },
         {
-          "title": "Directus Response Time",
+          "title": "Pod Restarts",
           "type": "timeseries",
           "datasource": {
             "type": "prometheus",
@@ -691,13 +802,13 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(nginx_ingress_controller_request_duration_seconds_sum{ingress=\"echo-ingress\", host=~\"directus.*\"}[5m])) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{ingress=\"echo-ingress\", host=~\"directus.*\"}[5m]))",
-              "legendFormat": "Directus Response Time"
+              "expr": "kube_pod_container_status_restarts_total{namespace=~\"echo-.*\"}",
+              "legendFormat": "{{ "{{" }}pod{{ "}}" }} - Restarts"
             }
           ],
           "fieldConfig": {
             "defaults": {
-              "unit": "s"
+              "unit": "none"
             }
           }
         },
