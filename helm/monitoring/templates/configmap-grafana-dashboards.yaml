@@ -1159,8 +1159,8 @@ data:
           },
           "targets": [
             {
-              "expr": 'sum(kube_pod_status_phase{namespace=~"\$namespace", phase="Running", pod=~"echo-\$component.*"}) by (component)',
-              "legendFormat": "{{component}}",
+              "expr": "sum(kube_pod_status_phase{namespace=~\"\\$namespace\", phase=\"Running\", pod=~\"echo-\\$component.*\"}) by {{ "(component)" }}",
+              "legendFormat": "{{ "{{component}}" }}",
               "instant": true
             }
           ],
@@ -1212,8 +1212,8 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(increase(kube_pod_container_status_restarts_total{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\"}[24h])) by (pod)",
-              "legendFormat": "{{pod}}",
+              "expr": "sum(increase(kube_pod_container_status_restarts_total{namespace=~\"\\$namespace\", pod=~\"echo-\\$component.*\"}[24h])) by {{ "(pod)" }}",
+              "legendFormat": "{{ "{{pod}}" }}",
               "instant": true
             }
           ],
@@ -1269,8 +1269,8 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(http_request_total{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\", status_code=~\"5..\"}[5m])) by (pod) / sum(rate(http_request_total{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\"}[5m])) by (pod)",
-              "legendFormat": "{{pod}} - Error %"
+              "expr": "sum(rate(http_request_total{namespace=~\"\\$namespace\", pod=~\"echo-\\$component.*\", status_code=~\"5..\"}[5m])) by {{ "(pod)" }} / sum(rate(http_request_total{namespace=~\"\\$namespace\", pod=~\"echo-\\$component.*\"}[5m])) by {{ "(pod)" }}",
+              "legendFormat": "{{ "{{pod}}" }} - Error %"
             }
           ],
           "fieldConfig": {
@@ -1331,8 +1331,8 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\", container!=\"\"}[5m])) by (pod)",
-              "legendFormat": "{{pod}}"
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"\\$namespace\", pod=~\"echo-\\$component.*\", container!=\"\"}[5m])) by {{ "(pod)" }}",
+              "legendFormat": "{{ "{{pod}}" }}"
             }
           ],
           "fieldConfig": {
@@ -1373,328 +1373,6 @@ data:
           }
         },
         {
-          "title": "Memory Usage",
-          "type": "timeseries",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 7
-          },
-          "targets": [
-            {
-              "expr": "sum(container_memory_usage_bytes{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\", container!=\"\"}) by (pod)",
-              "legendFormat": "{{pod}}"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {
-              "custom": {
-                "drawStyle": "line",
-                "lineInterpolation": "linear",
-                "barAlignment": 0,
-                "lineWidth": 1,
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "spanNulls": false,
-                "showPoints": "auto",
-                "pointSize": 5,
-                "stacking": {
-                  "mode": "none",
-                  "group": "A"
-                },
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "hideFrom": {
-                  "tooltip": false,
-                  "viz": false,
-                  "legend": false
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "color": {
-                "mode": "palette-classic"
-              },
-              "unit": "bytes"
-            }
-          }
-        },
-        {
-          "title": "CPU Usage vs. Limits",
-          "type": "timeseries",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 15
-          },
-          "targets": [
-            {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\", container!=\"\"}[5m])) by (pod) / sum(kube_pod_container_resource_limits{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\", resource=\"cpu\"}) by (pod)",
-              "legendFormat": "{{pod}} (usage/limit)"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {
-              "custom": {
-                "drawStyle": "line",
-                "lineInterpolation": "linear",
-                "barAlignment": 0,
-                "lineWidth": 1,
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "spanNulls": false,
-                "showPoints": "auto",
-                "pointSize": 5,
-                "stacking": {
-                  "mode": "none",
-                  "group": "A"
-                },
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "hideFrom": {
-                  "tooltip": false,
-                  "viz": false,
-                  "legend": false
-                },
-                "thresholdsStyle": {
-                  "mode": "line"
-                }
-              },
-              "color": {
-                "mode": "palette-classic"
-              },
-              "unit": "percentunit",
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "yellow",
-                    "value": 0.7
-                  },
-                  {
-                    "color": "red",
-                    "value": 0.85
-                  }
-                ]
-              }
-            }
-          }
-        },
-        {
-          "title": "Memory Usage vs. Limits",
-          "type": "timeseries",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 15
-          },
-          "targets": [
-            {
-              "expr": "sum(container_memory_usage_bytes{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\", container!=\"\"}) by (pod) / sum(kube_pod_container_resource_limits{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\", resource=\"memory\"}) by (pod)",
-              "legendFormat": "{{pod}} (usage/limit)"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {
-              "custom": {
-                "drawStyle": "line",
-                "lineInterpolation": "linear",
-                "barAlignment": 0,
-                "lineWidth": 1,
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "spanNulls": false,
-                "showPoints": "auto",
-                "pointSize": 5,
-                "stacking": {
-                  "mode": "none",
-                  "group": "A"
-                },
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "hideFrom": {
-                  "tooltip": false,
-                  "viz": false,
-                  "legend": false
-                },
-                "thresholdsStyle": {
-                  "mode": "line"
-                }
-              },
-              "color": {
-                "mode": "palette-classic"
-              },
-              "unit": "percentunit",
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "yellow",
-                    "value": 0.7
-                  },
-                  {
-                    "color": "red",
-                    "value": 0.85
-                  }
-                ]
-              }
-            }
-          }
-        },
-        {
-          "title": "Network I/O",
-          "type": "timeseries",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 23
-          },
-          "targets": [
-            {
-              "expr": "sum(rate(container_network_receive_bytes_total{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\"}[5m])) by (pod)",
-              "legendFormat": "{{pod}} - received"
-            },
-            {
-              "expr": "sum(rate(container_network_transmit_bytes_total{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\"}[5m])) by (pod)",
-              "legendFormat": "{{pod}} - transmitted"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {
-              "custom": {
-                "drawStyle": "line",
-                "lineInterpolation": "linear",
-                "barAlignment": 0,
-                "lineWidth": 1,
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "spanNulls": false,
-                "showPoints": "auto",
-                "pointSize": 5,
-                "stacking": {
-                  "mode": "none",
-                  "group": "A"
-                },
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "hideFrom": {
-                  "tooltip": false,
-                  "viz": false,
-                  "legend": false
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "color": {
-                "mode": "palette-classic"
-              },
-              "unit": "Bps"
-            }
-          }
-        },
-        {
-          "title": "Disk I/O",
-          "type": "timeseries",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 23
-          },
-          "targets": [
-            {
-              "expr": "sum(rate(container_fs_reads_bytes_total{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\", container!=\"\"}[5m])) by (pod)",
-              "legendFormat": "{{pod}} - reads"
-            },
-            {
-              "expr": "sum(rate(container_fs_writes_bytes_total{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\", container!=\"\"}[5m])) by (pod)",
-              "legendFormat": "{{pod}} - writes"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {
-              "custom": {
-                "drawStyle": "line",
-                "lineInterpolation": "linear",
-                "barAlignment": 0,
-                "lineWidth": 1,
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "spanNulls": false,
-                "showPoints": "auto",
-                "pointSize": 5,
-                "stacking": {
-                  "mode": "none",
-                  "group": "A"
-                },
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "hideFrom": {
-                  "tooltip": false,
-                  "viz": false,
-                  "legend": false
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "color": {
-                "mode": "palette-classic"
-              },
-              "unit": "Bps"
-            }
-          }
-        },
-        {
           "collapsed": false,
           "gridPos": {
             "h": 1,
@@ -1721,11 +1399,11 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"\$namespace\", pod=~\"echo-worker-cpu.*\", container!=\"\"}[5m]))",
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"\\$namespace\", pod=~\"echo-worker-cpu.*\", container!=\"\"}[5m]))",
               "legendFormat": "Worker-CPU Total"
             },
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"\$namespace\", pod=~\"echo-worker\", pod!~\"echo-worker-cpu.*\", container!=\"\"}[5m]))",
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"\\$namespace\", pod=~\"echo-worker\", pod!~\"echo-worker-cpu.*\", container!=\"\"}[5m]))",
               "legendFormat": "Standard Worker Total"
             }
           ],
@@ -1759,11 +1437,11 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(container_memory_usage_bytes{namespace=~\"\$namespace\", pod=~\"echo-worker-cpu.*\", container!=\"\"})",
+              "expr": "sum(container_memory_usage_bytes{namespace=~\"\\$namespace\", pod=~\"echo-worker-cpu.*\", container!=\"\"})",
               "legendFormat": "Worker-CPU Total"
             },
             {
-              "expr": "sum(container_memory_usage_bytes{namespace=~\"\$namespace\", pod=~\"echo-worker\", pod!~\"echo-worker-cpu.*\", container!=\"\"})",
+              "expr": "sum(container_memory_usage_bytes{namespace=~\"\\$namespace\", pod=~\"echo-worker\", pod!~\"echo-worker-cpu.*\", container!=\"\"})",
               "legendFormat": "Standard Worker Total"
             }
           ],
@@ -1797,7 +1475,7 @@ data:
           },
           "targets": [
             {
-              "expr": "{namespace=~\"\$namespace\", pod=~\"echo-worker-cpu.*\"} \$logfilter",
+              "expr": "{namespace=~\"\\$namespace\", pod=~\"echo-worker-cpu.*\"} \\$logfilter",
               "refId": "A"
             }
           ],
@@ -1827,7 +1505,7 @@ data:
           },
           "targets": [
             {
-              "expr": "{namespace=~\"\$namespace\", pod=~\"echo-worker\", pod!~\"echo-worker-cpu.*\"} \$logfilter",
+              "expr": "{namespace=~\"\\$namespace\", pod=~\"echo-worker\", pod!~\"echo-worker-cpu.*\"} \\$logfilter",
               "refId": "A"
             }
           ],
@@ -1840,209 +1518,6 @@ data:
             "showTime": true,
             "sortOrder": "Descending",
             "wrapLogMessage": true
-          }
-        },
-        {
-          "collapsed": false,
-          "gridPos": {
-            "h": 1,
-            "w": 24,
-            "x": 0,
-            "y": 48
-          },
-          "id": 3,
-          "title": "Application Logs",
-          "type": "row"
-        },
-        {
-          "title": "All Echo Logs",
-          "type": "logs",
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 24,
-            "x": 0,
-            "y": 49
-          },
-          "targets": [
-            {
-              "expr": "{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\"} \$logfilter",
-              "refId": "A"
-            }
-          ],
-          "options": {
-            "dedupStrategy": "none",
-            "enableLogDetails": true,
-            "prettifyLogMessage": false,
-            "showCommonLabels": false,
-            "showLabels": false,
-            "showTime": true,
-            "sortOrder": "Descending",
-            "wrapLogMessage": true
-          }
-        },
-        {
-          "title": "Error Logs Only",
-          "type": "logs",
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 24,
-            "x": 0,
-            "y": 57
-          },
-          "targets": [
-            {
-              "expr": "{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\"} |~ \"(?i)error|exception|fail|fatal\"",
-              "refId": "A"
-            }
-          ],
-          "options": {
-            "dedupStrategy": "none",
-            "enableLogDetails": true,
-            "prettifyLogMessage": false,
-            "showCommonLabels": false,
-            "showLabels": false,
-            "showTime": true,
-            "sortOrder": "Descending",
-            "wrapLogMessage": true
-          }
-        },
-        {
-          "title": "Log Volume Over Time",
-          "type": "timeseries",
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 65
-          },
-          "targets": [
-            {
-              "expr": "sum(count_over_time({namespace=~\"\$namespace\", pod=~\"echo-\$component.*\"}[5m])) by (pod)",
-              "legendFormat": "{{pod}}",
-              "refId": "A"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {
-              "custom": {
-                "drawStyle": "line",
-                "lineInterpolation": "linear",
-                "barAlignment": 0,
-                "lineWidth": 1,
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "spanNulls": false,
-                "showPoints": "auto",
-                "pointSize": 5,
-                "stacking": {
-                  "mode": "normal",
-                  "group": "A"
-                },
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "hideFrom": {
-                  "tooltip": false,
-                  "viz": false,
-                  "legend": false
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "color": {
-                "mode": "palette-classic"
-              },
-              "unit": "logs"
-            }
-          }
-        },
-        {
-          "title": "Error Log Rate",
-          "type": "timeseries",
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 65
-          },
-          "targets": [
-            {
-              "expr": "sum(count_over_time({namespace=~\"\$namespace\", pod=~\"echo-\$component.*\"} |~ \"(?i)error|exception|fail|fatal\"[5m])) by (pod)",
-              "legendFormat": "{{pod}}",
-              "refId": "A"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {
-              "custom": {
-                "drawStyle": "line",
-                "lineInterpolation": "linear",
-                "barAlignment": 0,
-                "lineWidth": 1,
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "spanNulls": false,
-                "showPoints": "auto",
-                "pointSize": 5,
-                "stacking": {
-                  "mode": "normal",
-                  "group": "A"
-                },
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "hideFrom": {
-                  "tooltip": false,
-                  "viz": false,
-                  "legend": false
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "color": {
-                "mode": "palette-classic"
-              },
-              "unit": "logs",
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "yellow",
-                    "value": 10
-                  },
-                  {
-                    "color": "red",
-                    "value": 50
-                  }
-                ]
-              }
-            }
           }
         }
       ],
@@ -2055,7 +1530,7 @@ data:
             "current": {
               "selected": true,
               "text": "All",
-              "value": "\$__all"
+              "value": "\\$__all"
             },
             "hide": 0,
             "includeAll": true,
@@ -2065,7 +1540,7 @@ data:
               {
                 "selected": true,
                 "text": "All",
-                "value": "\$__all"
+                "value": "\\$__all"
               },
               {
                 "selected": false,
@@ -2153,31 +1628,11 @@ data:
               },
               {
                 "selected": false,
-                "text": "API Server Logs",
-                "value": "|~ \"api-server\""
-              },
-              {
-                "selected": false,
-                "text": "Database Logs",
-                "value": "|~ \"(?i)database|db|sql|query\""
-              },
-              {
-                "selected": false,
-                "text": "Authentication Logs",
-                "value": "|~ \"(?i)auth|login|token|session\""
-              },
-              {
-                "selected": false,
                 "text": "Worker CPU Logs",
                 "value": "|~ \"worker-cpu\""
-              },
-              {
-                "selected": false,
-                "text": "AI Model Logs",
-                "value": "|~ \"(?i)openai|anthropic|model|inference|embedding\""
               }
             ],
-            "query": "All Logs : ,Error Logs : |~ \"(?i)error|exception|fail|fatal\",Warning Logs : |~ \"(?i)warn|warning\",API Server Logs : |~ \"api-server\",Database Logs : |~ \"(?i)database|db|sql|query\",Authentication Logs : |~ \"(?i)auth|login|token|session\",Worker CPU Logs : |~ \"worker-cpu\",AI Model Logs : |~ \"(?i)openai|anthropic|model|inference|embedding\"",
+            "query": "All Logs : ,Error Logs : |~ \"(?i)error|exception|fail|fatal\",Warning Logs : |~ \"(?i)warn|warning\",Worker CPU Logs : |~ \"worker-cpu\"",
             "skipUrlSync": false,
             "type": "custom"
           },
@@ -2211,47 +1666,17 @@ data:
                 "selected": false,
                 "text": "Last 24 hours",
                 "value": "now-24h"
-              },
-              {
-                "selected": false,
-                "text": "Last 7 days",
-                "value": "now-7d"
               }
             ],
-            "query": "Last 3 hours : now-3h, Last hour : now-1h, Last 12 hours : now-12h, Last 24 hours : now-24h, Last 7 days : now-7d",
+            "query": "Last 3 hours : now-3h, Last hour : now-1h, Last 12 hours : now-12h, Last 24 hours : now-24h",
             "skipUrlSync": false,
             "type": "custom"
           }
         ]
       },
       "time": {
-        "from": "\$timerange",
+        "from": "\\$timerange",
         "to": "now"
-      },
-      "timepicker": {
-        "refresh_intervals": [
-          "5s",
-          "10s",
-          "30s",
-          "1m",
-          "5m",
-          "15m",
-          "30m",
-          "1h",
-          "2h",
-          "1d"
-        ],
-        "time_options": [
-          "5m",
-          "15m",
-          "1h",
-          "6h",
-          "12h",
-          "24h",
-          "2d",
-          "7d",
-          "30d"
-        ]
       },
       "refresh": "30s"
     } 
