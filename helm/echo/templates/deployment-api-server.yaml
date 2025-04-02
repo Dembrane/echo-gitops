@@ -16,6 +16,9 @@ spec:
       labels:
         app: echo
         component: api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
     spec:
       imagePullSecrets:
         - name: do-registry-secret
@@ -28,6 +31,7 @@ spec:
             - '/code/server/prod.sh'
           ports:
             - containerPort: {{ .Values.apiServer.service.port }}
+              name: http
 
           env:
             - name: DEBUG_MODE

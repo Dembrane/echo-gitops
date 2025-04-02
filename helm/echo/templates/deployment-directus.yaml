@@ -17,6 +17,9 @@ spec:
       labels:
         app: echo
         component: directus
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8055"
     spec:
       imagePullSecrets:
         - name: do-registry-secret
@@ -24,8 +27,15 @@ spec:
         - name: directus
           image: {{ printf "%s/%s:%s" .Values.global.registry .Values.directus.image.repository .Values.global.imageTag | quote }}
           imagePullPolicy: Always
+          command:
+            - '/bin/sh'
+            - '-c'
+            - |
+              npm run schema apply system-collections; 
+              npx directus start;
           ports:
             - containerPort: {{ .Values.directus.service.port }}
+              name: http
           env:
             - name: PUBLIC_URL
               value: {{ .Values.directus.env.PUBLIC_URL | quote }}
