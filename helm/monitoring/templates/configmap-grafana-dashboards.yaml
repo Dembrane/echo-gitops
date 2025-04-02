@@ -1159,7 +1159,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(kube_pod_status_phase{namespace=~\"$namespace\", phase=\"Running\", pod=~\"echo-$component.*\"}) by (component)",
+              "expr": "sum(kube_pod_status_phase{namespace=~\"\$namespace\", phase=\"Running\", pod=~\"echo-\$component.*\"}) by \(component\)",
               "legendFormat": "{{component}}",
               "instant": true
             }
@@ -1212,7 +1212,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(increase(kube_pod_container_status_restarts_total{namespace=~\"$namespace\", pod=~\"echo-$component.*\"}[24h])) by (pod)",
+              "expr": "sum(increase(kube_pod_container_status_restarts_total{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\"}[24h])) by (pod)",
               "legendFormat": "{{pod}}",
               "instant": true
             }
@@ -1269,7 +1269,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(http_request_total{namespace=~\"$namespace\", pod=~\"echo-$component.*\", status_code=~\"5..\"}[5m])) by (pod) / sum(rate(http_request_total{namespace=~\"$namespace\", pod=~\"echo-$component.*\"}[5m])) by (pod)",
+              "expr": "sum(rate(http_request_total{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\", status_code=~\"5..\"}[5m])) by (pod) / sum(rate(http_request_total{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\"}[5m])) by (pod)",
               "legendFormat": "{{pod}} - Error %"
             }
           ],
@@ -1331,7 +1331,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod=~\"echo-$component.*\", container!=\"\"}[5m])) by (pod)",
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\", container!=\"\"}[5m])) by (pod)",
               "legendFormat": "{{pod}}"
             }
           ],
@@ -1387,7 +1387,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(container_memory_usage_bytes{namespace=~\"$namespace\", pod=~\"echo-$component.*\", container!=\"\"}) by (pod)",
+              "expr": "sum(container_memory_usage_bytes{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\", container!=\"\"}) by (pod)",
               "legendFormat": "{{pod}}"
             }
           ],
@@ -1443,7 +1443,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod=~\"echo-$component.*\", container!=\"\"}[5m])) by (pod) / sum(kube_pod_container_resource_limits{namespace=~\"$namespace\", pod=~\"echo-$component.*\", resource=\"cpu\"}) by (pod)",
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\", container!=\"\"}[5m])) by (pod) / sum(kube_pod_container_resource_limits{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\", resource=\"cpu\"}) by (pod)",
               "legendFormat": "{{pod}} (usage/limit)"
             }
           ],
@@ -1516,7 +1516,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(container_memory_usage_bytes{namespace=~\"$namespace\", pod=~\"echo-$component.*\", container!=\"\"}) by (pod) / sum(kube_pod_container_resource_limits{namespace=~\"$namespace\", pod=~\"echo-$component.*\", resource=\"memory\"}) by (pod)",
+              "expr": "sum(container_memory_usage_bytes{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\", container!=\"\"}) by (pod) / sum(kube_pod_container_resource_limits{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\", resource=\"memory\"}) by (pod)",
               "legendFormat": "{{pod}} (usage/limit)"
             }
           ],
@@ -1589,11 +1589,11 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(container_network_receive_bytes_total{namespace=~\"$namespace\", pod=~\"echo-$component.*\"}[5m])) by (pod)",
+              "expr": "sum(rate(container_network_receive_bytes_total{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\"}[5m])) by (pod)",
               "legendFormat": "{{pod}} - received"
             },
             {
-              "expr": "sum(rate(container_network_transmit_bytes_total{namespace=~\"$namespace\", pod=~\"echo-$component.*\"}[5m])) by (pod)",
+              "expr": "sum(rate(container_network_transmit_bytes_total{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\"}[5m])) by (pod)",
               "legendFormat": "{{pod}} - transmitted"
             }
           ],
@@ -1649,11 +1649,11 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(container_fs_reads_bytes_total{namespace=~\"$namespace\", pod=~\"echo-$component.*\", container!=\"\"}[5m])) by (pod)",
+              "expr": "sum(rate(container_fs_reads_bytes_total{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\", container!=\"\"}[5m])) by (pod)",
               "legendFormat": "{{pod}} - reads"
             },
             {
-              "expr": "sum(rate(container_fs_writes_bytes_total{namespace=~\"$namespace\", pod=~\"echo-$component.*\", container!=\"\"}[5m])) by (pod)",
+              "expr": "sum(rate(container_fs_writes_bytes_total{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\", container!=\"\"}[5m])) by (pod)",
               "legendFormat": "{{pod}} - writes"
             }
           ],
@@ -1721,11 +1721,11 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod=~\"echo-worker-cpu.*\", container!=\"\"}[5m]))",
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"\$namespace\", pod=~\"echo-worker-cpu.*\", container!=\"\"}[5m]))",
               "legendFormat": "Worker-CPU Total"
             },
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod=~\"echo-worker\", pod!~\"echo-worker-cpu.*\", container!=\"\"}[5m]))",
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"\$namespace\", pod=~\"echo-worker\", pod!~\"echo-worker-cpu.*\", container!=\"\"}[5m]))",
               "legendFormat": "Standard Worker Total"
             }
           ],
@@ -1759,11 +1759,11 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(container_memory_usage_bytes{namespace=~\"$namespace\", pod=~\"echo-worker-cpu.*\", container!=\"\"})",
+              "expr": "sum(container_memory_usage_bytes{namespace=~\"\$namespace\", pod=~\"echo-worker-cpu.*\", container!=\"\"})",
               "legendFormat": "Worker-CPU Total"
             },
             {
-              "expr": "sum(container_memory_usage_bytes{namespace=~\"$namespace\", pod=~\"echo-worker\", pod!~\"echo-worker-cpu.*\", container!=\"\"})",
+              "expr": "sum(container_memory_usage_bytes{namespace=~\"\$namespace\", pod=~\"echo-worker\", pod!~\"echo-worker-cpu.*\", container!=\"\"})",
               "legendFormat": "Standard Worker Total"
             }
           ],
@@ -1797,7 +1797,7 @@ data:
           },
           "targets": [
             {
-              "expr": "{namespace=~\"$namespace\", pod=~\"echo-worker-cpu.*\"} $logfilter",
+              "expr": "{namespace=~\"\$namespace\", pod=~\"echo-worker-cpu.*\"} \$logfilter",
               "refId": "A"
             }
           ],
@@ -1827,7 +1827,7 @@ data:
           },
           "targets": [
             {
-              "expr": "{namespace=~\"$namespace\", pod=~\"echo-worker\", pod!~\"echo-worker-cpu.*\"} $logfilter",
+              "expr": "{namespace=~\"\$namespace\", pod=~\"echo-worker\", pod!~\"echo-worker-cpu.*\"} \$logfilter",
               "refId": "A"
             }
           ],
@@ -1869,7 +1869,7 @@ data:
           },
           "targets": [
             {
-              "expr": "{namespace=~\"$namespace\", pod=~\"echo-$component.*\"} $logfilter",
+              "expr": "{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\"} \$logfilter",
               "refId": "A"
             }
           ],
@@ -1899,7 +1899,7 @@ data:
           },
           "targets": [
             {
-              "expr": "{namespace=~\"$namespace\", pod=~\"echo-$component.*\"} |~ \"(?i)error|exception|fail|fatal\"",
+              "expr": "{namespace=~\"\$namespace\", pod=~\"echo-\$component.*\"} |~ \"(?i)error|exception|fail|fatal\"",
               "refId": "A"
             }
           ],
@@ -1929,7 +1929,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(count_over_time({namespace=~\"$namespace\", pod=~\"echo-$component.*\"}[5m])) by (pod)",
+              "expr": "sum(count_over_time({namespace=~\"\$namespace\", pod=~\"echo-\$component.*\"}[5m])) by (pod)",
               "legendFormat": "{{pod}}",
               "refId": "A"
             }
@@ -1986,7 +1986,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(count_over_time({namespace=~\"$namespace\", pod=~\"echo-$component.*\"} |~ \"(?i)error|exception|fail|fatal\"[5m])) by (pod)",
+              "expr": "sum(count_over_time({namespace=~\"\$namespace\", pod=~\"echo-\$component.*\"} |~ \"(?i)error|exception|fail|fatal\"[5m])) by (pod)",
               "legendFormat": "{{pod}}",
               "refId": "A"
             }
@@ -2055,7 +2055,7 @@ data:
             "current": {
               "selected": true,
               "text": "All",
-              "value": "$__all"
+              "value": "\$__all"
             },
             "hide": 0,
             "includeAll": true,
@@ -2065,7 +2065,7 @@ data:
               {
                 "selected": true,
                 "text": "All",
-                "value": "$__all"
+                "value": "\$__all"
               },
               {
                 "selected": false,
@@ -2225,7 +2225,7 @@ data:
         ]
       },
       "time": {
-        "from": "$timerange",
+        "from": "\$timerange",
         "to": "now"
       },
       "timepicker": {
