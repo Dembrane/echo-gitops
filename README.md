@@ -41,5 +41,3 @@ terraform apply
 ```
 terraform output -json
 ```
-
-
