@@ -1,6 +1,6 @@
 <div align="center">
   <!-- REMOVE THIS IF YOU DON'T HAVE A LOGO -->
-    <img src="https://github.com/user-attachments/assets/9d5f4ab4-4fdd-40ef-83fe-43ce9c9384be" height="400">
+   
 
 <h3 align="center">Dembrane ECHO GitOps</h3>
 
@@ -39,7 +39,7 @@
 
 ## About The Project
 
-This repository contains the Infrastructure as Code (IaC) and configuration for deploying and managing the Dembrane ECHO platform using GitOps principles. It leverages tools like Terraform, Kubernetes, Helm, and Argo CD to automate infrastructure provisioning, application deployment, and monitoring.
+This repository contains the Infrastructure as Code (IaC) and configuration for deploying and managing the Dembrane ECHO platform using GitOps principles. It leverages tools like Terraform, Kubernetes, Helm, and Argo CD to automate infrastructure provisioning, application deployment, and monitoring. This supplements the GitHub Actions setup <a href="https://github.com/Dembrane/echo">dembrane/echo.</a>
 
 ### Key Features
 
@@ -56,7 +56,7 @@ This project is licensed under the Business Source License 1.1 - see the [LICENS
 
 ## Architecture
 
-![Architecture Diagram](https://github.com/user-attachments/assets/721b7fb3-e480-4809-9023-fd48b82b1f8c)
+![Architecture Diagram](https://github.com/user-attachments/assets/9d5f4ab4-4fdd-40ef-83fe-43ce9c9384be)
 
 The architecture consists of the following components:
 
@@ -133,56 +133,9 @@ The repository is structured as follows:
 
 3.  **Apply the Infrastructure:**
 
-    Initialize and apply the Terraform configuration:
-
-    ```bash
-    terraform init
-    terraform apply -var-file=./terraform.tfvars # or terraform-prod.tfvars
-    ```
-
-4.  **Get the Outputs:**
-
-    Retrieve the outputs from Terraform:
-
-    ```bash
-    terraform output -json
-    ```
-
-### Deployment
-
-1.  **Configure Kubernetes Credentials:**
-
-    Configure `kubectl` to connect to your DigitalOcean Kubernetes cluster. The `infra/main.tf` file automates the creation of the cluster but you will need to manually save the kubeconfig:
-
-    ```bash
-    doctl kubernetes cluster kubeconfig save dbr-echo-<env>-k8s-cluster
-    ```
-
-    Replace `<env>` with `dev` or `prod`.
-
-2.  **Create Secrets:**
-
-    Create the necessary secrets for the backend and monitoring components.  Update the secrets files in the `secrets/` directory with your actual values.  Then seal the secrets:
-
-    ```bash
-    # Backend Secrets (example for dev)
-    kubeseal --context=do-ams3-dbr-echo-dev-k8s-cluster \
-      --controller-namespace=kube-system \
-      --controller-name=sealed-secrets \
-      < secrets/backend-secrets-dev.yaml > secrets/sealed-backend-secrets-dev.yaml
-    kubectl apply -f secrets/sealed-backend-secrets-dev.yaml
-
-    # Monitoring Secrets (example for dev)
-    kubeseal --context=do-ams3-dbr-echo-dev-k8s-cluster \
-      --controller-namespace=kube-system \
-      --controller-name=sealed-secrets \
-      < secrets/monitoring-secrets-dev.yaml > secrets/sealed-monitoring-secrets-dev.yaml
-    kubectl apply -f secrets/sealed-monitoring-secrets-dev.yaml
-    ```
-
-    Repeat for the production environment, replacing `dev` with `prod` and using the appropriate cluster context.
-
-3.  **Apply Argo CD Applications:**
+    Check the comments in `main.tf`
+    
+4.  **Apply Argo CD Applications:**
 
     Deploy the Argo CD applications to synchronize the cluster state with the repository:
 
@@ -196,47 +149,10 @@ The repository is structured as follows:
     kubectl apply -f argo/echo-monitoring-prod.yaml
     ```
 
-4.  **Configure DNS Records:**
-
-    Configure DNS records for the monitoring services:
-
-    -   Development:
-
-        ```
-        grafana-echo-dev.echo-next.dembrane.com    → DigitalOcean Load Balancer IP
-        prometheus-echo-dev.echo-next.dembrane.com → DigitalOcean Load Balancer IP
-        ```
-
-    -   Production:
-
-        ```
-        grafana-echo-prod.dembrane.com    → DigitalOcean Load Balancer IP
-        prometheus-echo-prod.dembrane.com → DigitalOcean Load Balancer IP
-        ```
+5.  **Configure DNS Records:**
 
     To get the load balancer IP, run:
 
     ```bash
     kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
     ```
-
-### Accessing the Monitoring Stack
-
-#### Grafana
-
--   URL (Development): <https://grafana-echo-dev.echo-next.dembrane.com>
--   URL (Production): <https://grafana-echo-prod.dembrane.com>
-
-    Default login credentials:
-
-    -   Username: `admin`
-    -   Password: Defined in `secrets/monitoring-secrets-dev.yaml` or `secrets/monitoring-secrets-prod.yaml`
-
-#### Prometheus
-
--   URL (Development): <https://prometheus-echo-dev.echo-next.dembrane.com>
--   URL (Production): <https://prometheus-echo-prod.dembrane.com>
-
-## Acknowledgments
-
--   This README was created using [gitreadme.dev](https://gitreadme.dev) — an AI tool that looks at your entire codebase to instantly generate high-quality README files.
