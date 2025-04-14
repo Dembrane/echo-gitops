@@ -240,6 +240,13 @@ spec:
             
             - name: NODE_TLS_REJECT_UNAUTHORIZED
               value: "0"
+            
+            # for flows
+            - name: ADMIN_BASE_URL
+              value: {{ .Values.apiServer.env.ADMIN_BASE_URL | quote }}
+            
+            - name: PARTICIPANT_BASE_URL
+              value: {{ .Values.apiServer.env.PARTICIPANT_BASE_URL | quote }}
 
           resources:
             requests:
