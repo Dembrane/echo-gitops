@@ -114,11 +114,8 @@ spec:
               value: {{ .Values.apiServer.env.POSTGRES_USER | quote }}
             
             - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: echo-backend-secrets
-                  key: POSTGRES_PASSWORD
-            
+              value: {{ .Values.apiServer.env.POSTGRES_PASSWORD | quote }}
+
             - name: POSTGRES_DATABASE
               value: {{ .Values.apiServer.env.POSTGRES_DATABASE | quote }}
                 
