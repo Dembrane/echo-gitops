@@ -70,6 +70,15 @@ apiServer:
     # ANTHROPIC_API_KEY:
     # REDIS_URL:
     # DATABASE_URL:
+    # PostgreSQL configuration (extracted from DATABASE_URL)
+    POSTGRES_HOST: ""
+    POSTGRES_PORT: ""
+    POSTGRES_USER: ""
+    POSTGRES_DATABASE: ""
+    # Neo4j configuration
+    NEO4J_URI: "bolt://echo-neo4j:7687"
+    NEO4J_USERNAME: "neo4j"
+    # NEO4J_PASSWORD in secrets
     DISABLE_CORS: "0"
     DISABLE_REDACTION: "1"
     DISABLE_SENTRY: "0"
@@ -110,6 +119,24 @@ workerCpu:
       cpu: "2000m"  # 2 CPU cores
       memory: "2Gi"
 
+neo4j:
+  image:
+    repository: "neo4j"
+    tag: "5.18.0-community"
+  password: "admin@dembrane"
+  storage:
+    size: "10Gi"
+  config:
+    pagecacheSize: "512M"
+    heapSize: "512M"
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+
 ingress:
   enabled: true
   className: "nginx"
@@ -126,3 +153,6 @@ ingress:
       hosts:
         - "directus.echo-next.dembrane.com"
         - "api.echo-next.dembrane.com"
+
+storage:
+  storageClassName: "do-block-storage"

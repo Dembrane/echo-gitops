@@ -90,6 +90,38 @@ spec:
                   name: echo-backend-secrets
                   key: DATABASE_URL
                 
+            # Neo4j Configuration
+            - name: NEO4J_URI
+              value: {{ .Values.apiServer.env.NEO4J_URI | default "bolt://echo-neo4j:7687" | quote }}
+            
+            - name: NEO4J_USERNAME
+              value: {{ .Values.apiServer.env.NEO4J_USERNAME | default "neo4j" | quote }}
+            
+            - name: NEO4J_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: NEO4J_PASSWORD
+            
+            # PostgreSQL Configuration
+            - name: POSTGRES_HOST
+              value: {{ .Values.apiServer.env.POSTGRES_HOST | quote }}
+            
+            - name: POSTGRES_PORT
+              value: {{ .Values.apiServer.env.POSTGRES_PORT | quote }}
+            
+            - name: POSTGRES_USER
+              value: {{ .Values.apiServer.env.POSTGRES_USER | quote }}
+            
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: POSTGRES_PASSWORD
+            
+            - name: POSTGRES_DATABASE
+              value: {{ .Values.apiServer.env.POSTGRES_DATABASE | quote }}
+                
             - name: DISABLE_CORS
               value: {{ .Values.apiServer.env.DISABLE_CORS | quote }}
 

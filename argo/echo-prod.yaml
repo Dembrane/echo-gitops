@@ -16,8 +16,5 @@ spec:
     server: 'https://kubernetes.default.svc'
     namespace: echo-prod
   syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
     syncOptions:
       - CreateNamespace=true
