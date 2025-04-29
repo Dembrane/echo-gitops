@@ -14,7 +14,7 @@ directus:
       cpu: "500m"
       memory: "512Mi"
     limits:
-      cpu: "1000m"
+      cpu: "1"
       memory: "1Gi"
   env:
     PUBLIC_URL: "https://directus.echo-next.dembrane.com"
@@ -44,7 +44,7 @@ apiServer:
       cpu: "500m"
       memory: "512Mi"
     limits:
-      cpu: "1000m"
+      cpu: "1"
       memory: "1Gi"
   env:
     DEBUG_MODE: "1"
@@ -75,8 +75,8 @@ worker:
       cpu: "500m"
       memory: "800Mi"
     limits:
-      cpu: "1000m"
-      memory: "1.5Gi"
+      cpu: "1"
+      memory: "1536Mi"
 
 workerCpu:
   replicaCount: 2
@@ -85,10 +85,10 @@ workerCpu:
     repository: "dbr-echo-server"
   resources:
     requests:
-      cpu: "1000m"
+      cpu: "1"
       memory: "1Gi"
     limits:
-      cpu: "2000m"
+      cpu: "2"
       memory: "2Gi"
 
 neo4j:
@@ -106,7 +106,7 @@ neo4j:
       cpu: "500m"
       memory: "1Gi"
     limits:
-      cpu: "1000m"
+      cpu: "1"
       memory: "2Gi"
 
 ingress:
