@@ -25,13 +25,13 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8000"
     spec:
+      terminationGracePeriodSeconds: 120
       imagePullSecrets:
         - name: do-registry-secret
       containers:
         - name: worker-cpu
           image: {{ printf "%s/%s:%s" .Values.global.registry .Values.workerCpu.image.repository .Values.global.imageTag | quote }}
           imagePullPolicy: Always
-          terminationGracePeriodSeconds: 120
           command:
             - '/bin/sh'
             - '/code/server/prod-worker-cpu.sh'
