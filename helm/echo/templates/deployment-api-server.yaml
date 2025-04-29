@@ -34,6 +34,12 @@ spec:
               name: http
 
           env:
+            - name: ENABLE_CHAT_AUTO_SELECT
+              value: {{ .Values.apiServer.env.ENABLE_CHAT_AUTO_SELECT | quote }}
+
+            - name: ENABLE_AUDIO_LIGHTRAG_INPUT
+              value: {{ .Values.apiServer.env.ENABLE_AUDIO_LIGHTRAG_INPUT | quote }}
+
             - name: DEBUG_MODE
               value: {{ .Values.apiServer.env.DEBUG_MODE | quote }}
 
@@ -101,22 +107,6 @@ spec:
                   name: echo-backend-secrets
                   key: NEO4J_PASSWORD
             
-            # PostgreSQL Configuration
-            - name: POSTGRES_HOST
-              value: {{ .Values.apiServer.env.POSTGRES_HOST | quote }}
-            
-            - name: POSTGRES_PORT
-              value: {{ .Values.apiServer.env.POSTGRES_PORT | quote }}
-            
-            - name: POSTGRES_USER
-              value: {{ .Values.apiServer.env.POSTGRES_USER | quote }}
-            
-            - name: POSTGRES_PASSWORD
-              value: {{ .Values.apiServer.env.POSTGRES_PASSWORD | quote }}
-
-            - name: POSTGRES_DATABASE
-              value: {{ .Values.apiServer.env.POSTGRES_DATABASE | quote }}
-            
             - name: DISABLE_CORS
               value: {{ .Values.apiServer.env.DISABLE_CORS | quote }}
 
@@ -149,6 +139,109 @@ spec:
                 secretKeyRef:
                   name: echo-backend-secrets
                   key: S3_SECRET_KEY
+                  
+            # LightRAG LiteLLM Configuration
+            - name: LIGHTRAG_LITELLM_INFERENCE_MODEL
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LIGHTRAG_LITELLM_INFERENCE_MODEL
+
+            - name: LIGHTRAG_LITELLM_EMBEDDING_API_VERSION
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LIGHTRAG_LITELLM_EMBEDDING_API_VERSION
+
+            - name: LIGHTRAG_LITELLM_EMBEDDING_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LIGHTRAG_LITELLM_EMBEDDING_API_KEY
+
+            - name: LIGHTRAG_LITELLM_EMBEDDING_API_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LIGHTRAG_LITELLM_EMBEDDING_API_BASE
+
+            - name: LIGHTRAG_LITELLM_EMBEDDING_MODEL
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LIGHTRAG_LITELLM_EMBEDDING_MODEL
+
+            - name: LIGHTRAG_LITELLM_TEXTSTRUCTUREMODEL_API_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LIGHTRAG_LITELLM_TEXTSTRUCTUREMODEL_API_BASE
+
+            - name: LIGHTRAG_LITELLM_TEXTSTRUCTUREMODEL_API_VERSION
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LIGHTRAG_LITELLM_TEXTSTRUCTUREMODEL_API_VERSION
+
+            - name: LIGHTRAG_LITELLM_TEXTSTRUCTUREMODEL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LIGHTRAG_LITELLM_TEXTSTRUCTUREMODEL_API_KEY
+
+            - name: LIGHTRAG_LITELLM_TEXTSTRUCTUREMODEL_MODEL
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LIGHTRAG_LITELLM_TEXTSTRUCTUREMODEL_MODEL
+
+            - name: LIGHTRAG_LITELLM_AUDIOMODEL_API_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LIGHTRAG_LITELLM_AUDIOMODEL_API_BASE
+
+            - name: LIGHTRAG_LITELLM_AUDIOMODEL_API_VERSION
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LIGHTRAG_LITELLM_AUDIOMODEL_API_VERSION
+
+            - name: LIGHTRAG_LITELLM_AUDIOMODEL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LIGHTRAG_LITELLM_AUDIOMODEL_API_KEY
+
+            - name: LIGHTRAG_LITELLM_AUDIOMODEL_MODEL
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LIGHTRAG_LITELLM_AUDIOMODEL_MODEL
+
+            - name: LIGHTRAG_LITELLM_API_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LIGHTRAG_LITELLM_API_BASE
+
+            - name: LIGHTRAG_LITELLM_API_VERSION
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LIGHTRAG_LITELLM_API_VERSION
+
+            - name: LIGHTRAG_LITELLM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LIGHTRAG_LITELLM_API_KEY
+
+            - name: LIGHTRAG_LITELLM_MODEL
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LIGHTRAG_LITELLM_MODEL
                   
           resources:
             requests:

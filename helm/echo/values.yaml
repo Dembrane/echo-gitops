@@ -4,7 +4,7 @@ global:
 
 directus:
   replicaCount: 1
-  maxReplicaCount: 2
+  maxReplicaCount: 1
   image:
     repository: "dbr-echo-directus"
   service:
@@ -14,39 +14,26 @@ directus:
       cpu: "500m"
       memory: "512Mi"
     limits:
-      cpu: "900m"
-      memory: "768Mi"
+      cpu: "1000m"
+      memory: "1Gi"
   env:
     PUBLIC_URL: "https://directus.echo-next.dembrane.com"
-    # ADMIN_PASSWORD: 
-    # ADMIN_TOKEN:
-    # DB_CONNECTION_STRING:
-    # REDIS:
-    CORS_ORIGIN: "https://dashboard.echo-next.dembrane.com,https://portal.echo-next.dembrane.com"
+    CORS_ORIGIN: "https://dashboard.echo-next.dembrane.com,https://portal.echo-next.dembrane.com,http://localhost:5173,http://localhost:5174"
     SESSION_COOKIE_NAME: "dembrane_session_token_dev"
     SESSION_COOKIE_DOMAIN: "echo-next.dembrane.com"
-    # EMAIL_FROM
-    # EMAIL_SMTP_HOST
-    # EMAIL_SMTP_PORT
-    # EMAIL_SMTP_USER
-    # EMAIL_SMTP_PASSWORD
-    USER_REGISTER_URL_ALLOW_LIST: "https://dashboard.echo-next.dembrane.com/verify-email"
-    PASSWORD_RESET_URL_ALLOW_LIST: "https://dashboard.echo-next.dembrane.com/password-reset"
-    USER_INVITE_URL_ALLOW_LIST: "https://dashboard.echo-next.dembrane.com/invite"
-    # AUTH_GOOGLE_CLIENT_ID
-    # AUTH_GOOGLE_CLIENT_SECRET
+    USER_REGISTER_URL_ALLOW_LIST: "https://dashboard.echo-next.dembrane.com/verify-email,http://localhost:5173/verify-email"
+    PASSWORD_RESET_URL_ALLOW_LIST: "https://dashboard.echo-next.dembrane.com/password-reset,http://localhost:5173/password-reset"
+    USER_INVITE_URL_ALLOW_LIST: "https://dashboard.echo-next.dembrane.com/invite,http://localhost:5173/invite"
     AUTH_GOOGLE_ALLOW_PUBLIC_REGISTRATION: "true"
     AUTH_GOOGLE_DEFAULT_ROLE_ID: 2446660a-ab6c-4801-ad69-5711030cba83
     AUTH_GOOGLE_REDIRECT_ALLOW_LIST: "https://dashboard.echo-next.dembrane.com/en-US/projects,https://dashboard.echo-next.dembrane.com/nl-NL/projects,https://dashboard.echo-next.dembrane.com/es-ES/projects,https://dashboard.echo-next.dembrane.com/fr-FR/projects,https://dashboard.echo-next.dembrane.com/de-DE/projects"
-    # STORAGE_S3_KEY
-    # STORAGE_S3_SECRET
-    # dummy for compat of DO with S3
+    # dummy region for compat of digitalocean with S3 providers
     STORAGE_S3_REGION: "us-east-1"
     STORAGE_S3_ENDPOINT: "https://ams3.digitaloceanspaces.com"
     STORAGE_S3_BUCKET: "dbr-echo-dev-uploads"
 
 apiServer:
-  replicaCount: 1
+  replicaCount: 2
   maxReplicaCount: 2
   image:
     repository: "dbr-echo-server"
@@ -54,40 +41,24 @@ apiServer:
     port: 8000
   resources:
     requests:
-      cpu: "300m"
+      cpu: "500m"
       memory: "512Mi"
     limits:
-      cpu: "500m"
-      memory: "800Mi"
+      cpu: "1000m"
+      memory: "1Gi"
   env:
     DEBUG_MODE: "1"
-    DIRECTUS_BASE_URL: "https://directus.echo-next.dembrane.com"
-    # DIRECTUS_TOKEN:
-    # DIRECTUS_SECRET:
-    ADMIN_BASE_URL: "https://dashboard.echo-next.dembrane.com"
-    PARTICIPANT_BASE_URL: "https://portal.echo-next.dembrane.com"
-    # OPENAI_API_KEY:
-    # ANTHROPIC_API_KEY:
-    # REDIS_URL:
-    # DATABASE_URL:
-    # PostgreSQL configuration (extracted from DATABASE_URL)
-    # Suggested to obtain from DATABASE_URL
-    POSTGRES_HOST: ""
-    POSTGRES_PORT: ""
-    POSTGRES_USER: ""
-    POSTGRES_DATABASE: ""
-    POSTGRES_PASSWORD: ""
-    # Neo4j configuration
-    NEO4J_URI: "bolt://echo-neo4j:7687"
-    NEO4J_USERNAME: "neo4j"
-    # NEO4J_PASSWORD in secrets
-    DISABLE_CORS: "0"
+    ENABLE_CHAT_AUTO_SELECT: "1"
+    ENABLE_AUDIO_LIGHTRAG_INPUT: "1"
+    DISABLE_CORS: "1"
     DISABLE_REDACTION: "1"
     DISABLE_SENTRY: "0"
     SERVE_API_DOCS: "1"
-    # S3_ACCESS_KEY
-    # S3_SECRET_KEY
-    # dummy for compat of DO with S3
+    DIRECTUS_BASE_URL: "https://directus.echo-next.dembrane.com"
+    ADMIN_BASE_URL: "https://dashboard.echo-next.dembrane.com"
+    PARTICIPANT_BASE_URL: "https://portal.echo-next.dembrane.com"
+    NEO4J_URI: "bolt://echo-neo4j:7687"
+    NEO4J_USERNAME: "neo4j"
     STORAGE_S3_REGION: "us-east-1"
     STORAGE_S3_ENDPOINT: "https://ams3.digitaloceanspaces.com"
     STORAGE_S3_BUCKET: "dbr-echo-dev-uploads"
@@ -95,30 +66,29 @@ apiServer:
 worker:
   # the deployment uses the same tags as the api server
   # only the command is different
-  replicaCount: 1
+  replicaCount: 2
   maxReplicaCount: 2
   image:
     repository: "dbr-echo-server"
   resources:
     requests:
-      cpu: "500m"     # Moderate CPU for network operations
-      memory: "800Mi" # Sufficient memory for network buffers
+      cpu: "500m"
+      memory: "800Mi"
     limits:
-      cpu: "1000m"    # 1 CPU core max
-      memory: "1.5Gi" # 1.5GB max for network operations
+      cpu: "1000m"
+      memory: "1.5Gi"
 
 workerCpu:
-  # CPU-bound worker with higher CPU allocation
-  replicaCount: 1
+  replicaCount: 2
   maxReplicaCount: 2
   image:
     repository: "dbr-echo-server"
   resources:
     requests:
-      cpu: "1000m"  # 1 CPU core
+      cpu: "1000m"
       memory: "1Gi"
     limits:
-      cpu: "2000m"  # 2 CPU cores
+      cpu: "2000m"
       memory: "2Gi"
 
 neo4j:
