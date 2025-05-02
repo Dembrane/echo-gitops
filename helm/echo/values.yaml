@@ -1,5 +1,5 @@
 global:
-  imageTag: "e890cbe8254e0d0f1bf226dfd8a420dbd53d8774"
+  imageTag: "518ba09cf68c15275a11dc5089e50ed582216bd2"
   registry: "registry.digitalocean.com/dbr-cr"
 
 directus:
