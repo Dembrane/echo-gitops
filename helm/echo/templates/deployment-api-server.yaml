@@ -153,9 +153,6 @@ spec:
                   name: echo-backend-secrets
                   key: LIGHTRAG_LITELLM_INFERENCE_API_KEY
             
-            - name: LIGHTRAG_LITELLM_INFERENCE_API_VERSION
-              value: "2024-06-01"
-
             - name: LIGHTRAG_LITELLM_INFERENCE_API_BASE
               valueFrom:
                 secretKeyRef:
@@ -249,7 +246,7 @@ spec:
                   key: LIGHTRAG_LITELLM_API_KEY
             
             - name: LIGHTRAG_LITELLM_API_VERSION
-              value: "2024-06-01"
+              value: "2023-05-15"
 
             - name: LIGHTRAG_LITELLM_MODEL
               valueFrom:
