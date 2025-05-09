@@ -102,6 +102,16 @@ resource "digitalocean_database_cluster" "postgres" {
   }
 }
 
+resource "digitalocean_database_connection_pool" "postgres_pool" {
+  name       = "dbr-echo-${local.env}-postgres-pool"
+  cluster_id = digitalocean_database_cluster.postgres.id
+  db_name    = "defaultdb"
+  size       = 10
+  mode       = "transaction"
+
+  user = digitalocean_database_cluster.postgres.user
+}
+
 resource "digitalocean_database_cluster" "redis" {
   name                 = "dbr-echo-${local.env}-redis"
   private_network_uuid = digitalocean_vpc.echo_vpc.id
