@@ -153,12 +153,6 @@ spec:
                   name: echo-backend-secrets
                   key: LIGHTRAG_LITELLM_INFERENCE_API_KEY
             
-            - name: LIGHTRAG_LITELLM_INFERENCE_API_BASE
-              valueFrom:
-                secretKeyRef:
-                  name: echo-backend-secrets
-                  key: LIGHTRAG_LITELLM_API_BASE
-
             # LightRAG LiteLLM Embedding Configuration
             - name: LIGHTRAG_LITELLM_EMBEDDING_API_VERSION
               valueFrom:
