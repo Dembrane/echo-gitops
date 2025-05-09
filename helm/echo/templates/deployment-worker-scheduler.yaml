@@ -34,7 +34,7 @@ spec:
           imagePullPolicy: Always
           command:
             - '/bin/sh'
-            - '/code/server/prod-scheduler.py'
+            - '/code/server/prod-scheduler.sh'
           env:
             # Copying environment variables from worker-cpu deployment, review if all are necessary for scheduler
             - name: ENABLE_CHAT_AUTO_SELECT
@@ -280,25 +280,25 @@ spec:
               memory: {{ .Values.workerScheduler.resources.limits.memory | quote }} 
 
           # Assuming the scheduler script might have similar readiness/liveness checks
-          readinessProbe:
-            exec:
-              command:
-                - /bin/sh
-                - -c
-                - python /code/server/prod-worker-readiness.py
-            initialDelaySeconds: 20
-            periodSeconds: 10
-            timeoutSeconds: 10
-            successThreshold: 1
-            failureThreshold: 3
+          # readinessProbe:
+          #   exec:
+          #     command:
+          #       - /bin/sh
+          #       - -c
+          #       - python /code/server/prod-worker-readiness.py
+          #   initialDelaySeconds: 20
+          #   periodSeconds: 10
+          #   timeoutSeconds: 10
+          #   successThreshold: 1
+          #   failureThreshold: 3
 
-          livenessProbe:
-            exec:
-              command:
-                - /bin/sh
-                - -c
-                - python /code/server/prod-worker-liveness.py
-            initialDelaySeconds: 20
-            periodSeconds: 10
-            timeoutSeconds: 10
-            failureThreshold: 3 
+          # livenessProbe:
+          #   exec:
+          #     command:
+          #       - /bin/sh
+          #       - -c
+          #       - python /code/server/prod-worker-liveness.py
+          #   initialDelaySeconds: 20
+          #   periodSeconds: 10
+          #   timeoutSeconds: 10
+          #   failureThreshold: 3 
