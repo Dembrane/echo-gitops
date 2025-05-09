@@ -182,18 +182,15 @@ process_batch() {
 if [ "$OPERATION" = "list" ]; then
     echo "Keys in $SECRETS_FILE:"
     if [ "$SHOW_VALUES" = true ]; then
-        echo "------------------------------------"
-        echo "KEY                     | VALUE"
-        echo "------------------------------------"
+        echo "# .env format for $ENVIRONMENT environment"
+        echo "# Generated from $SECRETS_FILE on $(date)"
+        echo ""
         for key in $(get_keys); do
             value=$(get_plaintext_value "$key")
-            # Truncate value if too long
-            if [ ${#value} -gt 50 ]; then
-                value="${value:0:47}..."
-            fi
-            printf "%-24s | %s\n" "$key" "$value"
+            # Escape any double quotes in the value
+            value=$(echo "$value" | sed 's/"/\\"/g')
+            echo "$key=\"$value\""
         done
-        echo "------------------------------------"
     else
         get_keys
     fi

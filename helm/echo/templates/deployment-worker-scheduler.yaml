@@ -1,39 +1,42 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: echo-api
+  name: echo-worker-scheduler
   labels:
     app: echo
-    component: api
+    component: worker-scheduler
 spec:
-  replicas: {{ .Values.apiServer.replicaCount }}
+  replicas: {{ .Values.workerScheduler.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
   selector:
     matchLabels:
       app: echo
-      component: api
+      component: worker-scheduler
   template:
     metadata:
       labels:
         app: echo
-        component: api
+        component: worker-scheduler
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8000"
     spec:
+      terminationGracePeriodSeconds: 120
       imagePullSecrets:
         - name: do-registry-secret
       containers:
-        - name: api-server
-          image: {{ printf "%s/%s:%s" .Values.global.registry .Values.apiServer.image.repository .Values.global.imageTag | quote }}
+        - name: worker-scheduler
+          image: {{ printf "%s/%s:%s" .Values.global.registry .Values.workerScheduler.image.repository .Values.global.imageTag | quote }}
           imagePullPolicy: Always
           command:
             - '/bin/sh'
-            - '/code/server/prod.sh'
-          ports:
-            - containerPort: {{ .Values.apiServer.service.port }}
-              name: http
-
+            - '/code/server/prod-scheduler.py'
           env:
+            # Copying environment variables from worker-cpu deployment, review if all are necessary for scheduler
             - name: ENABLE_CHAT_AUTO_SELECT
               value: {{ .Values.apiServer.env.ENABLE_CHAT_AUTO_SELECT | quote }}
 
@@ -153,7 +156,6 @@ spec:
                   name: echo-backend-secrets
                   key: LIGHTRAG_LITELLM_INFERENCE_API_KEY
 
-            # LightRAG LiteLLM Embedding Configuration
             - name: LIGHTRAG_LITELLM_EMBEDDING_API_VERSION
               valueFrom:
                 secretKeyRef:
@@ -226,12 +228,17 @@ spec:
                   name: echo-backend-secrets
                   key: LIGHTRAG_LITELLM_AUDIOMODEL_MODEL
 
-            # LightRAG LiteLLM Configuration
             - name: LIGHTRAG_LITELLM_API_BASE
               valueFrom:
                 secretKeyRef:
                   name: echo-backend-secrets
                   key: LIGHTRAG_LITELLM_API_BASE
+
+            - name: LIGHTRAG_LITELLM_API_VERSION
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LIGHTRAG_LITELLM_API_VERSION
 
             - name: LIGHTRAG_LITELLM_API_KEY
               valueFrom:
@@ -266,8 +273,32 @@ spec:
 
           resources:
             requests:
-              cpu: {{ .Values.apiServer.resources.requests.cpu | quote }}
-              memory: {{ .Values.apiServer.resources.requests.memory | quote }}
+              cpu: {{ .Values.workerScheduler.resources.requests.cpu | quote }}
+              memory: {{ .Values.workerScheduler.resources.requests.memory | quote }}
             limits:
-              cpu: {{ .Values.apiServer.resources.limits.cpu | quote }}
-              memory: {{ .Values.apiServer.resources.limits.memory | quote }}
+              cpu: {{ .Values.workerScheduler.resources.limits.cpu | quote }}
+              memory: {{ .Values.workerScheduler.resources.limits.memory | quote }} 
+
+          # Assuming the scheduler script might have similar readiness/liveness checks
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - python /code/server/prod-worker-readiness.py
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - python /code/server/prod-worker-liveness.py
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 3 

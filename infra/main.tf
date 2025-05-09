@@ -1,3 +1,5 @@
+# Instructions:
+
 # before running terraform apply, run:
 # terraform workspace show 
 # for dev: terraform workspace select default
@@ -11,6 +13,51 @@
 # terraform workspace select prod
 # terraform plan -var-file=./terraform-prod.tfvars
 # terraform apply -var-file=./terraform-prod.tfvars
+
+# TODO: automate this later
+
+# doctl k8s c list
+# doctl k8s c kubeconfig save dbr-echo-dev-k8s-cluster
+# doctl k8s c kubeconfig save dbr-echo-prod-k8s-cluster
+
+
+/**
+
+secrets:
+
+kubeseal --context=do-ams3-dbr-echo-dev-k8s-cluster \
+  --controller-namespace=kube-system \
+  --controller-name=sealed-secrets \
+  < dev.yaml > echo-backend-secrets-dev.yaml
+
+kubectl apply -f echo-backend-secrets-dev.yaml
+
+kubeseal --context=do-ams3-dbr-echo-prod-k8s-cluster \
+  --controller-namespace=kube-system \
+  --controller-name=sealed-secrets \
+  < prod.yaml > echo-backend-secrets-prod.yaml
+
+kubectl apply -f echo-backend-secrets-prod.yaml
+
+*/
+
+# argo:
+
+# kubectl apply -f echo-dev.yaml
+# kubectl apply -f echo-prod.yaml
+
+# kubectl port-forward svc/argocd-server -n argocd 8080:443
+# username: admin
+# password: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+# settings -> repositories -> add repository -> https://github.com/dembrane/echo-gitops.git 
+
+# ingress: 
+
+# ingress is already through do-loadbalancer therefore, grab the ip from the console and point your domain to it
+
+# vercel:
+
+# manually and add the environment variables
 
 locals {
   # If workspace is default, use "dev" as the environment name
@@ -149,42 +196,6 @@ provider "kubectl" {
   load_config_file       = false
 }
 
-# TODO: automate this later
-
-# doctl k8s c list
-# doctl k8s c kubeconfig save dbr-echo-dev-k8s-cluster
-# doctl k8s c kubeconfig save dbr-echo-prod-k8s-cluster
-
-
-/**
-secrets:
-
-kubeseal --context=do-ams3-dbr-echo-dev-k8s-cluster \
-  --controller-namespace=kube-system \
-  --controller-name=sealed-secrets \
-  < dev.yaml > echo-backend-secrets-dev.yaml
-
-kubectl apply -f echo-backend-secrets-dev.yaml
-
-kubeseal --context=do-ams3-dbr-echo-prod-k8s-cluster \
-  --controller-namespace=kube-system \
-  --controller-name=sealed-secrets \
-  < prod.yaml > echo-backend-secrets-prod.yaml
-
-kubectl apply -f echo-backend-secrets-prod.yaml
-
-*/
-
-# argo:
-
-# kubectl apply -f echo-dev.yaml
-# kubectl apply -f echo-prod.yaml
-
-# kubectl port-forward svc/argocd-server -n argocd 8080:443
-# username: admin
-# password: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
-# settings -> repositories -> add repository -> https://github.com/dembrane/echo-gitops.git 
-
 
 resource "helm_release" "sealed_secrets" {
   name             = "sealed-secrets"
@@ -219,11 +230,6 @@ resource "helm_release" "ingress_nginx" {
     value = "LoadBalancer"
   }
 
-  # set {
-  #   name  = "controller.service.loadBalancerIP" # Explicitly set the loadBalancerIP
-  #   value = digitalocean_reserved_ip.echo_lb_ip.ip_address
-  # }
-
   set {
     name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/do-loadbalancer-name"
     value = "echo-${local.env}-ingress-lb"
@@ -239,12 +245,6 @@ resource "helm_release" "ingress_nginx" {
     name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/do-loadbalancer-floating-ip"
     value = "true"
   }
-
-  # Assign the reserved IP to the load balancer
-  # set {
-  #   name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/do-loadbalancer-floating-ip-assignment"
-  #   value = digitalocean_reserved_ip.echo_lb_ip.ip_address
-  # }
 
   # Important: Use TLS passthrough instead of DO certificate
   set {

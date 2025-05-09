@@ -66,8 +66,8 @@ apiServer:
 worker:
   # the deployment uses the same tags as the api server
   # only the command is different
-  replicaCount: 2
-  maxReplicaCount: 2
+  replicaCount: 1
+  maxReplicaCount: 1
   image:
     repository: "dbr-echo-server"
   resources:
@@ -79,7 +79,7 @@ worker:
       memory: "1536Mi"
 
 workerCpu:
-  replicaCount: 2
+  replicaCount: 1
   maxReplicaCount: 2
   image:
     repository: "dbr-echo-server"
@@ -90,6 +90,19 @@ workerCpu:
     limits:
       cpu: "2"
       memory: "2Gi"
+  
+workerScheduler:
+  replicaCount: 1
+  maxReplicaCount: 1
+  image:
+    repository: "dbr-echo-server"
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "800m"
+      memory: "1Gi"
 
 neo4j:
   image:
