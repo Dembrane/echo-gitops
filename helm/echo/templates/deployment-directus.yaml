@@ -153,6 +153,14 @@ spec:
                 secretKeyRef:
                   name: echo-backend-secrets
                   key: DIRECTUS_EMAIL_SMTP_PASSWORD
+            
+            # why this is done? contact @ussama
+            - name: EMAIL_SMTP_SECURE
+              value: "false"
+            
+            # why this is done? contact @ussama
+            - name: EMAIL_SMTP_IGNORE_TLS
+              value: "false"
 
             - name: USER_REGISTER_URL_ALLOW_LIST
               value: {{ .Values.directus.env.USER_REGISTER_URL_ALLOW_LIST | quote }}
