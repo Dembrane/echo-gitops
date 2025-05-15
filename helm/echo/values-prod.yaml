@@ -75,8 +75,8 @@ worker:
       cpu: "500m"
       memory: "800Mi"
     limits:
-      cpu: "1"
-      memory: "1536Mi"
+      cpu: "2"
+      memory: "2Gi"
 
 workerCpu:
   replicaCount: 3
@@ -88,8 +88,8 @@ workerCpu:
       cpu: "1"
       memory: "1Gi"
     limits:
-      cpu: "2"
-      memory: "2Gi"
+      cpu: "4"
+      memory: "4Gi"
 
 workerScheduler:
   replicaCount: 1
