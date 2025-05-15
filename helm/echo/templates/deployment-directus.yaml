@@ -27,12 +27,6 @@ spec:
         - name: directus
           image: {{ printf "%s/%s:%s" .Values.global.registry .Values.directus.image.repository .Values.global.imageTag | quote }}
           imagePullPolicy: Always
-          command:
-            - '/bin/sh'
-            - '-c'
-            - |
-              npm run schema apply system-collections; 
-              npx directus start;
           ports:
             - containerPort: {{ .Values.directus.service.port }}
               name: http
