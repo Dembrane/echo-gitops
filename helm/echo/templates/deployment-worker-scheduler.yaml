@@ -271,6 +271,81 @@ spec:
                   name: echo-backend-secrets
                   key: LITELLM_WHISPER_URL
 
+            # LARGE LiteLLM Configuration
+            - name: LARGE_LITELLM_API_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LARGE_LITELLM_API_BASE
+            
+            - name: LARGE_LITELLM_API_VERSION
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LARGE_LITELLM_API_VERSION
+
+            - name: LARGE_LITELLM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LARGE_LITELLM_API_KEY
+
+            - name: LARGE_LITELLM_MODEL
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: LARGE_LITELLM_MODEL
+
+            # MEDIUM LiteLLM Configuration
+            - name: MEDIUM_LITELLM_API_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: MEDIUM_LITELLM_API_BASE
+            
+            - name: MEDIUM_LITELLM_API_VERSION
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: MEDIUM_LITELLM_API_VERSION
+
+            - name: MEDIUM_LITELLM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: MEDIUM_LITELLM_API_KEY
+
+            - name: MEDIUM_LITELLM_MODEL
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: MEDIUM_LITELLM_MODEL
+
+            # SMALL LiteLLM Configuration
+            - name: SMALL_LITELLM_API_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: SMALL_LITELLM_API_BASE
+            
+            - name: SMALL_LITELLM_API_VERSION
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: SMALL_LITELLM_API_VERSION
+
+            - name: SMALL_LITELLM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: SMALL_LITELLM_API_KEY
+
+            - name: SMALL_LITELLM_MODEL
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: SMALL_LITELLM_MODEL
+
           resources:
             requests:
               cpu: {{ .Values.workerScheduler.resources.requests.cpu | quote }}
