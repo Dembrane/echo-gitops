@@ -4,7 +4,7 @@ global:
 
 directus:
   replicaCount: 2
-  maxReplicaCount: 3
+  maxReplicaCount: 2
   image:
     repository: "dbr-echo-directus"
   service:
@@ -14,32 +14,19 @@ directus:
       cpu: "500m"
       memory: "512Mi"
     limits:
-      cpu: "900m"
-      memory: "1Gi"
+      cpu: "1"
+      memory: "1536Mi"
   env:
     PUBLIC_URL: "https://directus.dembrane.com"
-    # ADMIN_PASSWORD: 
-    # ADMIN_TOKEN:
-    # DB_CONNECTION_STRING:
-    # REDIS:
     CORS_ORIGIN: "https://dashboard.dembrane.com,https://portal.dembrane.com"
     SESSION_COOKIE_NAME: "dembrane_session_token"
     SESSION_COOKIE_DOMAIN: "dembrane.com"
-    # EMAIL_FROM
-    # EMAIL_SMTP_HOST
-    # EMAIL_SMTP_PORT
-    # EMAIL_SMTP_USER
-    # EMAIL_SMTP_PASSWORD
     USER_REGISTER_URL_ALLOW_LIST: "https://dashboard.dembrane.com/verify-email"
     PASSWORD_RESET_URL_ALLOW_LIST: "https://dashboard.dembrane.com/password-reset"
     USER_INVITE_URL_ALLOW_LIST: "https://dashboard.dembrane.com/invite"
-    # AUTH_GOOGLE_CLIENT_ID
-    # AUTH_GOOGLE_CLIENT_SECRET
-    AUTH_GOOGLE_ALLOW_PUBLIC_REGISTRATION: "true"
+    AUTH_GOOGLE_ALLOW_PUBLIC_REGISTRATION: "false"
     AUTH_GOOGLE_DEFAULT_ROLE_ID: 2446660a-ab6c-4801-ad69-5711030cba83
     AUTH_GOOGLE_REDIRECT_ALLOW_LIST: "https://dashboard.dembrane.com/en-US/projects,https://dashboard.dembrane.com/nl-NL/projects,https://dashboard.dembrane.com/es-ES/projects,https://dashboard.dembrane.com/fr-FR/projects,https://dashboard.dembrane.com/de-DE/projects"
-    # STORAGE_S3_KEY
-    # STORAGE_S3_SECRET
     # dummy for compat of DO with S3
     STORAGE_S3_REGION: "us-east-1"
     STORAGE_S3_ENDPOINT: "https://ams3.digitaloceanspaces.com"
@@ -47,47 +34,31 @@ directus:
 
 apiServer:
   replicaCount: 2
-  maxReplicaCount: 4
+  maxReplicaCount: 2
   image:
     repository: "dbr-echo-server"
   service:
     port: 8000
   resources:
     requests:
-      cpu: "300m"
-      memory: "800Mi"
+      cpu: "500m"
+      memory: "512Mi"
     limits:
-      cpu: "800m"
+      cpu: "1"
       memory: "1Gi"
   env:
-    DEBUG_MODE: "1"
-    DIRECTUS_BASE_URL: "https://directus.dembrane.com"
-    # DIRECTUS_TOKEN:
-    # DIRECTUS_SECRET:
-    ADMIN_BASE_URL: "https://dashboard.dembrane.com"
-    PARTICIPANT_BASE_URL: "https://portal.dembrane.com"
-    # OPENAI_API_KEY:
-    # ANTHROPIC_API_KEY:
-    # REDIS_URL:
-    # DATABASE_URL:
-    # PostgreSQL configuration (extracted from DATABASE_URL)
-    # Suggested to obtain from DATABASE_URL
-    POSTGRES_HOST: ""
-    POSTGRES_PORT: ""
-    POSTGRES_USER: ""
-    POSTGRES_DATABASE: ""
-    POSTGRES_PASSWORD: ""
-    # Neo4j configuration
-    NEO4J_URI: "bolt://echo-neo4j:7687"
-    NEO4J_USERNAME: "neo4j"
-    # NEO4J_PASSWORD in secrets
+    DEBUG_MODE: "0"
+    ENABLE_CHAT_AUTO_SELECT: "1"
+    ENABLE_AUDIO_LIGHTRAG_INPUT: "1"
     DISABLE_CORS: "0"
     DISABLE_REDACTION: "1"
     DISABLE_SENTRY: "0"
-    SERVE_API_DOCS: "0"
-    # S3_ACCESS_KEY
-    # S3_SECRET_KEY
-    # dummy for compat of DO with S3
+    SERVE_API_DOCS: "1"
+    DIRECTUS_BASE_URL: "https://directus.dembrane.com"
+    ADMIN_BASE_URL: "https://dashboard.dembrane.com"
+    PARTICIPANT_BASE_URL: "https://portal.dembrane.com"
+    NEO4J_URI: "bolt://echo-neo4j:7687"
+    NEO4J_USERNAME: "neo4j"
     STORAGE_S3_REGION: "us-east-1"
     STORAGE_S3_ENDPOINT: "https://ams3.digitaloceanspaces.com"
     STORAGE_S3_BUCKET: "dbr-echo-prod-uploads"
@@ -95,8 +66,8 @@ apiServer:
 worker:
   # the deployment uses the same tags as the api server
   # only the command is different
-  replicaCount: 4
-  maxReplicaCount: 4
+  replicaCount: 3
+  maxReplicaCount: 3
   image:
     repository: "dbr-echo-server"
   resources:
@@ -104,8 +75,8 @@ worker:
       cpu: "500m"
       memory: "800Mi"
     limits:
-      cpu: "1000m"
-      memory: "1.5Gi"
+      cpu: "1"
+      memory: "1536Mi"
 
 workerCpu:
   replicaCount: 3
@@ -114,11 +85,24 @@ workerCpu:
     repository: "dbr-echo-server"
   resources:
     requests:
-      cpu: "1000m"
+      cpu: "1"
       memory: "1Gi"
     limits:
-      cpu: "2000m"
+      cpu: "2"
       memory: "2Gi"
+
+workerScheduler:
+  replicaCount: 1
+  maxReplicaCount: 1
+  image:
+    repository: "dbr-echo-server"
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "800m"
+      memory: "1Gi"
 
 neo4j:
   image:
@@ -132,11 +116,11 @@ neo4j:
     heapSize: "1G"
   resources:
     requests:
-      cpu: "1000m"
-      memory: "2Gi"
+      cpu: "1"
+      memory: "1Gi"
     limits:
-      cpu: "2000m"
-      memory: "4Gi"
+      cpu: "2"
+      memory: "2Gi"
 
 ingress:
   enabled: true
@@ -154,13 +138,6 @@ ingress:
       hosts:
         - "directus.dembrane.com"
         - "api.dembrane.com"
-
-monitoring:
-  grafana:
-    adminPassword: "admin"  # Change this in production
-  alertmanager:
-    slackWebhook: "https://hooks.slack.com/services/REPLACE_WITH_YOUR_SLACK_WEBHOOK"
-    slackChannel: "#alerts"
 
 storage:
   storageClassName: "do-block-storage"

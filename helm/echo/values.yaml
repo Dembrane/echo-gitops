@@ -24,10 +24,10 @@ directus:
     USER_REGISTER_URL_ALLOW_LIST: "https://dashboard.echo-next.dembrane.com/verify-email,http://localhost:5173/verify-email"
     PASSWORD_RESET_URL_ALLOW_LIST: "https://dashboard.echo-next.dembrane.com/password-reset,http://localhost:5173/password-reset"
     USER_INVITE_URL_ALLOW_LIST: "https://dashboard.echo-next.dembrane.com/invite,http://localhost:5173/invite"
-    AUTH_GOOGLE_ALLOW_PUBLIC_REGISTRATION: "true"
+    AUTH_GOOGLE_ALLOW_PUBLIC_REGISTRATION: "false"
     AUTH_GOOGLE_DEFAULT_ROLE_ID: 2446660a-ab6c-4801-ad69-5711030cba83
     AUTH_GOOGLE_REDIRECT_ALLOW_LIST: "https://dashboard.echo-next.dembrane.com/en-US/projects,https://dashboard.echo-next.dembrane.com/nl-NL/projects,https://dashboard.echo-next.dembrane.com/es-ES/projects,https://dashboard.echo-next.dembrane.com/fr-FR/projects,https://dashboard.echo-next.dembrane.com/de-DE/projects"
-    # dummy region for compat of digitalocean with S3 providers
+    # dummy for compat of DO with S3
     STORAGE_S3_REGION: "us-east-1"
     STORAGE_S3_ENDPOINT: "https://ams3.digitaloceanspaces.com"
     STORAGE_S3_BUCKET: "dbr-echo-dev-uploads"
