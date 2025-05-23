@@ -42,6 +42,9 @@ spec:
             - name: ENABLE_AUDIO_LIGHTRAG_INPUT
               value: {{ .Values.apiServer.env.ENABLE_AUDIO_LIGHTRAG_INPUT | quote }}
 
+            - name: ENABLE_RUNPOD_WHISPER_TRANSCRIPTION
+              value: {{ .Values.apiServer.env.ENABLE_RUNPOD_WHISPER_TRANSCRIPTION | quote }}
+
             - name: DEBUG_MODE
               value: {{ .Values.apiServer.env.DEBUG_MODE | quote }}
 
@@ -367,7 +370,40 @@ spec:
                 secretKeyRef:
                   name: echo-backend-secrets
                   key: LIGHTRAG_LITELLM_INFERENCE_API_VERSION
+
+# -----------------------------------
+
+            - name: RUNPOD_WHISPER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: RUNPOD_WHISPER_API_KEY
                   
+            - name: RUNPOD_WHISPER_MODEL
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: RUNPOD_WHISPER_MODEL
+      
+            - name: RUNPOD_WHISPER_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: RUNPOD_WHISPER_BASE_URL
+      
+            - name: RUNPOD_WHISPER_PRIORITY_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: RUNPOD_WHISPER_PRIORITY_BASE_URL
+     
+            - name: RUNPOD_WHISPER_MAX_REQUEST_THRESHOLD
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: RUNPOD_WHISPER_MAX_REQUEST_THRESHOLD
+
+# -----------------------------------
           resources:
             requests:
               cpu: {{ .Values.worker.resources.requests.cpu | quote }}
