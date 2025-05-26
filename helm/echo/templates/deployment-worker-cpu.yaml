@@ -399,10 +399,7 @@ spec:
                   key: RUNPOD_WHISPER_PRIORITY_BASE_URL
      
             - name: RUNPOD_WHISPER_MAX_REQUEST_THRESHOLD
-              valueFrom:
-                secretKeyRef:
-                  name: echo-backend-secrets
-                  key: RUNPOD_WHISPER_MAX_REQUEST_THRESHOLD
+              value: {{ .Values.apiServer.env.RUNPOD_WHISPER_MAX_REQUEST_THRESHOLD | quote }}
 
 # -----------------------------------
           resources:
