@@ -6,7 +6,7 @@ metadata:
     app: echo
     component: worker-scheduler
 spec:
-  replicas: {{ .Values.workerScheduler.replicaCount }}
+  replicas: { { .Values.workerScheduler.replicaCount } }
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -30,27 +30,41 @@ spec:
         - name: do-registry-secret
       containers:
         - name: worker-scheduler
-          image: {{ printf "%s/%s:%s" .Values.global.registry .Values.workerScheduler.image.repository .Values.global.imageTag | quote }}
+          image:
+            {
+              {
+                printf "%s/%s:%s" .Values.global.registry .Values.workerScheduler.image.repository .Values.global.imageTag | quote,
+              },
+            }
           imagePullPolicy: Always
           command:
-            - '/bin/sh'
-            - '/code/server/prod-scheduler.sh'
+            - "/bin/sh"
+            - "/code/server/prod-scheduler.sh"
           env:
             # Copying environment variables from worker-cpu deployment, review if all are necessary for scheduler
             - name: ENABLE_CHAT_AUTO_SELECT
-              value: {{ .Values.apiServer.env.ENABLE_CHAT_AUTO_SELECT | quote }}
+              value:
+                { { .Values.apiServer.env.ENABLE_CHAT_AUTO_SELECT | quote } }
 
             - name: ENABLE_AUDIO_LIGHTRAG_INPUT
-              value: {{ .Values.apiServer.env.ENABLE_AUDIO_LIGHTRAG_INPUT | quote }}
+              value:
+                {
+                  { .Values.apiServer.env.ENABLE_AUDIO_LIGHTRAG_INPUT | quote },
+                }
 
             - name: ENABLE_RUNPOD_WHISPER_TRANSCRIPTION
-              value: {{ .Values.apiServer.env.ENABLE_RUNPOD_WHISPER_TRANSCRIPTION | quote }}
+              value:
+                {
+                  {
+                    .Values.apiServer.env.ENABLE_RUNPOD_WHISPER_TRANSCRIPTION | quote,
+                  },
+                }
 
             - name: DEBUG_MODE
-              value: {{ .Values.apiServer.env.DEBUG_MODE | quote }}
+              value: { { .Values.apiServer.env.DEBUG_MODE | quote } }
 
             - name: DIRECTUS_BASE_URL
-              value: {{ .Values.apiServer.env.DIRECTUS_BASE_URL | quote }}
+              value: { { .Values.apiServer.env.DIRECTUS_BASE_URL | quote } }
 
             - name: DIRECTUS_TOKEN
               valueFrom:
@@ -65,16 +79,16 @@ spec:
                   key: DIRECTUS_SECRET
 
             - name: DIRECTUS_SESSION_COOKIE_NAME
-              value: {{ .Values.directus.env.SESSION_COOKIE_NAME | quote }}
+              value: { { .Values.directus.env.SESSION_COOKIE_NAME | quote } }
 
             - name: ADMIN_BASE_URL
-              value: {{ .Values.apiServer.env.ADMIN_BASE_URL | quote }}
+              value: { { .Values.apiServer.env.ADMIN_BASE_URL | quote } }
 
             - name: PARTICIPANT_BASE_URL
-              value: {{ .Values.apiServer.env.PARTICIPANT_BASE_URL | quote }}
+              value: { { .Values.apiServer.env.PARTICIPANT_BASE_URL | quote } }
 
             - name: BUILD_VERSION
-              value: {{ .Values.apiServer.env.BUILD_VERSION | quote }}
+              value: { { .Values.apiServer.env.BUILD_VERSION | quote } }
 
             - name: OPENAI_API_KEY
               valueFrom:
@@ -99,41 +113,51 @@ spec:
                 secretKeyRef:
                   name: echo-backend-secrets
                   key: DATABASE_URL
-            
+
             # Neo4j Configuration
             - name: NEO4J_URI
-              value: {{ .Values.apiServer.env.NEO4J_URI | default "bolt://echo-neo4j:7687" | quote }}
-            
+              value:
+                {
+                  {
+                    .Values.apiServer.env.NEO4J_URI | default "bolt://echo-neo4j:7687" | quote,
+                  },
+                }
+
             - name: NEO4J_USERNAME
-              value: {{ .Values.apiServer.env.NEO4J_USERNAME | default "neo4j" | quote }}
-            
+              value:
+                {
+                  {
+                    .Values.apiServer.env.NEO4J_USERNAME | default "neo4j" | quote,
+                  },
+                }
+
             - name: NEO4J_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: echo-backend-secrets
                   key: NEO4J_PASSWORD
-            
+
             - name: DISABLE_CORS
-              value: {{ .Values.apiServer.env.DISABLE_CORS | quote }}
+              value: { { .Values.apiServer.env.DISABLE_CORS | quote } }
 
             - name: DISABLE_REDACTION
-              value: {{ .Values.apiServer.env.DISABLE_REDACTION | quote }}
+              value: { { .Values.apiServer.env.DISABLE_REDACTION | quote } }
 
             - name: DISABLE_SENTRY
-              value: {{ .Values.apiServer.env.DISABLE_SENTRY | quote }}
+              value: { { .Values.apiServer.env.DISABLE_SENTRY | quote } }
 
             - name: SERVE_API_DOCS
-              value: {{ .Values.apiServer.env.SERVE_API_DOCS | quote }}
+              value: { { .Values.apiServer.env.SERVE_API_DOCS | quote } }
 
             - name: STORAGE_S3_REGION
-              value: {{ .Values.apiServer.env.STORAGE_S3_REGION | quote }}
+              value: { { .Values.apiServer.env.STORAGE_S3_REGION | quote } }
 
             - name: STORAGE_S3_ENDPOINT
-              value: {{ .Values.apiServer.env.STORAGE_S3_ENDPOINT | quote }}
-            
+              value: { { .Values.apiServer.env.STORAGE_S3_ENDPOINT | quote } }
+
             - name: STORAGE_S3_BUCKET
-              value: {{ .Values.apiServer.env.STORAGE_S3_BUCKET | quote }}
-            
+              value: { { .Values.apiServer.env.STORAGE_S3_BUCKET | quote } }
+
             - name: STORAGE_S3_KEY
               valueFrom:
                 secretKeyRef:
@@ -145,14 +169,14 @@ spec:
                 secretKeyRef:
                   name: echo-backend-secrets
                   key: S3_SECRET_KEY
-                  
+
             # LightRAG LiteLLM Configuration
             - name: LIGHTRAG_LITELLM_INFERENCE_MODEL
               valueFrom:
                 secretKeyRef:
                   name: echo-backend-secrets
                   key: LIGHTRAG_LITELLM_INFERENCE_MODEL
-            
+
             - name: LIGHTRAG_LITELLM_INFERENCE_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -254,7 +278,7 @@ spec:
                 secretKeyRef:
                   name: echo-backend-secrets
                   key: LIGHTRAG_LITELLM_MODEL
-                  
+
             # LightRAG LiteLLM Whisper Configuration
             - name: LITELLM_WHISPER_API_KEY
               valueFrom:
@@ -280,7 +304,7 @@ spec:
                 secretKeyRef:
                   name: echo-backend-secrets
                   key: LARGE_LITELLM_API_BASE
-            
+
             - name: LARGE_LITELLM_API_VERSION
               valueFrom:
                 secretKeyRef:
@@ -305,7 +329,7 @@ spec:
                 secretKeyRef:
                   name: echo-backend-secrets
                   key: MEDIUM_LITELLM_API_BASE
-            
+
             - name: MEDIUM_LITELLM_API_VERSION
               valueFrom:
                 secretKeyRef:
@@ -330,7 +354,7 @@ spec:
                 secretKeyRef:
                   name: echo-backend-secrets
                   key: SMALL_LITELLM_API_BASE
-            
+
             - name: SMALL_LITELLM_API_VERSION
               valueFrom:
                 secretKeyRef:
@@ -354,62 +378,66 @@ spec:
                 secretKeyRef:
                   name: echo-backend-secrets
                   key: LIGHTRAG_LITELLM_INFERENCE_API_KEY
-            
+
             - name: LIGHTRAG_LITELLM_INFERENCE_API_BASE
               valueFrom:
                 secretKeyRef:
                   name: echo-backend-secrets
                   key: LIGHTRAG_LITELLM_INFERENCE_API_BASE
-                  
+
             - name: LIGHTRAG_LITELLM_INFERENCE_MODEL
               valueFrom:
                 secretKeyRef:
                   name: echo-backend-secrets
                   key: LIGHTRAG_LITELLM_INFERENCE_MODEL
-                  
+
             - name: LIGHTRAG_LITELLM_INFERENCE_API_VERSION
               valueFrom:
                 secretKeyRef:
                   name: echo-backend-secrets
                   key: LIGHTRAG_LITELLM_INFERENCE_API_VERSION
 
-# -----------------------------------
+            # -----------------------------------
 
             - name: RUNPOD_WHISPER_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: echo-backend-secrets
                   key: RUNPOD_WHISPER_API_KEY
-                  
-            - name: RUNPOD_WHISPER_MODEL
-              valueFrom:
-                secretKeyRef:
-                  name: echo-backend-secrets
-                  key: RUNPOD_WHISPER_MODEL
-      
+
             - name: RUNPOD_WHISPER_BASE_URL
               valueFrom:
                 secretKeyRef:
                   name: echo-backend-secrets
                   key: RUNPOD_WHISPER_BASE_URL
-      
+
             - name: RUNPOD_WHISPER_PRIORITY_BASE_URL
               valueFrom:
                 secretKeyRef:
                   name: echo-backend-secrets
                   key: RUNPOD_WHISPER_PRIORITY_BASE_URL
-     
-            - name: RUNPOD_WHISPER_MAX_REQUEST_THRESHOLD
-              value: {{ .Values.apiServer.env.RUNPOD_WHISPER_MAX_REQUEST_THRESHOLD | quote }}
 
-# -----------------------------------
+            - name: RUNPOD_WHISPER_MAX_REQUEST_THRESHOLD
+              value:
+                {
+                  {
+                    .Values.apiServer.env.RUNPOD_WHISPER_MAX_REQUEST_THRESHOLD | quote,
+                  },
+                }
+
+          # -----------------------------------
           resources:
             requests:
-              cpu: {{ .Values.workerScheduler.resources.requests.cpu | quote }}
-              memory: {{ .Values.workerScheduler.resources.requests.memory | quote }}
+              cpu:
+                { { .Values.workerScheduler.resources.requests.cpu | quote } }
+              memory:
+                {
+                  { .Values.workerScheduler.resources.requests.memory | quote },
+                }
             limits:
-              cpu: {{ .Values.workerScheduler.resources.limits.cpu | quote }}
-              memory: {{ .Values.workerScheduler.resources.limits.memory | quote }} 
+              cpu: { { .Values.workerScheduler.resources.limits.cpu | quote } }
+              memory:
+                { { .Values.workerScheduler.resources.limits.memory | quote } }
 
           # Assuming the scheduler script might have similar readiness/liveness checks
           # readinessProbe:
@@ -433,4 +461,4 @@ spec:
           #   initialDelaySeconds: 20
           #   periodSeconds: 10
           #   timeoutSeconds: 10
-          #   failureThreshold: 3 
+          #   failureThreshold: 3
