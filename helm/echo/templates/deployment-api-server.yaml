@@ -6,7 +6,7 @@ metadata:
     app: echo
     component: api
 spec:
-  replicas: { { .Values.apiServer.replicaCount } }
+  replicas: {{ .Values.apiServer.replicaCount }}
   selector:
     matchLabels:
       app: echo
@@ -24,44 +24,30 @@ spec:
         - name: do-registry-secret
       containers:
         - name: api-server
-          image:
-            {
-              {
-                printf "%s/%s:%s" .Values.global.registry .Values.apiServer.image.repository .Values.global.imageTag | quote,
-              },
-            }
+          image: {{ printf "%s/%s:%s" .Values.global.registry .Values.apiServer.image.repository .Values.global.imageTag | quote }}
           imagePullPolicy: Always
           command:
             - "/bin/sh"
             - "/code/server/prod.sh"
           ports:
-            - containerPort: { { .Values.apiServer.service.port } }
+            - containerPort: {{ .Values.apiServer.service.port }}
               name: http
 
           env:
             - name: ENABLE_CHAT_AUTO_SELECT
-              value:
-                { { .Values.apiServer.env.ENABLE_CHAT_AUTO_SELECT | quote } }
+              value: {{ .Values.apiServer.env.ENABLE_CHAT_AUTO_SELECT | quote }}
 
             - name: ENABLE_AUDIO_LIGHTRAG_INPUT
-              value:
-                {
-                  { .Values.apiServer.env.ENABLE_AUDIO_LIGHTRAG_INPUT | quote },
-                }
+              value: {{ .Values.apiServer.env.ENABLE_AUDIO_LIGHTRAG_INPUT | quote }}
 
             - name: ENABLE_RUNPOD_WHISPER_TRANSCRIPTION
-              value:
-                {
-                  {
-                    .Values.apiServer.env.ENABLE_RUNPOD_WHISPER_TRANSCRIPTION | quote,
-                  },
-                }
+              value: {{ .Values.apiServer.env.ENABLE_RUNPOD_WHISPER_TRANSCRIPTION | quote }}
 
             - name: DEBUG_MODE
-              value: { { .Values.apiServer.env.DEBUG_MODE | quote } }
+              value: {{ .Values.apiServer.env.DEBUG_MODE | quote }}
 
             - name: DIRECTUS_BASE_URL
-              value: { { .Values.apiServer.env.DIRECTUS_BASE_URL | quote } }
+              value: {{ .Values.apiServer.env.DIRECTUS_BASE_URL | quote }}
 
             - name: DIRECTUS_TOKEN
               valueFrom:
@@ -76,16 +62,16 @@ spec:
                   key: DIRECTUS_SECRET
 
             - name: DIRECTUS_SESSION_COOKIE_NAME
-              value: { { .Values.directus.env.SESSION_COOKIE_NAME | quote } }
+              value: {{ .Values.directus.env.SESSION_COOKIE_NAME | quote }}
 
             - name: ADMIN_BASE_URL
-              value: { { .Values.apiServer.env.ADMIN_BASE_URL | quote } }
+              value: {{ .Values.apiServer.env.ADMIN_BASE_URL | quote }}
 
             - name: PARTICIPANT_BASE_URL
-              value: { { .Values.apiServer.env.PARTICIPANT_BASE_URL | quote } }
+              value: {{ .Values.apiServer.env.PARTICIPANT_BASE_URL | quote }}
 
             - name: BUILD_VERSION
-              value: { { .Values.apiServer.env.BUILD_VERSION | quote } }
+              value: {{ .Values.apiServer.env.BUILD_VERSION | quote }}
 
             - name: OPENAI_API_KEY
               valueFrom:
@@ -114,19 +100,11 @@ spec:
             # Neo4j Configuration
             - name: NEO4J_URI
               value:
-                {
-                  {
-                    .Values.apiServer.env.NEO4J_URI | default "bolt://echo-neo4j:7687" | quote,
-                  },
-                }
+                {{ .Values.apiServer.env.NEO4J_URI | default "bolt://echo-neo4j:7687" | quote }}
 
             - name: NEO4J_USERNAME
               value:
-                {
-                  {
-                    .Values.apiServer.env.NEO4J_USERNAME | default "neo4j" | quote,
-                  },
-                }
+                {{ .Values.apiServer.env.NEO4J_USERNAME | default "neo4j" | quote }}
 
             - name: NEO4J_PASSWORD
               valueFrom:
@@ -135,25 +113,25 @@ spec:
                   key: NEO4J_PASSWORD
 
             - name: DISABLE_CORS
-              value: { { .Values.apiServer.env.DISABLE_CORS | quote } }
+              value: {{ .Values.apiServer.env.DISABLE_CORS | quote }}
 
             - name: DISABLE_REDACTION
-              value: { { .Values.apiServer.env.DISABLE_REDACTION | quote } }
+              value: {{ .Values.apiServer.env.DISABLE_REDACTION | quote }}
 
             - name: DISABLE_SENTRY
-              value: { { .Values.apiServer.env.DISABLE_SENTRY | quote } }
+              value: {{ .Values.apiServer.env.DISABLE_SENTRY | quote }}
 
             - name: SERVE_API_DOCS
-              value: { { .Values.apiServer.env.SERVE_API_DOCS | quote } }
+              value: {{ .Values.apiServer.env.SERVE_API_DOCS | quote }}
 
             - name: STORAGE_S3_REGION
-              value: { { .Values.apiServer.env.STORAGE_S3_REGION | quote } }
+              value: {{ .Values.apiServer.env.STORAGE_S3_REGION | quote }}
 
             - name: STORAGE_S3_ENDPOINT
-              value: { { .Values.apiServer.env.STORAGE_S3_ENDPOINT | quote } }
+              value: {{ .Values.apiServer.env.STORAGE_S3_ENDPOINT | quote }}
 
             - name: STORAGE_S3_BUCKET
-              value: { { .Values.apiServer.env.STORAGE_S3_BUCKET | quote } }
+              value: {{ .Values.apiServer.env.STORAGE_S3_BUCKET | quote }}
 
             - name: STORAGE_S3_KEY
               valueFrom:
@@ -413,17 +391,12 @@ spec:
 
             - name: RUNPOD_WHISPER_MAX_REQUEST_THRESHOLD
               value:
-                {
-                  {
-                    .Values.apiServer.env.RUNPOD_WHISPER_MAX_REQUEST_THRESHOLD | quote,
-                  },
-                }
+                {{ .Values.apiServer.env.RUNPOD_WHISPER_MAX_REQUEST_THRESHOLD | quote }}
 
           resources:
             requests:
-              cpu: { { .Values.apiServer.resources.requests.cpu | quote } }
-              memory:
-                { { .Values.apiServer.resources.requests.memory | quote } }
+              cpu: {{ .Values.apiServer.resources.requests.cpu | quote }}
+              memory: {{ .Values.apiServer.resources.requests.memory | quote }}
             limits:
-              cpu: { { .Values.apiServer.resources.limits.cpu | quote } }
-              memory: { { .Values.apiServer.resources.limits.memory | quote } }
+              cpu: {{ .Values.apiServer.resources.limits.cpu | quote }}
+              memory: {{ .Values.apiServer.resources.limits.memory | quote }}
