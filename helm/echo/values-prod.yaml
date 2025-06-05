@@ -2,6 +2,36 @@ global:
   imageTag: "f82612c6f034397cf24e0ad8d3a6e53241169126"
   registry: "registry.digitalocean.com/dbr-cr"
 
+# Common configuration shared across services - Production overrides
+common:
+  env:
+    # Core application config
+    DEBUG_MODE: "0"
+    DIRECTUS_BASE_URL: "https://directus.dembrane.com"
+    ADMIN_BASE_URL: "https://dashboard.dembrane.com"
+    PARTICIPANT_BASE_URL: "https://portal.dembrane.com"
+    API_BASE_URL: "https://api.dembrane.com/api"
+    NEO4J_URI: "bolt://echo-neo4j:7687"
+    NEO4J_USERNAME: "neo4j"
+    DISABLE_CORS: "0"
+    DISABLE_REDACTION: "1"
+    DISABLE_SENTRY: "0"
+    SERVE_API_DOCS: "1"
+    
+    # Feature flags
+    ENABLE_CHAT_AUTO_SELECT: "1"
+    ENABLE_AUDIO_LIGHTRAG_INPUT: "1"
+    ENABLE_RUNPOD_WHISPER_TRANSCRIPTION: "1"
+    RUNPOD_WHISPER_MAX_REQUEST_THRESHOLD: "30"
+    
+    # Storage config
+    STORAGE_S3_REGION: "us-east-1"
+    STORAGE_S3_ENDPOINT: "https://ams3.digitaloceanspaces.com"
+    STORAGE_S3_BUCKET: "dbr-echo-prod-uploads"
+    
+    # LiteLLM API Version (non-sensitive)
+    LIGHTRAG_LITELLM_API_VERSION: "2023-05-15"
+
 directus:
   replicaCount: 2
   maxReplicaCount: 2
@@ -27,10 +57,6 @@ directus:
     AUTH_GOOGLE_ALLOW_PUBLIC_REGISTRATION: "false"
     AUTH_GOOGLE_DEFAULT_ROLE_ID: 2446660a-ab6c-4801-ad69-5711030cba83
     AUTH_GOOGLE_REDIRECT_ALLOW_LIST: "https://dashboard.dembrane.com/en-US/projects,https://dashboard.dembrane.com/nl-NL/projects,https://dashboard.dembrane.com/es-ES/projects,https://dashboard.dembrane.com/fr-FR/projects,https://dashboard.dembrane.com/de-DE/projects"
-    # dummy for compat of DO with S3
-    STORAGE_S3_REGION: "us-east-1"
-    STORAGE_S3_ENDPOINT: "https://ams3.digitaloceanspaces.com"
-    STORAGE_S3_BUCKET: "dbr-echo-prod-uploads"
 
 apiServer:
   replicaCount: 2
@@ -46,26 +72,8 @@ apiServer:
     limits:
       cpu: "1"
       memory: "1Gi"
-  env:
-    DEBUG_MODE: "0"
-    ENABLE_CHAT_AUTO_SELECT: "1"
-    ENABLE_AUDIO_LIGHTRAG_INPUT: "1"
-    DISABLE_CORS: "0"
-    DISABLE_REDACTION: "1"
-    DISABLE_SENTRY: "0"
-    SERVE_API_DOCS: "1"
-    DIRECTUS_BASE_URL: "https://directus.dembrane.com"
-    ADMIN_BASE_URL: "https://dashboard.dembrane.com"
-    PARTICIPANT_BASE_URL: "https://portal.dembrane.com"
-    NEO4J_URI: "bolt://echo-neo4j:7687"
-    NEO4J_USERNAME: "neo4j"
-    STORAGE_S3_REGION: "us-east-1"
-    STORAGE_S3_ENDPOINT: "https://ams3.digitaloceanspaces.com"
-    STORAGE_S3_BUCKET: "dbr-echo-prod-uploads"
 
 worker:
-  # the deployment uses the same tags as the api server
-  # only the command is different
   replicaCount: 3
   maxReplicaCount: 3
   image:

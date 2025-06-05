@@ -229,13 +229,13 @@ spec:
                   key: S3_SECRET_KEY
             
             - name: STORAGE_S3_BUCKET
-              value: {{ .Values.directus.env.STORAGE_S3_BUCKET | quote }}
+              value: {{ .Values.common.env.STORAGE_S3_BUCKET | quote }}
             
             - name: STORAGE_S3_REGION
-              value: {{ .Values.directus.env.STORAGE_S3_REGION | quote }}
+              value: {{ .Values.common.env.STORAGE_S3_REGION | quote }}
             
             - name: STORAGE_S3_ENDPOINT
-              value: {{ .Values.directus.env.STORAGE_S3_ENDPOINT | quote }}
+              value: {{ .Values.common.env.STORAGE_S3_ENDPOINT | quote }}
             
             - name: DB_SSL_REJECT_UNAUTHORIZED
               value: "false"
@@ -248,10 +248,10 @@ spec:
               value: "ADMIN_BASE_URL,PARTICIPANT_BASE_URL"
             
             - name: ADMIN_BASE_URL
-              value: {{ .Values.apiServer.env.ADMIN_BASE_URL | quote }}
+              value: {{ .Values.common.env.ADMIN_BASE_URL | quote }}
             
             - name: PARTICIPANT_BASE_URL
-              value: {{ .Values.apiServer.env.PARTICIPANT_BASE_URL | quote }}
+              value: {{ .Values.common.env.PARTICIPANT_BASE_URL | quote }}
 
           resources:
             requests:
