@@ -6,7 +6,7 @@ global:
 common:
   env:
     # Core application config
-    DEBUG_MODE: "1"
+    DEBUG_MODE: "0"
     DIRECTUS_BASE_URL: "https://directus.echo-next.dembrane.com"
     ADMIN_BASE_URL: "https://dashboard.echo-next.dembrane.com"
     PARTICIPANT_BASE_URL: "https://portal.echo-next.dembrane.com"
@@ -22,7 +22,7 @@ common:
     ENABLE_CHAT_AUTO_SELECT: "1"
     ENABLE_AUDIO_LIGHTRAG_INPUT: "1"
     ENABLE_LITELLM_WHISPER_TRANSCRIPTION: "1"
-    ENABLE_ENGLISH_TRANSCRIPTION_WITH_LITELLM: "1"
+    ENABLE_ENGLISH_TRANSCRIPTION_WITH_LITELLM: "0"
     ENABLE_RUNPOD_WHISPER_TRANSCRIPTION: "1"
     RUNPOD_WHISPER_MAX_REQUEST_THRESHOLD: "30"
     ENABLE_RUNPOD_DIARIZATION: "1"
