@@ -142,9 +142,6 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/proxy-buffering: "off"
-    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "7200"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "7200"
   clusterIssuerName: "letsencrypt-prod"
   domain: "dembrane.com"
   hosts:

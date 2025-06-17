@@ -1,5 +1,5 @@
 global:
-  imageTag: "91abfcf6c6018c595f6db84909b909f0e28273e8"
+  imageTag: "0d9f0a27f3b567c3532a7dbb6210641878ad0bf8"
   registry: "registry.digitalocean.com/dbr-cr"
 
 # Common configuration shared across services
@@ -142,9 +142,6 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/proxy-buffering: "off"
-    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "7200"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "7200"
   clusterIssuerName: "letsencrypt-prod"
   domain: "echo-next.dembrane.com"
   hosts:
