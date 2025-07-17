@@ -14,7 +14,7 @@ spec:
         - values-prod.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: echo-prod
+    namespace: monitoring
   syncPolicy:
     syncOptions:
       - CreateNamespace=true 

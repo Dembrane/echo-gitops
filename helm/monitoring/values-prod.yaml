@@ -54,12 +54,12 @@ promtail:
       cpu: "400m"
       memory: "512Mi"
 
-# Ingress settings
+# Ingress settings - Disabled for port-forward access only
 ingress:
-  enabled: true
+  enabled: false
   className: "nginx"
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
   basicAuth:
-    enabled: true 
+    enabled: false 
