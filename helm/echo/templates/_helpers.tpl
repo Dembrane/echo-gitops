@@ -318,4 +318,14 @@ All secret-based environment variables
     secretKeyRef:
       name: echo-backend-secrets
       key: RUNPOD_WHISPER_PRIORITY_BASE_URL
+- name: RUNPOD_TOPIC_MODELER_URL
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: RUNPOD_TOPIC_MODELER_URL
+- name: RUNPOD_TOPIC_MODELER_API_KEY
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: RUNPOD_TOPIC_MODELER_API_KEY
 {{- end }}

@@ -25,19 +25,26 @@
 
 secrets:
 
+./secret-manager.sh dev list --show-values
+# add ur secrets .env style (key=value pairs) in secrets.txt
+./secret-manager.sh dev batch secrets.txt --dry-run
+./secret-manager.sh dev batch secrets.txt
+
 kubeseal --context=do-ams3-dbr-echo-dev-k8s-cluster \
   --controller-namespace=kube-system \
   --controller-name=sealed-secrets \
-  < dev.yaml > echo-backend-secrets-dev.yaml
+  < secrets/backend-secrets-dev.yaml > secrets/sealed-backend-secrets-dev.yaml
 
-kubectl apply -f echo-backend-secrets-dev.yaml
+kubectl --context=do-ams3-dbr-echo-dev-k8s-cluster \
+  apply -f secrets/sealed-backend-secrets-dev.yaml
 
 kubeseal --context=do-ams3-dbr-echo-prod-k8s-cluster \
   --controller-namespace=kube-system \
   --controller-name=sealed-secrets \
-  < prod.yaml > echo-backend-secrets-prod.yaml
+  < secrets/backend-secrets-prod.yaml > secrets/sealed-backend-secrets-prod.yaml
 
-kubectl apply -f echo-backend-secrets-prod.yaml
+kubectl --context=do-ams3-dbr-echo-prod-k8s-cluster \
+  apply -f secrets/sealed-backend-secrets-prod.yaml
 
 */
 
