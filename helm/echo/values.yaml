@@ -80,7 +80,7 @@ apiServer:
 
 worker:
   replicaCount: 1
-  maxReplicaCount: 1
+  maxReplicaCount: 3
   image:
     repository: "dbr-echo-server"
   resources:
