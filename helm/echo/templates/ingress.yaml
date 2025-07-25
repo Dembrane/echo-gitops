@@ -8,6 +8,11 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: "{{ .Values.ingress.className }}"
     nginx.ingress.kubernetes.io/proxy-body-size: "500m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/upstream-keepalive-connections: "50"
+    nginx.ingress.kubernetes.io/upstream-keepalive-timeout: "60"
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}

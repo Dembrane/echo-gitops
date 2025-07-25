@@ -1,0 +1,14 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: echo-api-pdb
+  labels:
+    app: echo
+    component: api
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: echo
+      component: api
+  unhealthyPodEvictionPolicy: AlwaysAllow 

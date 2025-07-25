@@ -4,7 +4,7 @@
 usage() {
     echo "Usage: $0 [environment] [operation] [key or input_file] [options]"
     echo "Environment: dev, prod (default: dev)"
-    echo "Operation: list, get, update, batch (default: list)"
+    echo "Operation: list, get, update, batch, compare (default: list)"
     echo "Key: For 'get' operation, the key to retrieve"
     echo "Input_file: For 'batch' operation, path to file with key=value pairs"
     echo "Options:"
@@ -19,13 +19,22 @@ usage() {
     echo "  $0 dev batch secrets.txt         - Batch: Update multiple keys from a file"
     echo "  $0 dev batch secrets.txt --dry-run - Batch: Preview changes without applying them"
     echo "  $0 dev batch                     - Batch: Read key=value pairs from stdin"
+    echo "  $0 compare                       - Compare secrets between dev and prod environments"
     exit 1
 }
 
 # Parse arguments
-ENVIRONMENT=${1:-dev}
-OPERATION=${2:-list}
-KEY_OR_FILE=$3
+# Handle special case where first argument is 'compare'
+if [[ "$1" == "compare" ]]; then
+    ENVIRONMENT="dev"  # Default, but not used for compare
+    OPERATION="compare"
+    KEY_OR_FILE=$2
+else
+    ENVIRONMENT=${1:-dev}
+    OPERATION=${2:-list}
+    KEY_OR_FILE=$3
+fi
+
 DRY_RUN=false
 SHOW_VALUES=false
 
@@ -43,17 +52,20 @@ if [[ "$3" == "--dry-run" || "$3" == "--show-values" ]]; then
     KEY_OR_FILE=""
 fi
 
-# Check if the file exists
-SECRETS_FILE="secrets/backend-secrets-$ENVIRONMENT.yaml"
-if [ ! -f "$SECRETS_FILE" ]; then
-    echo "Error: $SECRETS_FILE does not exist"
-    exit 1
+# Check if the file exists (skip for compare operation)
+if [[ "$OPERATION" != "compare" ]]; then
+    SECRETS_FILE="secrets/backend-secrets-$ENVIRONMENT.yaml"
+    if [ ! -f "$SECRETS_FILE" ]; then
+        echo "Error: $SECRETS_FILE does not exist"
+        exit 1
+    fi
 fi
 
 # Function to extract keys from the secrets file
 get_keys() {
+    local file=${1:-$SECRETS_FILE}
     # Skip metadata fields (name, namespace) and focus on data section
-    grep -E '^\s+[A-Z0-9_]+:' "$SECRETS_FILE" | awk '{print $1}' | sed 's/:$//'
+    grep -E '^\s+[A-Z0-9_]+:' "$file" | awk '{print $1}' | sed 's/:$//'
 }
 
 # Function to base64 encode a string
@@ -178,6 +190,76 @@ process_batch() {
     fi
 }
 
+# Function to compare secrets between dev and prod
+compare_secrets() {
+    local dev_file="secrets/backend-secrets-dev.yaml"
+    local prod_file="secrets/backend-secrets-prod.yaml"
+    
+    # Check if both files exist
+    if [ ! -f "$dev_file" ]; then
+        echo "Error: $dev_file does not exist"
+        exit 1
+    fi
+    
+    if [ ! -f "$prod_file" ]; then
+        echo "Error: $prod_file does not exist"
+        exit 1
+    fi
+    
+    # Get keys from both environments
+    local dev_keys=$(get_keys "$dev_file" | sort)
+    local prod_keys=$(get_keys "$prod_file" | sort)
+    
+    # Create temporary files for comparison
+    local temp_dev=$(create_temp_file)
+    local temp_prod=$(create_temp_file)
+    
+    echo "$dev_keys" > "$temp_dev"
+    echo "$prod_keys" > "$temp_prod"
+    
+    # Get all unique keys
+    local all_keys=$(cat "$temp_dev" "$temp_prod" | sort -u)
+    
+    # Print table header
+    printf "%-40s | %-6s | %-6s\n" "SECRET KEY" "DEV" "PROD"
+    printf "%-40s-+--------+-------\n" "----------------------------------------"
+    
+    # Check each key's presence in both environments
+    for key in $all_keys; do
+        local dev_status="❌"
+        local prod_status="❌"
+        
+        if grep -q "^$key$" "$temp_dev"; then
+            dev_status="✅"
+        fi
+        
+        if grep -q "^$key$" "$temp_prod"; then
+            prod_status="✅"
+        fi
+        
+        printf "%-40s | %-6s | %-6s\n" "$key" "$dev_status" "$prod_status"
+    done
+    
+    # Summary statistics
+    local total_dev=$(echo "$dev_keys" | wc -l)
+    local total_prod=$(echo "$prod_keys" | wc -l)
+    local total_unique=$(echo "$all_keys" | wc -l)
+    local common=$(comm -12 "$temp_dev" "$temp_prod" | wc -l)
+    local dev_only=$(comm -23 "$temp_dev" "$temp_prod" | wc -l)
+    local prod_only=$(comm -13 "$temp_dev" "$temp_prod" | wc -l)
+    
+    echo ""
+    echo "Summary:"
+    echo "  Total secrets in DEV:  $total_dev"
+    echo "  Total secrets in PROD: $total_prod"
+    echo "  Common secrets:        $common"
+    echo "  DEV only:              $dev_only"
+    echo "  PROD only:             $prod_only"
+    
+    # Clean up temporary files
+    rm "$temp_dev" "$temp_prod"
+}
+
 # Main logic
 if [ "$OPERATION" = "list" ]; then
     echo "Keys in $SECRETS_FILE:"
@@ -239,6 +321,8 @@ elif [ "$OPERATION" = "batch" ]; then
         process_batch "$TEMP_FILE"
         rm "$TEMP_FILE"
     fi
+elif [ "$OPERATION" = "compare" ]; then
+    compare_secrets
 else
     echo "Invalid operation: $OPERATION"
     usage
