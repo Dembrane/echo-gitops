@@ -1116,6 +1116,42 @@ data:
         "to": "now"
       }
     }
+  prod-overview.json: |
+    {
+      "annotations": {"list": []},
+      "title": "Prod Overview",
+      "uid": "prod-overview",
+      "timezone": "",
+      "schemaVersion": 38,
+      "version": 1,
+      "refresh": "30s",
+      "time": {"from": "now-3h", "to": "now"},
+      "templating": {
+        "list": [
+          {"type": "custom", "name": "namespace", "query": "echo-prod", "current": {"text": "echo-prod", "value": "echo-prod", "selected": true}},
+          {"type": "query", "name": "service", "datasource": {"type": "prometheus", "uid": "prometheus"}, "query": "label_values(nginx_ingress_controller_requests{namespace=\"$namespace\"}, service)", "refresh": 2, "includeAll": true, "multi": true, "current": {"text": "All", "value": [".*"], "selected": true}}
+        ]
+      },
+      "panels": [
+        {"type": "timeseries", "title": "RPS per service", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "targets": [{"expr": "sum by (service)(rate(nginx_ingress_controller_requests{namespace=\"$namespace\"}[5m]))", "refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}}],
+          "fieldConfig": {"defaults": {"unit": "req/s"}} },
+        {"type": "timeseries", "title": "p95 latency per service", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "targets": [{"expr": "histogram_quantile(0.95, sum by (service, le) (rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m])))", "refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}}],
+          "fieldConfig": {"defaults": {"unit": "s"}} },
+        {"type": "timeseries", "title": "HTTP 5xx error % per service", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "targets": [{"expr": "sum by (service)(rate(nginx_ingress_controller_requests{status=~\"5..\",namespace=\"$namespace\"}[5m])) / sum by (service)(rate(nginx_ingress_controller_requests{namespace=\"$namespace\"}[5m]))", "refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}}],
+          "fieldConfig": {"defaults": {"unit": "percentunit", "thresholds": {"mode": "absolute", "steps": [{"color": "green"}, {"color": "yellow", "value": 0.01}, {"color": "red", "value": 0.05}]}}}},
+        {"type": "timeseries", "title": "CPU by Deployment", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "targets": [{"expr": "sum by (deployment) (rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", container!=\"\"}[5m]))", "refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}}],
+          "fieldConfig": {"defaults": {"unit": "cores"}} },
+        {"type": "timeseries", "title": "Memory by Deployment", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+          "targets": [{"expr": "sum by (deployment) (container_memory_usage_bytes{namespace=\"$namespace\", container!=\"\"})", "refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}}],
+          "fieldConfig": {"defaults": {"unit": "bytes"}} },
+        {"type": "timeseries", "title": "Pod restarts (1h)", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+          "targets": [{"expr": "sum by (pod) (increase(kube_pod_container_status_restarts_total{namespace=\"$namespace\"}[1h]))", "refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}}]}
+      ]
+    }
   echo-comprehensive-dashboard.json: |
     {
       "annotations": {

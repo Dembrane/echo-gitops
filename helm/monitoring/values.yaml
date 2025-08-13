@@ -62,3 +62,9 @@ ingress:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
   basicAuth:
     enabled: false
+
+# Alerting settings
+alerting:
+  enabled: true
+  slack:
+    channel: "#prod-alerts"

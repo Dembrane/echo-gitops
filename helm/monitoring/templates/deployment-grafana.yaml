@@ -105,3 +105,5 @@ spec:
                 path: loki-logs-dashboard.json
               - key: echo-application-dashboard.json
                 path: echo-application-dashboard.json 
+              - key: prod-overview.json
+                path: prod-overview.json
