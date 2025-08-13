@@ -54,9 +54,9 @@ promtail:
       cpu: "400m"
       memory: "512Mi"
 
-# Ingress settings - Disabled for port-forward access only
+# Ingress settings - Enable public access via NGINX and TLS
 ingress:
-  enabled: false
+  enabled: true
   className: "nginx"
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
