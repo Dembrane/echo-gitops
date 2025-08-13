@@ -88,8 +88,9 @@ data:
           - source_labels: [__meta_kubernetes_pod_name]
             action: replace
             target_label: kubernetes_pod_name
-            - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
-              target_label: service
+          - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+            action: replace
+            target_label: service
       
       # Scrape Loki metrics
       - job_name: 'loki'
@@ -110,6 +111,24 @@ data:
            - source_labels: [__meta_kubernetes_endpoint_port_name]
              action: keep
              regex: http-metrics
+
+      # Scrape ingress-nginx metrics (controller)
+      - job_name: 'ingress-nginx'
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+                - ingress-nginx
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_label_app_kubernetes_io_name]
+            action: keep
+            regex: ingress-nginx
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: ingress-nginx-controller-metrics|ingress-nginx-controller
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: metrics|http-metrics
 
       # Scrape Echo Application metrics
       - job_name: 'echo-application'
