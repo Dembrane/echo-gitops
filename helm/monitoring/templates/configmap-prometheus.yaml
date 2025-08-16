@@ -130,6 +130,24 @@ data:
             action: keep
             regex: metrics|http-metrics
 
+      # Fallback: scrape ingress-nginx controller pods directly on port 10254
+      - job_name: 'ingress-nginx-pods'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - ingress-nginx
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+            action: keep
+            regex: ingress-nginx
+          - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_component]
+            action: keep
+            regex: controller
+          - source_labels: [__meta_kubernetes_pod_ip]
+            target_label: __address__
+            replacement: ${1}:10254
+
       # Scrape Echo Application metrics
       - job_name: 'echo-application'
         kubernetes_sd_configs:
