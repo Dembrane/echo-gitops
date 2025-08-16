@@ -145,6 +145,8 @@ data:
             action: keep
             regex: controller
           - source_labels: [__meta_kubernetes_pod_ip]
+            action: replace
+            regex: (.+)
             target_label: __address__
             replacement: ${1}:10254
 
