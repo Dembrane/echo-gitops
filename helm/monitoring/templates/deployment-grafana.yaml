@@ -107,3 +107,5 @@ spec:
                 path: echo-application-dashboard.json 
               - key: prod-overview.json
                 path: prod-overview.json
+              - key: prod-health.json
+                path: prod-health.json

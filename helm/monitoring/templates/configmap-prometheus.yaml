@@ -222,20 +222,78 @@ data:
     groups:
     - name: application
       rules:
-      - alert: HighRequestLatency
-        expr: sum(rate(http_request_duration_seconds_sum[5m])) by (service) / sum(rate(http_request_duration_seconds_count[5m])) by (service) > 0.5
+      - alert: IngressHighErrorRate
+        expr: (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) / (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 0.05
         for: 10m
         labels:
           severity: warning
         annotations:
-          summary: "High request latency on {{ "{{" }} $labels.service {{ "}}" }}"
-          description: "{{ "{{" }} $labels.service {{ "}}" }} has a latency of {{ "{{" }} $value {{ "}}" }}s"
+          summary: "High error rate via ingress on {{ "{{" }} $labels.svc {{ "}}" }}"
+          description: "5xx ratio > 5% over 10m: {{ "{{" }} $value {{ "}}" }}"
 
-      - alert: HighErrorRate
-        expr: sum(rate(http_request_total{status_code=~"5.."}[5m])) by (service) / sum(rate(http_request_total[5m])) by (service) > 0.05
+      - alert: IngressCriticalErrorRate
+        expr: (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) / (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 0.20
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical error rate via ingress on {{ "{{" }} $labels.svc {{ "}}" }}"
+          description: "5xx ratio > 20% over 5m: {{ "{{" }} $value {{ "}}" }}"
+
+      - alert: IngressHighLatencyP95
+        expr: histogram_quantile(0.95, sum by (svc, le) ( label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 0.5
         for: 10m
         labels:
           severity: warning
         annotations:
-          summary: "High error rate on {{ "{{" }} $labels.service {{ "}}" }}"
-          description: "Error rate is above 5% on {{ "{{" }} $labels.service {{ "}}" }} ({{ "{{" }} $value {{ "}}" }})" 
+          summary: "High p95 latency via ingress on {{ "{{" }} $labels.svc {{ "}}" }}"
+          description: "> 0.5s over 10m: {{ "{{" }} $value {{ "}}" }}"
+
+      - alert: IngressCriticalLatencyP95
+        expr: histogram_quantile(0.95, sum by (svc, le) ( label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 1.5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical p95 latency via ingress on {{ "{{" }} $labels.svc {{ "}}" }}"
+          description: "> 1.5s over 5m: {{ "{{" }} $value {{ "}}" }}"
+
+      - alert: CrashLoopBackOff
+        expr: sum by (namespace, pod, container) (kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff", namespace="echo-prod"}) > 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CrashLoopBackOff: {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }} ({{ "{{" }} $labels.container {{ "}}" }})"
+
+      - alert: PodRestartSpike
+        expr: sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total{namespace="echo-prod"}[5m])) > 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Restart spike: {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }}"
+
+      - alert: OOMKilled
+        expr: sum by (namespace, pod, container) (increase(kube_pod_container_status_terminated_reason{reason="OOMKilled", namespace="echo-prod"}[5m])) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "OOMKilled: {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }} ({{ "{{" }} $labels.container {{ "}}" }})"
+
+      - alert: HighContainerCPUUtilization
+        expr: ( sum by (pod, namespace)(rate(container_cpu_usage_seconds_total{namespace="echo-prod", image!="", container!=""}[5m])) ) / clamp_min(sum by (pod, namespace)(kube_pod_container_resource_requests{namespace="echo-prod", resource="cpu", unit="core", container!=""}), 0.1) > 0.9
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU utilization vs requests: {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }}"
+
+      - alert: HighContainerMemoryUtilization
+        expr: ( sum by (pod, namespace)(container_memory_working_set_bytes{namespace="echo-prod", image!="", container!=""}) ) / clamp_min(sum by (pod, namespace)(kube_pod_container_resource_limits{namespace="echo-prod", resource="memory", unit="byte", container!=""}), 1) > 0.9
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Memory utilization vs limits: {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }}"
