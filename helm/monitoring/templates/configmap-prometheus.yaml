@@ -235,6 +235,10 @@ data:
             regex: .*/(api|directus)(?:/.*)?$
             target_label: svc
             replacement: $1
+          - source_labels: [__param_target]
+            regex: https?://(api|directus)\.
+            target_label: svc
+            replacement: $1
 
   node-alerts.yml: |
     groups:
