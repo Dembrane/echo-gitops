@@ -1192,16 +1192,30 @@ data:
         },
         {"type": "row", "title": "Capacity", "id": 9, "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 24}},
         {"type": "timeseries", "title": "Cluster CPU used vs capacity (cores)", "id": 10, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 25},
-          "fieldConfig": {"defaults": {"unit": "cores"}},
+          "fieldConfig": {"defaults": {"unit": "cores"}, "overrides": [
+            {"matcher": {"id": "byRefId", "options": "C"}, "properties": [
+              {"id": "unit", "value": "percentunit"},
+              {"id": "custom.axisPlacement", "value": "right"}
+            ]}
+          ]},
           "targets": [
             {"refId": "A", "legendFormat": "Used", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum(rate(container_cpu_usage_seconds_total{image!=\"\", container!=\"\"}[5m]))"},
-            {"refId": "B", "legendFormat": "Capacity", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum(kube_node_status_capacity{resource=\"cpu\", unit=\"core\"})"}
+            {"refId": "B", "legendFormat": "Capacity", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum(kube_node_status_capacity{resource=\"cpu\", unit=\"core\"})"},
+            {"refId": "C", "legendFormat": "Utilization", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum(rate(container_cpu_usage_seconds_total{image!=\"\", container!=\"\"}[5m])) / sum(kube_node_status_capacity{resource=\"cpu\", unit=\"core\"})"}
           ]
         },
-        {"type": "table", "title": "CPU utilization by DO node pool", "id": 11, "gridPos": {"h": 8, "w": 12, "x": 12, "y": 25},
-          "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum by (label_doks_digitalocean_com_node_pool) (  sum by (node) (    sum by (pod, namespace) (      rate(container_cpu_usage_seconds_total{image!=\"\", container!=\"\"}[5m])    )    * on(pod, namespace) group_left(node)      kube_pod_info  )  * on(node) group_left(label_doks_digitalocean_com_node_pool)    max by (node, label_doks_digitalocean_com_node_pool) (kube_node_labels)) / sum by (label_doks_digitalocean_com_node_pool) (  max by (node) (    kube_node_status_capacity{resource=\"cpu\", unit=\"core\"}  )  * on(node) group_left(label_doks_digitalocean_com_node_pool)    max by (node, label_doks_digitalocean_com_node_pool) (kube_node_labels) )"}],
-          "fieldConfig": {"defaults": {"unit": "percentunit"}},
-          "options": {"showHeader": true}
+        {"type": "timeseries", "title": "Cluster Memory used vs capacity (GB Memory)", "id": 11, "gridPos": {"h": 8, "w": 12, "x": 12, "y": 25},
+          "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides": [
+            {"matcher": {"id": "byRefId", "options": "C"}, "properties": [
+              {"id": "unit", "value": "percentunit"},
+              {"id": "custom.axisPlacement", "value": "right"}
+            ]}
+          ]},
+          "targets": [
+            {"refId": "A", "legendFormat": "Used", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum(container_memory_working_set_bytes{image!=\"\", container!=\"\", container!=\"POD\"})"},
+            {"refId": "B", "legendFormat": "Capacity", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum(kube_node_status_capacity{resource=\"memory\", unit=\"byte\"})"},
+            {"refId": "C", "legendFormat": "Utilization", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum(container_memory_working_set_bytes{image!=\"\", container!=\"\", container!=\"POD\"}) / sum(kube_node_status_capacity{resource=\"memory\", unit=\"byte\"})"}
+          ]
         },
         {"type": "row", "title": "Resource hotspots", "id": 12, "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 33}},
         {"type": "bargauge", "title": "Top CPU utilization by deployment", "id": 13, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 34},
