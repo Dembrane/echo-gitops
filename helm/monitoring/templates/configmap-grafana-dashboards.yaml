@@ -1206,15 +1206,13 @@ data:
           ]
         },
         {"type": "row", "title": "Resource hotspots", "id": 12, "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 33}},
-        {"type": "bargauge", "title": "Top CPU utilization by service", "id": 13, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 34},
-          "fieldConfig": {"defaults": {"unit": "percentunit", "thresholds": {"mode": "absolute", "steps": [{"color": "green"}, {"color": "yellow", "value": 0.7}, {"color": "red", "value": 0.9}]}}},
-          "options": {"displayMode": "gradient"},
-          "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "topk(10, ( sum by (svc) ( label_replace( sum by (pod) ( rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", image!=\"\", container!=\"POD\", container!=\"\"}[5m]) ), \"svc\", \"$1\", \"pod\", \"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*\" ) ) ) / clamp_min( sum by (svc) ( label_replace( sum by (pod, container) ( kube_pod_container_resource_requests{namespace=\"$namespace\", resource=\"cpu\", unit=\"core\", container!=\"\"} ), \"svc\", \"$1\", \"pod\", \"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*\" ) ), 0.1) )"}]
+        {"type": "timeseries", "title": "CPU usage by service (cores)", "id": 13, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 34},
+          "fieldConfig": {"defaults": {"unit": "cores"}},
+          "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum by (svc) ( label_replace( sum by (pod) ( rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", image!=\"\", container!=\"POD\", container!=\"\"}[5m]) ), \"svc\", \"$1\", \"pod\", \"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*\" ) )"}] 
         },
-        {"type": "bargauge", "title": "Top Memory utilization by service", "id": 14, "gridPos": {"h": 8, "w": 12, "x": 12, "y": 34},
-          "fieldConfig": {"defaults": {"unit": "percentunit", "thresholds": {"mode": "absolute", "steps": [{"color": "green"}, {"color": "yellow", "value": 0.7}, {"color": "red", "value": 0.9}]}}},
-          "options": {"displayMode": "gradient"},
-          "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "topk(10, ( sum by (svc) ( label_replace( sum by (pod) ( container_memory_working_set_bytes{namespace=\"$namespace\", image!=\"\", container!=\"POD\", container!=\"\"} ), \"svc\", \"$1\", \"pod\", \"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*\" ) ) ) / clamp_min( sum by (svc) ( label_replace( sum by (pod, container) ( kube_pod_container_resource_limits{namespace=\"$namespace\", resource=\"memory\", unit=\"byte\", container!=\"\"} ), \"svc\", \"$1\", \"pod\", \"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*\" ) ), 1) )"}]
+        {"type": "timeseries", "title": "Memory usage by service (bytes)", "id": 14, "gridPos": {"h": 8, "w": 12, "x": 12, "y": 34},
+          "fieldConfig": {"defaults": {"unit": "bytes"}},
+          "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum by (svc) ( label_replace( sum by (pod) ( container_memory_working_set_bytes{namespace=\"$namespace\", image!=\"\", container!=\"POD\", container!=\"\"} ), \"svc\", \"$1\", \"pod\", \"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*\" ) )"}] 
         }
         ,
         {"type": "row", "title": "Error Logs", "id": 200, "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 42}},
