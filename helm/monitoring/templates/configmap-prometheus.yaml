@@ -212,6 +212,30 @@ data:
             action: keep
             regex: metrics
 
+      # Blackbox HTTP checks
+      - job_name: 'blackbox_http'
+        metrics_path: /probe
+        scrape_interval: {{ .Values.httpChecks.interval | default "30s" | quote }}
+        scrape_timeout: {{ .Values.httpChecks.timeout | default "5s" | quote }}
+        params:
+          module: [http_2xx]
+        static_configs:
+          - targets:
+{{- range .Values.httpChecks.targets }}
+              - {{ .url | quote }}
+{{- end }}
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: blackbox-exporter.monitoring.svc:9115
+          - source_labels: [__param_target]
+            regex: .*/(api|directus)(?:/.*)?$
+            target_label: svc
+            replacement: $1
+
   node-alerts.yml: |
     groups:
     - name: node

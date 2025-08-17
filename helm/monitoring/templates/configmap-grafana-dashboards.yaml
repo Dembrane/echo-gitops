@@ -1166,7 +1166,7 @@ data:
       "panels": [
         {"type": "row", "title": "SLIs", "id": 1, "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}},
         {"type": "timeseries", "title": "HTTP 5xx error % by service (5m)", "id": 2, "gridPos": {"h": 7, "w": 8, "x": 0, "y": 1},
-          "fieldConfig": {"defaults": {"unit": "percentunit", "thresholds": {"mode": "absolute", "steps": [{"color": "green"}, {"color": "yellow", "value": 0.01}, {"color": "red", "value": 0.05}]}}},
+          "fieldConfig": {"defaults": {"unit": "percentunit", "custom": {"axisSoftMin": 0, "axisSoftMax": 0.3}, "thresholds": {"mode": "absolute", "steps": [{"color": "green"}, {"color": "yellow", "value": 0.01}, {"color": "red", "value": 0.05}]}}},
           "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "(sum by (svc)( label_replace(rate({__name__=~\"nginx_ingress_controller_requests(_total)?\", status=~\"5..\", namespace=\"$namespace\"}[5m]), \"svc\", \"$1\", \"exported_service\", \"(.*)\") or label_replace(rate({__name__=~\"nginx_ingress_controller_requests(_total)?\", status=~\"5..\", namespace=\"$namespace\"}[5m]), \"svc\", \"$1\", \"service\", \"(.*)\") )) / (sum by (svc)( label_replace(rate({__name__=~\"nginx_ingress_controller_requests(_total)?\", namespace=\"$namespace\"}[5m]), \"svc\", \"$1\", \"exported_service\", \"(.*)\") or label_replace(rate({__name__=~\"nginx_ingress_controller_requests(_total)?\", namespace=\"$namespace\"}[5m]), \"svc\", \"$1\", \"service\", \"(.*)\") ))"}]
         },
         {"type": "timeseries", "title": "p95 latency (s) by service (5m)", "id": 3, "gridPos": {"h": 7, "w": 8, "x": 8, "y": 1},
@@ -1182,10 +1182,15 @@ data:
           "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum(kube_deployment_status_replicas_available{namespace=\"$namespace\"}) / clamp_min(sum(kube_deployment_spec_replicas{namespace=\"$namespace\"}), 1)"}]
         },
         {"type": "row", "title": "Reliability", "id": 6, "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 8}},
-        {"type": "table", "title": "Service health", "id": 7, "gridPos": {"h": 8, "w": 8, "x": 0, "y": 9},
-          "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "min by (svc) ( label_replace( (sum by (deployment) (kube_deployment_status_replicas_available{namespace=\"$namespace\"}) / clamp_min(sum by (deployment) (kube_deployment_spec_replicas{namespace=\"$namespace\"}), 1) ), \"svc\", \"$1\", \"deployment\", \"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*\") ) >= 1", "instant": true}],
+        {"type": "table", "title": "Service health (HTTP)", "id": 7, "gridPos": {"h": 8, "w": 8, "x": 0, "y": 9},
+          "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "avg_over_time(probe_success{job=\"blackbox_http\"}[5m])", "instant": true}],
           "options": {"showHeader": true},
-          "fieldConfig": {"defaults": {"mappings": [{"type": "value", "options": {"1": {"text": "Healthy"}, "0": {"text": "Unhealthy"}}}], "thresholds": {"mode": "absolute", "steps": [{"color": "red"}, {"color": "green", "value": 1}]}, "custom": {"displayMode": "color-text"}}, "overrides": []}
+          "transformations": [{"id": "labelsToFields", "options": {}}],
+          "fieldConfig": {"defaults": {"mappings": [
+              {"type": "range", "options": {"from": 0, "to": 0.99, "result": {"text": "Unhealthy"}}},
+              {"type": "range", "options": {"from": 0.99, "to": 1, "result": {"text": "Degraded"}}},
+              {"type": "value", "options": {"1": {"text": "Healthy"}}}
+            ], "thresholds": {"mode": "absolute", "steps": [{"color": "red"}, {"color": "yellow", "value": 0.99}, {"color": "green", "value": 1}]}, "custom": {"displayMode": "color-background"}}, "overrides": []}
         },
         {"type": "timeseries", "title": "Pod restarts by service (1h)", "id": 8, "gridPos": {"h": 8, "w": 8, "x": 8, "y": 9},
           "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum by (svc) ( label_replace( increase(kube_pod_container_status_restarts_total{namespace=\"$namespace\"}[1h]), \"svc\", \"$1\", \"pod\", \"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*\" ) )", "legendFormat": "{{ "{{" }}svc{{ "}}" }}"}],

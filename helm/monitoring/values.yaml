@@ -63,6 +63,16 @@ ingress:
   basicAuth:
     enabled: false
 
+# HTTP Blackbox checks (dev/default)
+httpChecks:
+  interval: 30s
+  timeout: 5s
+  targets:
+    - name: api
+      url: https://api.echo-next.dembrane.com/api/health
+    - name: directus
+      url: https://directus.echo-next.dembrane.com/server/health
+
 # Alerting settings
 alerting:
   enabled: true

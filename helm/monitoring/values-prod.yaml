@@ -63,3 +63,13 @@ ingress:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
   basicAuth:
     enabled: false 
+
+# HTTP Blackbox checks (prod)
+httpChecks:
+  interval: 30s
+  timeout: 5s
+  targets:
+    - name: api
+      url: https://api.dembrane.com/api/health
+    - name: directus
+      url: https://directus.dembrane.com/server/health
