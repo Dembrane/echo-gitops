@@ -1220,13 +1220,13 @@ data:
           "fieldConfig": {"defaults": {"unit": "short"}},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "sum(count_over_time(({namespace=\\\"$namespace\\\", component=\\\"api\\\"} |~ \\\"error|ERROR|Error|Exception|exception|EXCEPTION\\\")[5m]))"}
+            {"refId": "A", "expr": "sum(count_over_time({namespace=\\\"$namespace\\\", component=\\\"api\\\"} |= \\\"error\\\" [5m]))"}
           ]
         },
         {"type": "logs", "title": "API Error Logs", "id": 202, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 43},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "{namespace=~\\\"$namespace\\\", component=\\\"api\\\"} |~ \\\"error|ERROR|Error|Exception|exception|EXCEPTION\\\""}
+            {"refId": "A", "expr": "{namespace=~\\\"$namespace\\\", component=\\\"api\\\"} |= \\\"error\\\""}
           ],
           "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
         },
@@ -1234,13 +1234,13 @@ data:
           "fieldConfig": {"defaults": {"unit": "short"}},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "sum(count_over_time(({namespace=\\\"$namespace\\\", component=\\\"directus\\\"} |~ \\\"error|ERROR|Error|Exception|exception|EXCEPTION\\\")[5m]))"}
+            {"refId": "A", "expr": "sum(count_over_time({namespace=\\\"$namespace\\\", component=\\\"directus\\\"} |= \\\"error\\\" [5m]))"}
           ]
         },
         {"type": "logs", "title": "Directus Error Logs", "id": 204, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 51},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "{namespace=~\\\"$namespace\\\", component=\\\"directus\\\"} |~ \\\"error|ERROR|Error|Exception|exception|EXCEPTION\\\""}
+            {"refId": "A", "expr": "{namespace=~\\\"$namespace\\\", component=\\\"directus\\\"} |= \\\"error\\\""}
           ],
           "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
         },
@@ -1248,13 +1248,13 @@ data:
           "fieldConfig": {"defaults": {"unit": "short"}},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "sum(count_over_time(({namespace=\\\"$namespace\\\", component=\\\"worker\\\"} |~ \\\"error|ERROR|Error|Exception|exception|EXCEPTION\\\")[5m]))"}
+            {"refId": "A", "expr": "sum(count_over_time({namespace=\\\"$namespace\\\", component=\\\"worker\\\"} |= \\\"error\\\" [5m]))"}
           ]
         },
         {"type": "logs", "title": "Worker Error Logs", "id": 206, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 59},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "{namespace=~\\\"$namespace\\\", component=\\\"worker\\\"} |~ \\\"error|ERROR|Error|Exception|exception|EXCEPTION\\\""}
+            {"refId": "A", "expr": "{namespace=~\\\"$namespace\\\", component=\\\"worker\\\"} |= \\\"error\\\""}
           ],
           "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
         },
@@ -1262,13 +1262,13 @@ data:
           "fieldConfig": {"defaults": {"unit": "short"}},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "sum(count_over_time(({namespace=\\\"$namespace\\\", component=\\\"worker-cpu\\\"} |~ \\\"error|ERROR|Error|Exception|exception|EXCEPTION\\\")[5m]))"}
+            {"refId": "A", "expr": "sum(count_over_time({namespace=\\\"$namespace\\\", component=\\\"worker-cpu\\\"} |= \\\"error\\\" [5m]))"}
           ]
         },
         {"type": "logs", "title": "Worker-CPU Error Logs", "id": 208, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 67},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "{namespace=~\\\"$namespace\\\", component=\\\"worker-cpu\\\"} |~ \\\"error|ERROR|Error|Exception|exception|EXCEPTION\\\""}
+            {"refId": "A", "expr": "{namespace=~\\\"$namespace\\\", component=\\\"worker-cpu\\\"} |= \\\"error\\\""}
           ],
           "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
         }
