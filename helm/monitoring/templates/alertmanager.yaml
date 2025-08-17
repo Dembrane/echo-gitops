@@ -19,12 +19,16 @@ data:
         slack_configs:
           - channel: '#prod-alerts'
             send_resolved: true
-            title: '[{{ `{{` }} .Status {{ `}}` }}] {{ `{{` }} .CommonLabels.alertname {{ `}}` }}'
-            text: >-
-              *Alert:* {{ `{{` }} .CommonLabels.alertname {{ `}}` }}\n
-              *Severity:* {{ `{{` }} .CommonLabels.severity {{ `}}` }}\n
-              *Description:* {{ `{{` }} .CommonAnnotations.description {{ `}}` }}\n
-              *Details:* {{ `{{` }} .CommonLabels {{ `}}` }}
+            link_names: true
+            title: ':rotating_light: [{{ `{{` }} .Status {{ `}}` }}] {{ `{{` }} .CommonLabels.alertname {{ `}}` }}'
+            text: |
+              :rotating_light: *Alert:* {{ `{{` }} .CommonLabels.alertname {{ `}}` }}
+              :warning: *Severity:* {{ `{{` }} .CommonLabels.severity {{ `}}` }}
+              :x: *Description:* {{ `{{` }} .CommonAnnotations.description {{ `}}` }}
+              *Details:*
+              ```
+              {{ `{{` }} .CommonLabels {{ `}}` }}
+              ```
 ---
 apiVersion: apps/v1
 kind: Deployment

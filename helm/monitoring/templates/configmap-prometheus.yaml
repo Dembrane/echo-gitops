@@ -9,6 +9,11 @@ data:
       scrape_interval: 15s
       evaluation_interval: 15s
 
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets: ['alertmanager.monitoring.svc:9093']
+
     # Load rules once and periodically evaluate them
     rule_files:
       - /etc/prometheus/rules/*.yml
@@ -317,3 +322,16 @@ data:
           severity: warning
         annotations:
           summary: "High Memory utilization vs limits: {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }}"
+
+      - alert: DeploymentAvailabilityShortfall
+        expr: |
+          (
+            sum by (deployment) (kube_deployment_spec_replicas{namespace="echo-prod", deployment=~"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*"})
+          - sum by (deployment) (kube_deployment_status_replicas_available{namespace="echo-prod", deployment=~"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*"})
+          ) > 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Unavailable replicas for {{ "{{" }} $labels.deployment {{ "}}" }}"
+          description: "Available replicas < desired for 10m. Check rollout status, image pulls, probes, and node capacity."
