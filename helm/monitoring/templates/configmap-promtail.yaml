@@ -27,31 +27,33 @@ data:
             regex: ([0-9a-z-.]+)(-[0-9a-f]{8,10})?
             action: replace
             target_label: __tmp_controller_name
-          - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name, __meta_kubernetes_pod_label_app, __tmp_controller_name]
-            regex: (.+);(.+);(.+)
-            action: replace
+          # Set a stable 'app' label preferring app.kubernetes.io/name, then app, then controller name
+          - action: replace
+            source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+            target_label: app
+            regex: (.+)
             replacement: $1
+          - action: replace
+            source_labels: [__meta_kubernetes_pod_label_app]
             target_label: app
-          - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name, __meta_kubernetes_pod_label_app, __tmp_controller_name]
-            regex: (.+);(.+);(.+)
-            action: replace
-            replacement: $2
-            target_label: app
-          - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name, __meta_kubernetes_pod_label_app, __tmp_controller_name]
-            regex: (.+);(.+);(.+)
-            action: replace
-            replacement: $3
-            target_label: app
-          - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_component, __meta_kubernetes_pod_label_component]
-            regex: (.+);(.+)
-            action: replace
+            regex: (.+)
             replacement: $1
+          - action: replace
+            source_labels: [__tmp_controller_name]
+            target_label: app
+            regex: (.+)
+            replacement: $1
+          # Set a stable 'component' label preferring app.kubernetes.io/component, then component
+          - action: replace
+            source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_component]
             target_label: component
-          - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_component, __meta_kubernetes_pod_label_component]
-            regex: (.+);(.+)
-            action: replace
-            replacement: $2
+            regex: (.+)
+            replacement: $1
+          - action: replace
+            source_labels: [__meta_kubernetes_pod_label_component]
             target_label: component
+            regex: (.+)
+            replacement: $1
           - source_labels: [__meta_kubernetes_pod_node_name]
             action: replace
             target_label: node
