@@ -1195,11 +1195,11 @@ data:
           "fieldConfig": {"defaults": {"unit": "cores"}},
           "targets": [
             {"refId": "A", "legendFormat": "Used", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum(rate(container_cpu_usage_seconds_total{image!=\"\", container!=\"\"}[5m]))"},
-            {"refId": "B", "legendFormat": "Capacity", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum(kube_node_status_capacity_cpu_cores)"}
+            {"refId": "B", "legendFormat": "Capacity", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum(kube_node_status_capacity{resource=\"cpu\", unit=\"core\"})"}
           ]
         },
         {"type": "table", "title": "CPU utilization by DO node pool", "id": 11, "gridPos": {"h": 8, "w": 12, "x": 12, "y": 25},
-          "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum by (label_doks_digitalocean_com_node_pool)( (sum by (node)(sum by (pod, namespace)(rate(container_cpu_usage_seconds_total{image!=\"\", container!=\"\"}[5m])) * on(pod,namespace) group_left(node) kube_pod_info{job=\"kube-state-metrics\"})) * on(node) group_left(label_doks_digitalocean_com_node_pool) kube_node_info{job=\"kube-state-metrics\", label_doks_digitalocean_com_node_pool!=\"\"} ) / sum by (label_doks_digitalocean_com_node_pool)( max by (node)(kube_node_status_capacity_cpu_cores) * on(node) group_left(label_doks_digitalocean_com_node_pool) kube_node_info{job=\"kube-state-metrics\", label_doks_digitalocean_com_node_pool!=\"\"} )"}],
+          "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum by (label_doks_digitalocean_com_node_pool) (  sum by (node) (    sum by (pod, namespace) (      rate(container_cpu_usage_seconds_total{image!=\"\", container!=\"\"}[5m])    )    * on(pod, namespace) group_left(node)      kube_pod_info  )  * on(node) group_left(label_doks_digitalocean_com_node_pool)    max by (node, label_doks_digitalocean_com_node_pool) (kube_node_labels)) / sum by (label_doks_digitalocean_com_node_pool) (  max by (node) (    kube_node_status_capacity{resource=\"cpu\", unit=\"core\"}  )  * on(node) group_left(label_doks_digitalocean_com_node_pool)    max by (node, label_doks_digitalocean_com_node_pool) (kube_node_labels) )"}],
           "fieldConfig": {"defaults": {"unit": "percentunit"}},
           "options": {"showHeader": true}
         },
