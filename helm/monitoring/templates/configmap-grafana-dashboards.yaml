@@ -1177,95 +1177,96 @@ data:
           "fieldConfig": {"defaults": {"unit": "req/s"}},
           "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum by (svc)( label_replace(rate({__name__=~\"nginx_ingress_controller_requests(_total)?\", namespace=\"$namespace\"}[5m]), \"svc\", \"$1\", \"exported_service\", \"(.*)\") or label_replace(rate({__name__=~\"nginx_ingress_controller_requests(_total)?\", namespace=\"$namespace\"}[5m]), \"svc\", \"$1\", \"service\", \"(.*)\") )"}]
         },
-        {"type": "stat", "title": "Availability % (available/desired replicas)", "id": 5, "gridPos": {"h": 7, "w": 24, "x": 0, "y": 8},
+        {"type": "stat", "title": "Availability % (available/desired replicas)", "id": 5, "gridPos": {"h": 8, "w": 8, "x": 16, "y": 9},
           "fieldConfig": {"defaults": {"unit": "percentunit"}},
           "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum(kube_deployment_status_replicas_available{namespace=\"$namespace\"}) / clamp_min(sum(kube_deployment_spec_replicas{namespace=\"$namespace\"}), 1)"}]
         },
-        {"type": "row", "title": "Reliability", "id": 6, "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 15}},
-        {"type": "table", "title": "CrashLoopBackOff pods (now)", "id": 7, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
-          "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "max by (pod, container)(kube_pod_container_status_waiting_reason{namespace=\"$namespace\", reason=\"CrashLoopBackOff\"})"}],
-          "options": {"showHeader": true}
+        {"type": "row", "title": "Reliability", "id": 6, "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 8}},
+        {"type": "table", "title": "Service health", "id": 7, "gridPos": {"h": 8, "w": 8, "x": 0, "y": 9},
+          "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "min by (svc) ( label_replace( (sum by (deployment) (kube_deployment_status_replicas_available{namespace=\"$namespace\"}) / clamp_min(sum by (deployment) (kube_deployment_spec_replicas{namespace=\"$namespace\"}), 1) ), \"svc\", \"$1\", \"deployment\", \"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*\") ) >= 1", "instant": true}],
+          "options": {"showHeader": true},
+          "fieldConfig": {"defaults": {"mappings": [{"type": "value", "options": {"1": {"text": "Healthy"}, "0": {"text": "Unhealthy"}}}], "thresholds": {"mode": "absolute", "steps": [{"color": "red"}, {"color": "green", "value": 1}]}, "custom": {"displayMode": "color-text"}}, "overrides": []}
         },
-        {"type": "table", "title": "Pod restarts (1h)", "id": 8, "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
-          "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum by (pod, container)(increase(kube_pod_container_status_restarts_total{namespace=\"$namespace\"}[1h]))"}],
-          "options": {"showHeader": true}
+        {"type": "timeseries", "title": "Pod restarts by service (1h)", "id": 8, "gridPos": {"h": 8, "w": 8, "x": 8, "y": 9},
+          "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum by (svc) ( label_replace( increase(kube_pod_container_status_restarts_total{namespace=\"$namespace\"}[1h]), \"svc\", \"$1\", \"pod\", \"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*\" ) )", "legendFormat": "{{ {{svc}} }}"}],
+          "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []}
         },
-        {"type": "row", "title": "Capacity", "id": 9, "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 24}},
-        {"type": "timeseries", "title": "Cluster CPU used vs capacity (cores)", "id": 10, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 25},
+        {"type": "row", "title": "Capacity", "id": 9, "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 17}},
+        {"type": "timeseries", "title": "Cluster CPU used vs capacity (cores)", "id": 10, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 18},
           "fieldConfig": {"defaults": {"unit": "cores"}},
           "targets": [
             {"refId": "A", "legendFormat": "Used", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum(rate(container_cpu_usage_seconds_total{image!=\"\", container!=\"\"}[5m]))"},
             {"refId": "B", "legendFormat": "Capacity", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum(kube_node_status_capacity{resource=\"cpu\", unit=\"core\"})"}
           ]
         },
-        {"type": "timeseries", "title": "Cluster Memory used vs capacity (GB Memory)", "id": 11, "gridPos": {"h": 8, "w": 12, "x": 12, "y": 25},
+        {"type": "timeseries", "title": "Cluster Memory used vs capacity (GB Memory)", "id": 11, "gridPos": {"h": 8, "w": 12, "x": 12, "y": 18},
           "fieldConfig": {"defaults": {"unit": "bytes"}},
           "targets": [
             {"refId": "A", "legendFormat": "Used", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum(container_memory_working_set_bytes{image!=\"\", container!=\"\", container!=\"POD\"})"},
             {"refId": "B", "legendFormat": "Capacity", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum(kube_node_status_capacity{resource=\"memory\", unit=\"byte\"})"}
           ]
         },
-        {"type": "row", "title": "Resource hotspots", "id": 12, "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 33}},
-        {"type": "timeseries", "title": "CPU usage by service (cores)", "id": 13, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 34},
+        {"type": "row", "title": "Resource hotspots", "id": 12, "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 26}},
+        {"type": "timeseries", "title": "CPU usage by service (cores)", "id": 13, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 27},
           "fieldConfig": {"defaults": {"unit": "cores"}},
           "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum by (svc) ( label_replace( sum by (pod) ( rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", image!=\"\", container!=\"POD\", container!=\"\"}[5m]) ), \"svc\", \"$1\", \"pod\", \"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*\" ) )"}] 
         },
-        {"type": "timeseries", "title": "Memory usage by service (bytes)", "id": 14, "gridPos": {"h": 8, "w": 12, "x": 12, "y": 34},
+        {"type": "timeseries", "title": "Memory usage by service (bytes)", "id": 14, "gridPos": {"h": 8, "w": 12, "x": 12, "y": 27},
           "fieldConfig": {"defaults": {"unit": "bytes"}},
           "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum by (svc) ( label_replace( sum by (pod) ( container_memory_working_set_bytes{namespace=\"$namespace\", image!=\"\", container!=\"POD\", container!=\"\"} ), \"svc\", \"$1\", \"pod\", \"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*\" ) )"}] 
         }
         ,
-        {"type": "row", "title": "Error Logs", "id": 200, "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 42}},
-        {"type": "timeseries", "title": "API Error logs (5m count)", "id": 201, "gridPos": {"h": 8, "w": 6, "x": 0, "y": 43},
+        {"type": "row", "title": "Error Logs", "id": 200, "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 35}},
+        {"type": "timeseries", "title": "API Error logs (5m count)", "id": 201, "gridPos": {"h": 8, "w": 6, "x": 0, "y": 36},
           "fieldConfig": {"defaults": {"unit": "short"}},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
             {"refId": "A", "expr": "sum(count_over_time(({namespace=\"$namespace\", component=\"api\"} |~ \"(?i)error|exception|fail|fatal\")[5m]))"}
           ]
         },
-        {"type": "logs", "title": "API Error Logs", "id": 202, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 43},
+        {"type": "logs", "title": "API Error Logs", "id": 202, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 36},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
             {"refId": "A", "expr": "{namespace=~\"$namespace\", component=\"api\"} |~ \"(?i)error|exception|fail|fatal\""}
           ],
           "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
         },
-        {"type": "timeseries", "title": "Directus Error logs (5m count)", "id": 203, "gridPos": {"h": 8, "w": 6, "x": 0, "y": 51},
+        {"type": "timeseries", "title": "Directus Error logs (5m count)", "id": 203, "gridPos": {"h": 8, "w": 6, "x": 0, "y": 44},
           "fieldConfig": {"defaults": {"unit": "short"}},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
             {"refId": "A", "expr": "sum(count_over_time(({namespace=\"$namespace\", component=\"directus\"} |~ \"(?i)error|exception|fail|fatal\")[5m]))"}
           ]
         },
-        {"type": "logs", "title": "Directus Error Logs", "id": 204, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 51},
+        {"type": "logs", "title": "Directus Error Logs", "id": 204, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 44},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
             {"refId": "A", "expr": "{namespace=~\"$namespace\", component=\"directus\"} |~ \"(?i)error|exception|fail|fatal\""}
           ],
           "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
         },
-        {"type": "timeseries", "title": "Worker Error logs (5m count)", "id": 205, "gridPos": {"h": 8, "w": 6, "x": 0, "y": 59},
+        {"type": "timeseries", "title": "Worker Error logs (5m count)", "id": 205, "gridPos": {"h": 8, "w": 6, "x": 0, "y": 52},
           "fieldConfig": {"defaults": {"unit": "short"}},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
             {"refId": "A", "expr": "sum(count_over_time(({namespace=\"$namespace\", component=\"worker\"} |~ \"(?i)error|exception|fail|fatal\")[5m]))"}
           ]
         },
-        {"type": "logs", "title": "Worker Error Logs", "id": 206, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 59},
+        {"type": "logs", "title": "Worker Error Logs", "id": 206, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 52},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
             {"refId": "A", "expr": "{namespace=~\"$namespace\", component=\"worker\"} |~ \"(?i)error|exception|fail|fatal\""}
           ],
           "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
         },
-        {"type": "timeseries", "title": "Worker-CPU Error logs (5m count)", "id": 207, "gridPos": {"h": 8, "w": 6, "x": 0, "y": 67},
+        {"type": "timeseries", "title": "Worker-CPU Error logs (5m count)", "id": 207, "gridPos": {"h": 8, "w": 6, "x": 0, "y": 60},
           "fieldConfig": {"defaults": {"unit": "short"}},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
             {"refId": "A", "expr": "sum(count_over_time(({namespace=\"$namespace\", component=\"worker-cpu\"} |~ \"(?i)error|exception|fail|fatal\")[5m]))"}
           ]
         },
-        {"type": "logs", "title": "Worker-CPU Error Logs", "id": 208, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 67},
+        {"type": "logs", "title": "Worker-CPU Error Logs", "id": 208, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 60},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
             {"refId": "A", "expr": "{namespace=~\"$namespace\", component=\"worker-cpu\"} |~ \"(?i)error|exception|fail|fatal\""}
