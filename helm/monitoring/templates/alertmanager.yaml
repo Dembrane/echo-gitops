@@ -29,6 +29,10 @@ data:
               ```
               {{ `{{` }} .CommonLabels {{ `}}` }}
               ```
+            mrkdwn_in:
+              - text
+              - title
+              - fields
 ---
 apiVersion: apps/v1
 kind: Deployment
