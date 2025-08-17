@@ -84,6 +84,8 @@ spec:
       containers:
         - name: kube-state-metrics
           image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.13.0
+          args:
+            - --metric-labels-allowlist=nodes=[doks.digitalocean.com/node-pool]
           ports:
             - containerPort: 8080
               name: http-metrics
