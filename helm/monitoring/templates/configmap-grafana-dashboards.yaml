@@ -1185,11 +1185,11 @@ data:
         },
         {"type": "row", "title": "Reliability", "id": 6, "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 8}},
         {"type": "table", "title": "Service Health", "id": 7, "gridPos": {"h": 8, "w": 8, "x": 0, "y": 9},
-          "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "avg by (svc) ( label_replace( avg_over_time(probe_success{job=\"blackbox_http\"}[5m]), \"svc\", \"$1\", \"instance\", \"https?://(api|directus)\\\\.\" ) )", "instant": true}],
+          "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "avg by (instance) (avg_over_time(probe_success{job=\"blackbox_http\"}[5m]))", "instant": true}],
           "options": {"showHeader": true},
           "transformations": [
             {"id": "labelsToFields", "options": {}},
-            {"id": "organize", "options": {"excludeByName": {"Time": true, "instance": true}, "indexByName": {"svc": 0, "Value": 1}, "renameByName": {"svc": "service", "Value": "state"}}}
+            {"id": "organize", "options": {"excludeByName": {"Time": true}, "indexByName": {"instance": 0, "Value": 1}, "renameByName": {"instance": "service", "Value": "state"}}}
           ],
           "fieldConfig": {"defaults": {"mappings": [
               {"type": "range", "options": {"from": 0, "to": 0.99, "result": {"text": "Unhealthy"}}},
