@@ -1290,13 +1290,13 @@ data:
           "fieldConfig": {"defaults": {"unit": "short"}},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"echo-prod\", pod=~\"echo-neo4j.*\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\")[5m]))"}
+            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"echo-prod\", container=\"neo4j\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\")[5m]))"}
           ]
         },
         {"type": "logs", "title": "Neo4j Error Logs", "id": 210, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 68},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "{namespace=\"echo-prod\", pod=~\"echo-neo4j.*\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\""}
+            {"refId": "A", "expr": "{namespace=\"echo-prod\", container=\"neo4j\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\""}
           ],
           "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
         }
