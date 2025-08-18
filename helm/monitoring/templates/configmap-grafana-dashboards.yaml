@@ -1226,13 +1226,13 @@ data:
           "fieldConfig": {"defaults": {"unit": "short"}},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"$namespace\", component=\"api\"} |~ \"(?i)error|exception|fail|fatal\")[5m]))"}
+            {"refId": "A", "expr": "sum(count_over_time(( ({namespace=\"$namespace\", component=\"api\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\") or ({namespace=\"$namespace\", component=\"api\", stream=\"stderr\"} !~ \"(?i)info|debug|trace\") )[5m]))"}
           ]
         },
         {"type": "logs", "title": "API Error Logs", "id": 202, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 36},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "{namespace=~\"$namespace\", component=\"api\"} |~ \"(?i)error|exception|fail|fatal\""}
+            {"refId": "A", "expr": "({namespace=~\"$namespace\", component=\"api\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\") or ({namespace=~\"$namespace\", component=\"api\", stream=\"stderr\"} !~ \"(?i)info|debug|trace\")"}
           ],
           "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
         },
@@ -1240,13 +1240,13 @@ data:
           "fieldConfig": {"defaults": {"unit": "short"}},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"$namespace\", component=\"directus\"} |~ \"(?i)error|exception|fail|fatal\")[5m]))"}
+            {"refId": "A", "expr": "sum(count_over_time(( ({namespace=\"$namespace\", component=\"directus\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\") or ({namespace=\"$namespace\", component=\"directus\", stream=\"stderr\"} !~ \"(?i)info|debug|trace\") )[5m]))"}
           ]
         },
         {"type": "logs", "title": "Directus Error Logs", "id": 204, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 44},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "{namespace=~\"$namespace\", component=\"directus\"} |~ \"(?i)error|exception|fail|fatal\""}
+            {"refId": "A", "expr": "({namespace=~\"$namespace\", component=\"directus\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\") or ({namespace=~\"$namespace\", component=\"directus\", stream=\"stderr\"} !~ \"(?i)info|debug|trace\")"}
           ],
           "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
         },
@@ -1254,13 +1254,13 @@ data:
           "fieldConfig": {"defaults": {"unit": "short"}},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"$namespace\", component=\"worker\"} |~ \"(?i)error|exception|fail|fatal\")[5m]))"}
+            {"refId": "A", "expr": "sum(count_over_time(( ({namespace=\"$namespace\", component=\"worker\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\") or ({namespace=\"$namespace\", component=\"worker\", stream=\"stderr\"} !~ \"(?i)info|debug|trace\") )[5m]))"}
           ]
         },
         {"type": "logs", "title": "Worker Error Logs", "id": 206, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 52},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "{namespace=~\"$namespace\", component=\"worker\"} |~ \"(?i)error|exception|fail|fatal\""}
+            {"refId": "A", "expr": "({namespace=~\"$namespace\", component=\"worker\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\") or ({namespace=~\"$namespace\", component=\"worker\", stream=\"stderr\"} !~ \"(?i)info|debug|trace\")"}
           ],
           "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
         },
@@ -1268,13 +1268,27 @@ data:
           "fieldConfig": {"defaults": {"unit": "short"}},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"$namespace\", component=\"worker-cpu\"} |~ \"(?i)error|exception|fail|fatal\")[5m]))"}
+            {"refId": "A", "expr": "sum(count_over_time(( ({namespace=\"$namespace\", component=\"worker-cpu\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\") or ({namespace=\"$namespace\", component=\"worker-cpu\", stream=\"stderr\"} !~ \"(?i)info|debug|trace\") )[5m]))"}
           ]
         },
         {"type": "logs", "title": "Worker-CPU Error Logs", "id": 208, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 60},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "{namespace=~\"$namespace\", component=\"worker-cpu\"} |~ \"(?i)error|exception|fail|fatal\""}
+            {"refId": "A", "expr": "({namespace=~\"$namespace\", component=\"worker-cpu\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\") or ({namespace=~\"$namespace\", component=\"worker-cpu\", stream=\"stderr\"} !~ \"(?i)info|debug|trace\")"}
+          ],
+          "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
+        },
+        {"type": "timeseries", "title": "Neo4j Error logs (5m count)", "id": 209, "gridPos": {"h": 8, "w": 6, "x": 0, "y": 68},
+          "fieldConfig": {"defaults": {"unit": "short"}},
+          "datasource": {"type": "loki", "uid": "loki"},
+          "targets": [
+            {"refId": "A", "expr": "sum(count_over_time(( ({namespace=\"$namespace\", component=\"neo4j\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\") or ({namespace=\"$namespace\", component=\"neo4j\", stream=\"stderr\"} !~ \"(?i)info|debug|trace\") )[5m]))"}
+          ]
+        },
+        {"type": "logs", "title": "Neo4j Error Logs", "id": 210, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 68},
+          "datasource": {"type": "loki", "uid": "loki"},
+          "targets": [
+            {"refId": "A", "expr": "({namespace=~\"$namespace\", component=\"neo4j\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\") or ({namespace=~\"$namespace\", component=\"neo4j\", stream=\"stderr\"} !~ \"(?i)info|debug|trace\")"}
           ],
           "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
         }
