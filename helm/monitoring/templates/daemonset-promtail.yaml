@@ -36,6 +36,9 @@ spec:
             - name: containers
               mountPath: /var/lib/docker/containers
               readOnly: true
+            - name: containers-varlog
+              mountPath: /var/log/containers
+              readOnly: true
             - name: pods
               mountPath: /var/log/pods
               readOnly: true
@@ -59,6 +62,9 @@ spec:
         - name: containers
           hostPath:
             path: /var/lib/docker/containers
+        - name: containers-varlog
+          hostPath:
+            path: /var/log/containers
         - name: pods
           hostPath:
             path: /var/log/pods 

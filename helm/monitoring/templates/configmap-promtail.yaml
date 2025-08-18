@@ -78,11 +78,21 @@ data:
             source_labels:
               - __meta_kubernetes_pod_container_name
             target_label: container
-          - replacement: /var/log/pods/*$1/*.log
+          # Kubernetes 1.24+ often uses containerd logs under /var/log/containers with symlinks
+          - action: replace
+            replacement: /var/log/pods/*$1/*.log
             separator: /
             source_labels:
               - __meta_kubernetes_pod_uid
               - __meta_kubernetes_pod_container_name
+            target_label: __path__
+          - action: replace
+            replacement: /var/log/containers/$1_$3_$2-*.log
+            separator: ;
+            source_labels:
+              - __meta_kubernetes_pod_name
+              - __meta_kubernetes_pod_container_name
+              - __meta_kubernetes_namespace
             target_label: __path__
           - source_labels: [__meta_kubernetes_pod_annotationpresent_kubernetes_io_config_hash]
             action: replace
