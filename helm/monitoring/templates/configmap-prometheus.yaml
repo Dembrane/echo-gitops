@@ -220,9 +220,11 @@ data:
         params:
           module: [http_2xx]
         static_configs:
-          - targets:
 {{- range .Values.httpChecks.targets }}
+          - targets:
               - {{ .url | quote }}
+            labels:
+              svc: {{ .name | quote }}
 {{- end }}
         relabel_configs:
           - source_labels: [__address__]
