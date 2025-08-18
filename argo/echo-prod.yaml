@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: 'https://github.com/dembrane/echo-gitops.git'
-    targetRevision: main
+    targetRevision: feature/monitoring_prod
     path: helm/echo
     helm:
       valueFiles:
