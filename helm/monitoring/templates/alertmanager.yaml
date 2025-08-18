@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: monitoring
+data:
+  alertmanager.yml: |
+    global:
+      resolve_timeout: 5m
+      slack_api_url_file: /etc/alertmanager/secrets/slack-webhook-url
+    route:
+      group_by: ['alertname','service']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 2h
+      receiver: 'slack-prod'
+    receivers:
+      - name: 'slack-prod'
+        slack_configs:
+          - channel: '#prod-alerts'
+            send_resolved: true
+            link_names: true
+            title: ':rotating_light: [{{ `{{` }} .Status {{ `}}` }}] {{ `{{` }} .CommonLabels.alertname {{ `}}` }}'
+            text: |
+              :rotating_light: *Alert:* {{ `{{` }} .CommonLabels.alertname {{ `}}` }}
+              :warning: *Severity:* {{ `{{` }} .CommonLabels.severity {{ `}}` }}
+              :x: *Description:* {{ `{{` }} .CommonAnnotations.description {{ `}}` }}
+              *Details:*
+              ```
+              {{ `{{` }} .CommonLabels {{ `}}` }}
+              ```
+            mrkdwn_in:
+              - text
+              - title
+              - fields
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager
+  namespace: monitoring
+  labels:
+    app: alertmanager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alertmanager
+  template:
+    metadata:
+      labels:
+        app: alertmanager
+    spec:
+      containers:
+        - name: alertmanager
+          image: prom/alertmanager:v0.26.0
+          args:
+            - '--config.file=/etc/alertmanager/alertmanager.yml'
+            - '--storage.path=/alertmanager'
+          ports:
+            - name: http
+              containerPort: 9093
+          volumeMounts:
+            - name: alertmanager-config
+              mountPath: /etc/alertmanager/alertmanager.yml
+              subPath: alertmanager.yml
+            - name: alertmanager-secrets
+              mountPath: /etc/alertmanager/secrets
+      volumes:
+        - name: alertmanager-config
+          configMap:
+            name: alertmanager-config
+        - name: alertmanager-secrets
+          secret:
+            secretName: monitoring-secrets
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+  namespace: monitoring
+  labels:
+    app: alertmanager
+spec:
+  selector:
+    app: alertmanager
+  ports:
+    - name: http
+      port: 9093
+      targetPort: http
+
+
