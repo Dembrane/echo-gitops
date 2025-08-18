@@ -1152,11 +1152,13 @@ data:
           "targets": [{"expr": "sum by (pod) (increase(kube_pod_container_status_restarts_total{namespace=\"$namespace\"}[1h]))", "refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}}]}
       ]
     }
+  # NOTE: Prod Health dashboard Loki queries are hardcoded to namespace "echo-prod" to avoid variable misuse.
   prod-health.json: |
     {
       "annotations": {"list": []},
       "title": "Prod Health",
       "uid": "prod-health",
+      "description": "Loki queries are hardcoded to namespace echo-prod (do not use $namespace in logs panels)",
       "timezone": "",
       "schemaVersion": 38,
       "version": 1,
@@ -1226,13 +1228,13 @@ data:
           "fieldConfig": {"defaults": {"unit": "short"}},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"$namespace\", component=\"api\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\")[5m]))"}
+            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"echo-prod\", component=\"api\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\")[5m]))"}
           ]
         },
         {"type": "logs", "title": "API Error Logs", "id": 202, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 36},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "{namespace=~\"$namespace\", component=\"api\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\""}
+            {"refId": "A", "expr": "{namespace=\"echo-prod\", component=\"api\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\""}
           ],
           "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
         },
@@ -1240,13 +1242,13 @@ data:
           "fieldConfig": {"defaults": {"unit": "short"}},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"$namespace\", component=\"directus\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\")[5m]))"}
+            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"echo-prod\", component=\"directus\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\")[5m]))"}
           ]
         },
         {"type": "logs", "title": "Directus Error Logs", "id": 204, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 44},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "{namespace=~\"$namespace\", component=\"directus\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\""}
+            {"refId": "A", "expr": "{namespace=\"echo-prod\", component=\"directus\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\""}
           ],
           "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
         },
@@ -1254,13 +1256,13 @@ data:
           "fieldConfig": {"defaults": {"unit": "short"}},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"$namespace\", component=\"worker\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\")[5m]))"}
+            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"echo-prod\", component=\"worker\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\")[5m]))"}
           ]
         },
         {"type": "logs", "title": "Worker Error Logs", "id": 206, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 52},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "{namespace=~\"$namespace\", component=\"worker\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\""}
+            {"refId": "A", "expr": "{namespace=\"echo-prod\", component=\"worker\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\""}
           ],
           "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
         },
@@ -1268,13 +1270,13 @@ data:
           "fieldConfig": {"defaults": {"unit": "short"}},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"$namespace\", component=\"worker-cpu\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\")[5m]))"}
+            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"echo-prod\", component=\"worker-cpu\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\")[5m]))"}
           ]
         },
         {"type": "logs", "title": "Worker-CPU Error Logs", "id": 208, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 60},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "{namespace=~\"$namespace\", component=\"worker-cpu\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\""}
+            {"refId": "A", "expr": "{namespace=\"echo-prod\", component=\"worker-cpu\"} |~ \"(?i)(error|exception|fail|fatal|critical|panic|warn|warning)\""}
           ],
           "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
         }
