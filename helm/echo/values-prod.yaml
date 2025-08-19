@@ -39,7 +39,7 @@ common:
 
 directus:
   replicaCount: 2
-  maxReplicaCount: 2
+  maxReplicaCount: 4
   image:
     repository: "dbr-echo-directus"
   service:
@@ -64,8 +64,8 @@ directus:
     AUTH_GOOGLE_REDIRECT_ALLOW_LIST: "https://dashboard.dembrane.com/en-US/projects,https://dashboard.dembrane.com/nl-NL/projects,https://dashboard.dembrane.com/es-ES/projects,https://dashboard.dembrane.com/fr-FR/projects,https://dashboard.dembrane.com/de-DE/projects"
 
 apiServer:
-  replicaCount: 2
-  maxReplicaCount: 2
+  replicaCount: 6
+  maxReplicaCount: 10
   image:
     repository: "dbr-echo-server"
   service:
@@ -73,27 +73,27 @@ apiServer:
   resources:
     requests:
       cpu: "500m"
-      memory: "512Mi"
+      memory: "1Gi"
     limits:
       cpu: "1"
-      memory: "1.5Gi"
+      memory: "2Gi"
 
 worker:
-  replicaCount: 3
-  maxReplicaCount: 3
+  replicaCount: 4
+  maxReplicaCount: 8
   image:
     repository: "dbr-echo-server"
   resources:
     requests:
       cpu: "500m"
-      memory: "800Mi"
+      memory: "1Gi"
     limits:
       cpu: "1"
       memory: "1.5Gi"
 
 workerCpu:
-  replicaCount: 2
-  maxReplicaCount: 3
+  replicaCount: 4
+  maxReplicaCount: 8
   image:
     repository: "dbr-echo-server"
   resources:
@@ -101,7 +101,7 @@ workerCpu:
       cpu: "2"
       memory: "2Gi"
     limits:
-      cpu: "3"
+      cpu: "4"
       memory: "4Gi"
 
 workerScheduler:
@@ -133,7 +133,7 @@ neo4j:
       memory: "1Gi"
     limits:
       cpu: "2"
-      memory: "2Gi"
+      memory: "4Gi"
 
 ingress:
   enabled: true
