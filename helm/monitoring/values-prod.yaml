@@ -20,7 +20,7 @@ prometheus:
       memory: "1Gi"
     limits:
       cpu: "1000m"
-      memory: "2Gi"
+      memory: "4Gi"
 
 # Grafana settings
 grafana:
