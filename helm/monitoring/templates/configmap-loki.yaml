@@ -56,12 +56,20 @@ data:
             store: inmemory
           replication_factor: 1
 
+    query_range:
+      parallelise_shardable_queries: true
+      align_queries_with_step: true
+
+    frontend:
+      max_outstanding_per_tenant: 2048
+
     limits_config:
       retention_period: 7d
       ingestion_rate_mb: 10
       ingestion_burst_size_mb: 20
-      max_query_length: 12h
-      max_query_parallelism: 32
+      max_query_length: 13h
+      split_queries_by_interval: 30m
+      max_query_parallelism: 12
       max_streams_per_user: 10000
       max_global_streams_per_user: 10000
 

@@ -14,13 +14,18 @@ storage:
 
 # Prometheus settings
 prometheus:
+  extraArgs:
+    - --query.max-concurrency=40
+    - --web.max-connections=1024
+    - --query.timeout=2m
+    - --query.max-samples=100000000
   resources:
     requests:
       cpu: "500m"
       memory: "1Gi"
     limits:
       cpu: "1000m"
-      memory: "2Gi"
+      memory: "4Gi"
 
 # Grafana settings
 grafana:
@@ -54,12 +59,22 @@ promtail:
       cpu: "400m"
       memory: "512Mi"
 
-# Ingress settings - Disabled for port-forward access only
+# Ingress settings - Enable public access via NGINX and TLS
 ingress:
-  enabled: false
+  enabled: true
   className: "nginx"
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
   basicAuth:
     enabled: false 
+
+# HTTP Blackbox checks (prod)
+httpChecks:
+  interval: 30s
+  timeout: 5s
+  targets:
+    - name: api
+      url: https://api.dembrane.com/api/health
+    - name: directus
+      url: https://directus.dembrane.com/server/health

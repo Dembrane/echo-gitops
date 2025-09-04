@@ -9,6 +9,11 @@ data:
       scrape_interval: 15s
       evaluation_interval: 15s
 
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets: ['alertmanager.monitoring.svc:9093']
+
     # Load rules once and periodically evaluate them
     rule_files:
       - /etc/prometheus/rules/*.yml
@@ -88,11 +93,67 @@ data:
           - source_labels: [__meta_kubernetes_pod_name]
             action: replace
             target_label: kubernetes_pod_name
+          - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+            action: replace
+            target_label: service
       
       # Scrape Loki metrics
       - job_name: 'loki'
         static_configs:
           - targets: ['loki:3100']
+
+      # Scrape kube-state-metrics
+      - job_name: 'kube-state-metrics'
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+                - monitoring
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: kube-state-metrics
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: http-metrics
+
+      # Scrape ingress-nginx metrics (controller)
+      - job_name: 'ingress-nginx'
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+                - ingress-nginx
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_label_app_kubernetes_io_name]
+            action: keep
+            regex: ingress-nginx
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: ingress-nginx-controller-metrics|ingress-nginx-controller
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: metrics|http-metrics
+
+      # Fallback: scrape ingress-nginx controller pods directly on port 10254
+      - job_name: 'ingress-nginx-pods'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - ingress-nginx
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+            action: keep
+            regex: ingress-nginx
+          - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_component]
+            action: keep
+            regex: controller
+          - source_labels: [__meta_kubernetes_pod_ip]
+            action: replace
+            regex: (.+)
+            target_label: __address__
+            replacement: ${1}:10254
 
       # Scrape Echo Application metrics
       - job_name: 'echo-application'
@@ -151,6 +212,36 @@ data:
             action: keep
             regex: metrics
 
+      # Blackbox HTTP checks
+      - job_name: 'blackbox_http'
+        metrics_path: /probe
+        scrape_interval: {{ .Values.httpChecks.interval | default "30s" | quote }}
+        scrape_timeout: {{ .Values.httpChecks.timeout | default "5s" | quote }}
+        params:
+          module: [http_2xx]
+        static_configs:
+{{- range .Values.httpChecks.targets }}
+          - targets:
+              - {{ .url | quote }}
+            labels:
+              svc: {{ .name | quote }}
+{{- end }}
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: blackbox-exporter.monitoring.svc:9115
+          - source_labels: [__param_target]
+            regex: .*/(api|directus)(?:/.*)?$
+            target_label: svc
+            replacement: $1
+          - source_labels: [__param_target]
+            regex: https?://(api|directus)\.
+            target_label: svc
+            replacement: $1
+
   node-alerts.yml: |
     groups:
     - name: node
@@ -186,20 +277,91 @@ data:
     groups:
     - name: application
       rules:
-      - alert: HighRequestLatency
-        expr: sum(rate(http_request_duration_seconds_sum[5m])) by (service) / sum(rate(http_request_duration_seconds_count[5m])) by (service) > 0.5
+      - alert: IngressHighErrorRate
+        expr: (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) / (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 0.05
         for: 10m
         labels:
           severity: warning
         annotations:
-          summary: "High request latency on {{ "{{" }} $labels.service {{ "}}" }}"
-          description: "{{ "{{" }} $labels.service {{ "}}" }} has a latency of {{ "{{" }} $value {{ "}}" }}s"
+          summary: "High error rate via ingress on {{ "{{" }} $labels.svc {{ "}}" }}"
+          description: "5xx ratio > 5% over 10m: {{ "{{" }} $value {{ "}}" }}"
 
-      - alert: HighErrorRate
-        expr: sum(rate(http_request_total{status_code=~"5.."}[5m])) by (service) / sum(rate(http_request_total[5m])) by (service) > 0.05
+      - alert: IngressCriticalErrorRate
+        expr: (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) / (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 0.20
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical error rate via ingress on {{ "{{" }} $labels.svc {{ "}}" }}"
+          description: "5xx ratio > 20% over 5m: {{ "{{" }} $value {{ "}}" }}"
+
+      - alert: IngressHighLatencyP95
+        expr: histogram_quantile(0.95, sum by (svc, le) ( label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 0.5
         for: 10m
         labels:
           severity: warning
         annotations:
-          summary: "High error rate on {{ "{{" }} $labels.service {{ "}}" }}"
-          description: "Error rate is above 5% on {{ "{{" }} $labels.service {{ "}}" }} ({{ "{{" }} $value {{ "}}" }})" 
+          summary: "High p95 latency via ingress on {{ "{{" }} $labels.svc {{ "}}" }}"
+          description: "> 0.5s over 10m: {{ "{{" }} $value {{ "}}" }}"
+
+      - alert: IngressCriticalLatencyP95
+        expr: histogram_quantile(0.95, sum by (svc, le) ( label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 1.5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical p95 latency via ingress on {{ "{{" }} $labels.svc {{ "}}" }}"
+          description: "> 1.5s over 5m: {{ "{{" }} $value {{ "}}" }}"
+
+      - alert: CrashLoopBackOff
+        expr: sum by (namespace, pod, container) (kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff", namespace="echo-prod"}) > 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CrashLoopBackOff: {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }} ({{ "{{" }} $labels.container {{ "}}" }})"
+
+      - alert: PodRestartSpike
+        expr: sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total{namespace="echo-prod"}[5m])) > 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Restart spike: {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }}"
+
+      - alert: OOMKilled
+        expr: sum by (namespace, pod, container) (increase(kube_pod_container_status_terminated_reason{reason="OOMKilled", namespace="echo-prod"}[5m])) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "OOMKilled: {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }} ({{ "{{" }} $labels.container {{ "}}" }})"
+
+      - alert: HighContainerCPUUtilization
+        expr: ( sum by (pod, namespace)(rate(container_cpu_usage_seconds_total{namespace="echo-prod", image!="", container!=""}[5m])) ) / clamp_min(sum by (pod, namespace)(kube_pod_container_resource_requests{namespace="echo-prod", resource="cpu", unit="core", container!=""}), 0.1) > 0.9
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU utilization vs requests: {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }}"
+
+      - alert: HighContainerMemoryUtilization
+        expr: ( sum by (pod, namespace)(container_memory_working_set_bytes{namespace="echo-prod", image!="", container!=""}) ) / clamp_min(sum by (pod, namespace)(kube_pod_container_resource_limits{namespace="echo-prod", resource="memory", unit="byte", container!=""}), 1) > 0.9
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Memory utilization vs limits: {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }}"
+
+      - alert: DeploymentAvailabilityShortfall
+        expr: |
+          (
+            sum by (deployment) (kube_deployment_spec_replicas{namespace="echo-prod", deployment=~"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*"})
+          - sum by (deployment) (kube_deployment_status_replicas_available{namespace="echo-prod", deployment=~"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*"})
+          ) > 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Unavailable replicas for {{ "{{" }} $labels.deployment {{ "}}" }}"
+          description: "Available replicas < desired for 10m. Check rollout status, image pulls, probes, and node capacity."

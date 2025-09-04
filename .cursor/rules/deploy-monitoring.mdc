@@ -1,0 +1,69 @@
+---
+alwaysApply: false
+description: how to deploy
+---
+### Monitoring-only deployment (safe via ArgoCD)
+
+Use this when deploying changes to the monitoring stack (Grafana, Prometheus, Loki, Promtail) without touching application workloads.
+
+#### Relevant files
+- Dashboards: [helm/monitoring/templates/configmap-grafana-dashboards.yaml](mdc:helm/monitoring/templates/configmap-grafana-dashboards.yaml)
+- Prometheus config/alerts: [helm/monitoring/templates/configmap-prometheus.yaml](mdc:helm/monitoring/templates/configmap-prometheus.yaml)
+- Grafana deployment: [helm/monitoring/templates/deployment-grafana.yaml](mdc:helm/monitoring/templates/deployment-grafana.yaml)
+- ArgoCD app: [argo/echo-monitoring-prod.yaml](mdc:argo/echo-monitoring-prod.yaml)
+
+#### Steps
+1) Commit and push monitoring changes to the deployment branch (e.g. `feature/monitoring_prod`)
+```bash
+git add -A && git commit -m "monitoring: <summary>" && git push
+```
+
+2) Ensure ArgoCD Application points to that branch
+- Confirm `.spec.source.targetRevision` is your branch in `echo-monitoring-prod`.
+
+3) Safe sync options (avoid disruption)
+```bash
+kubectl -n argocd annotate application/echo-monitoring-prod \
+  argocd.argoproj.io/sync-options="Validate=false,Prune=false,ApplyOutOfSyncOnly=true" --overwrite
+```
+
+4) Manually trigger sync (no prune, apply only out-of-sync)
+```bash
+kubectl -n argocd patch application echo-monitoring-prod --type=merge -p '{
+  "operation": {
+    "sync": {
+      "revision": "feature/monitoring_prod",
+      "prune": false,
+      "dryRun": false,
+      "syncStrategy": {"apply": {"force": false}}
+    }
+  }
+}'
+```
+
+5) Monitor rollout closely (isolate to monitoring)
+- Prometheus
+```bash
+kubectl -n monitoring rollout status deploy/prometheus --timeout=180s
+```
+- Grafana (PVC multi-attach can require Recreate strategy)
+```bash
+kubectl -n monitoring rollout status deploy/grafana --timeout=180s
+# If blocked, ensure deployment strategy is Recreate in
+# [helm/monitoring/templates/deployment-grafana.yaml](mdc:helm/monitoring/templates/deployment-grafana.yaml)
+# then:
+kubectl -n monitoring rollout restart deploy/grafana
+kubectl -n monitoring rollout status deploy/grafana --timeout=180s
+```
+
+6) Validate in Grafana (no hotfix drift)
+- Dashboards provisioned from ConfigMap should appear/reload. If a dashboard is missing, verify the live ConfigMap keys:
+```bash
+kubectl -n monitoring get configmap grafana-dashboards-config -o json | jq -r '.data | keys[]'
+```
+
+#### Guardrails
+- Do not prune during sync.
+- Apply only out-of-sync changes.
+- Avoid replacing or restarting app workloads; only monitoring components should roll.
+- Use ArgoCD-driven changes only (no manual edits in-cluster).
