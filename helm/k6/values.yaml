@@ -54,6 +54,10 @@ nodeSelector: {}
 tolerations: []
 affinity: {}
 
+# Pin k6 to the monitoring-devops-pool nodes in DigitalOcean
+nodeSelector:
+  doks.digitalocean.com/node-pool: "monitoring-devops-pool"
+
 serviceAccount:
   create: true
   name: ""
