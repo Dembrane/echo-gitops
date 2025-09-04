@@ -111,3 +111,5 @@ spec:
                 path: prod-overview.json
               - key: prod-health.json
                 path: prod-health.json
+              - key: k6-dashboard.json
+                path: k6-dashboard.json

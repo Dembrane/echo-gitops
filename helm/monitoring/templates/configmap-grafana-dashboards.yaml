@@ -1154,6 +1154,37 @@ data:
     }
   # NOTE: Prod Health dashboard Loki queries are hardcoded to namespace "echo-prod" to avoid variable misuse.
   prod-health.json: |
+  k6-dashboard.json: |
+    {
+      "title": "k6 Load Testing",
+      "uid": "k6-load",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 1,
+      "panels": [
+        {
+          "type": "timeseries",
+          "title": "HTTP Req Duration p95",
+          "targets": [
+            { "expr": "histogram_quantile(0.95, sum(rate(k6_http_req_duration_seconds_bucket[5m])) by (le))", "datasource": {"type":"prometheus","uid":"prometheus"} }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "HTTP Req Rate",
+          "targets": [
+            { "expr": "sum(rate(k6_http_reqs_total[1m]))", "datasource": {"type":"prometheus","uid":"prometheus"} }
+          ]
+        },
+        {
+          "type": "stat",
+          "title": "Failures %",
+          "targets": [
+            { "expr": "sum(rate(k6_errors_total[1m])) / sum(rate(k6_http_reqs_total[1m])) * 100", "datasource": {"type":"prometheus","uid":"prometheus"} }
+          ]
+        }
+      ]
+    }
     {
       "annotations": {"list": []},
       "title": "Prod Health",
