@@ -15,7 +15,8 @@ storage:
 # Prometheus settings
 prometheus:
   # Additional Prometheus CLI args
-  extraArgs: []
+  extraArgs:
+    - --web.enable-remote-write-receiver
   # Default rollout strategy to avoid PVC multi-attach races
   strategy: Recreate
   resources:
