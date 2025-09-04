@@ -89,7 +89,7 @@ worker:
       memory: "1Gi"
     limits:
       cpu: "1"
-      memory: "1.5Gi"
+      memory: "2Gi"
 
 workerCpu:
   replicaCount: 4
@@ -98,11 +98,11 @@ workerCpu:
     repository: "dbr-echo-server"
   resources:
     requests:
-      cpu: "2"
-      memory: "2Gi"
+      cpu: "1500m"
+      memory: "3Gi"
     limits:
       cpu: "4"
-      memory: "4Gi"
+      memory: "6Gi"
 
 workerScheduler:
   replicaCount: 1
@@ -125,15 +125,15 @@ neo4j:
   storage:
     size: "40Gi"
   config:
-    pagecacheSize: "1G"
-    heapSize: "1G"
+    pagecacheSize: "2G"
+    heapSize: "4G"
   resources:
     requests:
       cpu: "1"
       memory: "1Gi"
     limits:
-      cpu: "2"
-      memory: "4Gi"
+      cpu: "4"
+      memory: "8Gi"
 
 ingress:
   enabled: true
@@ -155,3 +155,7 @@ ingress:
 
 storage:
   storageClassName: "do-block-storage"
+
+rollout:
+  maxUnavailable: 0
+  maxSurge: "25%"
