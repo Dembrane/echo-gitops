@@ -59,7 +59,7 @@ spec:
             - name: GF_SECURITY_DISABLE_GRAVATAR
               value: "true"
             - name: GF_DASHBOARDS_MIN_REFRESH_INTERVAL
-              value: "10s"
+              value: "30s"
             - name: GF_METRICS_ENABLED
               value: "true"
           volumeMounts:
