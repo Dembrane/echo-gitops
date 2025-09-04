@@ -158,5 +158,5 @@ storage:
   storageClassName: "do-block-storage"
 
 rollout:
-  maxUnavailable: 0
+  maxUnavailable: "0%"
   maxSurge: "25%"
