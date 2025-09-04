@@ -38,10 +38,23 @@ spec:
         - name: k6
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            {{- if .Values.webDashboard.enabled }}
+            - containerPort: {{ .Values.webDashboard.port }}
+              name: webdash
+            {{- end }}
           env:
             {{- range $k, $v := .Values.bigTest.env }}
             - name: {{ $k }}
               value: {{ $v | quote }}
+            {{- end }}
+            {{- if .Values.webDashboard.enabled }}
+            - name: K6_WEB_DASHBOARD
+              value: "true"
+            - name: K6_WEB_DASHBOARD_HOST
+              value: {{ .Values.webDashboard.host | quote }}
+            - name: K6_WEB_DASHBOARD_PORT
+              value: {{ .Values.webDashboard.port | quote }}
             {{- end }}
             {{- if .Values.prometheus.remoteWrite.enabled }}
             - name: K6_PROMETHEUS_RW_SERVER_URL

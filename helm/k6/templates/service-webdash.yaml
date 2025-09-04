@@ -1,0 +1,17 @@
+{{- if .Values.webDashboard.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "k6.fullname" . }}-webdash
+  namespace: {{ .Values.namespace | default "loadtesting" | quote }}
+  labels:
+    app: k6
+spec:
+  selector:
+    app: k6
+  ports:
+    - name: webdash
+      port: {{ .Values.webDashboard.port }}
+      targetPort: {{ .Values.webDashboard.port }}
+{{- end }}
+

@@ -5,6 +5,11 @@ image:
   tag: latest
   pullPolicy: IfNotPresent
 
+webDashboard:
+  enabled: true
+  host: "0.0.0.0"
+  port: 5665
+
 prometheus:
   # Use remote write by default; alternatively enable scrape below
   remoteWrite:
