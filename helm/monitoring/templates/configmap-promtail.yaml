@@ -82,14 +82,12 @@ data:
               - __meta_kubernetes_pod_container_name
             target_label: container
           # Explicit pod log path under /var/log/pods/<namespace>_<pod>_<uid>/<container>/<n>.log
-          # Use wildcard on namespace_pod to avoid empty segment issues in some distros
+          # Use UID-only pattern so container dir and rotation filenames are matched
           - action: replace
             source_labels:
               - __meta_kubernetes_pod_uid
-              - __meta_kubernetes_pod_container_name
             target_label: __path__
-            regex: (.+);(.+)
-            replacement: /var/log/pods/*$1/$2/*.log
+            replacement: /var/log/pods/*$1/*/*.log
           - source_labels: [__meta_kubernetes_pod_annotationpresent_kubernetes_io_config_hash]
             action: replace
             replacement: true
