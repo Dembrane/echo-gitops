@@ -156,3 +156,25 @@ The repository is structured as follows:
     ```bash
     kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
     ```
+
+## Access k6 Web Dashboard (local)
+
+- The k6 web dashboard is built-in and runs during a test (no database required). See docs: https://grafana.com/docs/k6/latest/results-output/web-dashboard/
+
+Steps:
+
+1) Start a synthetic run (dev example):
+```bash
+kubectl -n loadtesting create job manual-synthetic-$(date +%s) --from=cronjob/echo-k6-dev-k6-synthetic
+```
+
+2) Port-forward the k6 web dashboard:
+```bash
+kubectl -n loadtesting port-forward svc/echo-k6-dev-k6-webdash 5665:5665
+```
+
+3) Open http://localhost:5665 while the job is running.
+
+Notes:
+- Web dashboard stops when the test finishes. Trigger another job to view it again.
+- Historical metrics are available in Grafana via Prometheus (remote write enabled).
