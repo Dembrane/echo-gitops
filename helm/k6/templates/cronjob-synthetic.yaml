@@ -1,0 +1,75 @@
+{{- if .Values.synthetic.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "k6.fullname" . }}-synthetic
+  namespace: {{ .Values.namespace | default "loadtesting" | quote }}
+spec:
+  schedule: {{ .Values.synthetic.schedule | quote }}
+  suspend: {{ .Values.synthetic.suspend | default false }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: k6
+            component: synthetic
+          {{- if .Values.prometheus.scrape.enabled }}
+          annotations:
+            prometheus.io/scrape: "true"
+            prometheus.io/port: {{ .Values.prometheus.scrape.port | quote }}
+            prometheus.io/path: {{ .Values.prometheus.scrape.metricsPath | quote }}
+          {{- end }}
+        spec:
+          restartPolicy: Never
+          serviceAccountName: {{ include "k6.serviceAccountName" . }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          containers:
+            - name: k6
+              image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              env:
+                {{- range $k, $v := .Values.synthetic.env }}
+                - name: {{ $k }}
+                  value: {{ $v | quote }}
+                {{- end }}
+                {{- if .Values.prometheus.remoteWrite.enabled }}
+                - name: K6_PROMETHEUS_RW_SERVER_URL
+                  value: {{ .Values.prometheus.remoteWrite.serverUrl | quote }}
+                - name: K6_PROMETHEUS_RW_TREND_STATS
+                  value: {{ .Values.prometheus.remoteWrite.trendStats | quote }}
+                {{- end }}
+              args:
+                {{- if .Values.prometheus.remoteWrite.enabled }}
+                - run
+                - --out
+                - experimental-prometheus-rw
+                {{- else if .Values.prometheus.scrape.enabled }}
+                - run
+                - --out
+                - experimental-prometheus
+                {{- else }}
+                - run
+                {{- end }}
+                - {{ .Values.synthetic.scriptPath }}
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+              resources:
+                {{- toYaml .Values.synthetic.resources | nindent 16 }}
+          volumes:
+            - name: scripts
+              configMap:
+                name: {{ include "k6.fullname" . }}-scripts
+

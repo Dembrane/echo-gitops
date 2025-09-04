@@ -1,0 +1,7 @@
+apiVersion: v2
+name: k6
+description: k6 load testing infrastructure (synthetic CronJob and scalable big test Job)
+type: application
+version: 0.1.0
+appVersion: "0.49.0"
+

@@ -1,0 +1,55 @@
+namespace: loadtesting
+
+image:
+  repository: grafana/k6
+  tag: v0.49.0
+  pullPolicy: IfNotPresent
+
+prometheus:
+  # Use remote write by default; alternatively enable scrape below
+  remoteWrite:
+    enabled: true
+    serverUrl: "http://prometheus.monitoring.svc:9090/api/v1/write"
+    trendStats: "p(95),p(99),min,max,avg"  # K6_PROMETHEUS_RW_TREND_STATS
+  scrape:
+    enabled: false
+    port: 6565
+    metricsPath: /metrics
+
+synthetic:
+  enabled: true
+  schedule: "*/10 * * * *"
+  suspend: false
+  scriptPath: /scripts/smoke.js
+  env: {}
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+bigTest:
+  enabled: true
+  parallelism: 1
+  completions: 1
+  ttlSecondsAfterFinished: 3600
+  scriptPath: /scripts/big.js
+  env: {}
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "2"
+      memory: "2Gi"
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+serviceAccount:
+  create: true
+  name: ""
+
