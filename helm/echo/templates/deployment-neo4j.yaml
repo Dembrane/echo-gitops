@@ -45,12 +45,6 @@ spec:
               value: "{{ default (default "512M" .Values.neo4j.config.heapSize) .Values.neo4j.config.heapMaxSize }}"
             - name: NEO4J_server_bolt_listen__address
               value: "0.0.0.0:7687"
-            - name: NEO4J_server_bolt_thread__pool_min__size
-              value: "{{ .Values.neo4j.config.boltThreadPoolMin | default "10" }}"
-            - name: NEO4J_server_bolt_thread__pool_max__size
-              value: "{{ .Values.neo4j.config.boltThreadPoolMax | default "400" }}"
-            - name: NEO4J_server_bolt_backlog__size
-              value: "{{ .Values.neo4j.config.boltBacklogSize | default "1024" }}"
           volumeMounts:
             - name: neo4j-data
               mountPath: /data
