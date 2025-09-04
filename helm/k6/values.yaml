@@ -2,7 +2,7 @@ namespace: loadtesting
 
 image:
   repository: grafana/k6
-  tag: v0.49.0
+  tag: latest
   pullPolicy: IfNotPresent
 
 prometheus:
