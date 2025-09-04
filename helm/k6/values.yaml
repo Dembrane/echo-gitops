@@ -8,11 +8,11 @@ image:
 prometheus:
   # Use remote write by default; alternatively enable scrape below
   remoteWrite:
-    enabled: true
+    enabled: false
     serverUrl: "http://prometheus.monitoring.svc:9090/api/v1/write"
     trendStats: "p(95),p(99),min,max,avg"  # K6_PROMETHEUS_RW_TREND_STATS
   scrape:
-    enabled: false
+    enabled: true
     port: 6565
     metricsPath: /metrics
 

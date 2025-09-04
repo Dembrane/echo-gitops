@@ -1,0 +1,17 @@
+{{- if .Values.prometheus.scrape.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "k6.fullname" . }}-metrics
+  namespace: {{ .Values.namespace | default "loadtesting" | quote }}
+  labels:
+    app: k6
+spec:
+  selector:
+    app: k6
+  ports:
+    - name: http-metrics
+      port: {{ .Values.prometheus.scrape.port }}
+      targetPort: {{ .Values.prometheus.scrape.port }}
+{{- end }}
+
