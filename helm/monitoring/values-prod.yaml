@@ -14,6 +14,11 @@ storage:
 
 # Prometheus settings
 prometheus:
+  extraArgs:
+    - --query.max-concurrency=40
+    - --web.max-connections=1024
+    - --query.timeout=2m
+    - --query.max-samples=100000000
   resources:
     requests:
       cpu: "500m"
