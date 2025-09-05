@@ -11,7 +11,17 @@ const SLEEP_SEC = Number(__ENV.SLEEP || 30)
 const CALL_FINISH = ((__ENV.CALL_FINISH || 'true') + '').toLowerCase() === 'true'
 const CHUNK_FIELD = 'chunk'
 
-export const options = { vus: 1, iterations: 1 }
+export const options = {
+  scenarios: {
+    default: {
+      executor: 'shared-iterations',
+      vus: Number(__ENV.VUS || 10),
+      iterations: Number(__ENV.ITERATIONS || 10),
+      maxDuration: __ENV.MAX_DURATION || '20m',
+      gracefulStop: '30s',
+    },
+  },
+}
 
 function zeroPad(num, width) {
   const s = String(num)
