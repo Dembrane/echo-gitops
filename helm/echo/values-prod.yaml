@@ -125,16 +125,16 @@ neo4j:
   storage:
     size: "40Gi"
   config:
-    pagecacheSize: "1G"
-    heapInitialSize: "1G"
-    heapMaxSize: "1G"
+    pagecacheSize: "2G"
+    heapInitialSize: "2G"
+    heapMaxSize: "4G"
   resources:
     requests:
-      cpu: "1"
-      memory: "1Gi"
-    limits:
       cpu: "2"
-      memory: "4Gi"
+      memory: "2Gi"
+    limits:
+      cpu: "4"
+      memory: "8Gi"
 
 ingress:
   enabled: true
