@@ -1,0 +1,13 @@
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: echo-critical
+  labels:
+    app: echo
+    component: neo4j
+value: 1000000000
+globalDefault: false
+preemptionPolicy: PreemptLowerPriority
+description: "PriorityClass for echo Neo4j to ensure scheduling of larger resources"
+
+
