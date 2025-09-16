@@ -17,23 +17,24 @@ common:
     DISABLE_REDACTION: "1"
     DISABLE_SENTRY: "0"
     SERVE_API_DOCS: "1"
-    
+
     # Feature flags
     ENABLE_CHAT_AUTO_SELECT: "1"
     ENABLE_AUDIO_LIGHTRAG_INPUT: "1"
-    ENABLE_LITELLM_WHISPER_TRANSCRIPTION: "1"
+    ENABLE_ASSEMBLYAI_TRANSCRIPTION: "1"
+    ENABLE_LITELLM_WHISPER_TRANSCRIPTION: "0"
+    ENABLE_RUNPOD_WHISPER_TRANSCRIPTION: "0"
     ENABLE_ENGLISH_TRANSCRIPTION_WITH_LITELLM: "0"
-    ENABLE_RUNPOD_WHISPER_TRANSCRIPTION: "1"
     RUNPOD_WHISPER_MAX_REQUEST_THRESHOLD: "30"
-    ENABLE_RUNPOD_DIARIZATION: "1"
+    ENABLE_RUNPOD_DIARIZATION: "0"
     DISABLE_MULTILINGUAL_DIARIZATION: "1"
     RUNPOD_DIARIZATION_TIMEOUT: "30"
-    
+
     # Storage config
     STORAGE_S3_REGION: "us-east-1"
     STORAGE_S3_ENDPOINT: "https://ams3.digitaloceanspaces.com"
     STORAGE_S3_BUCKET: "dbr-echo-dev-uploads"
-    
+
     # LiteLLM API Version (non-sensitive)
     LIGHTRAG_LITELLM_API_VERSION: "2023-05-15"
 
@@ -155,7 +156,7 @@ ingress:
 
 storage:
   storageClassName: "do-block-storage"
- 
+
 rollout:
   maxUnavailable: 1
   maxSurge: 1
