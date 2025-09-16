@@ -30,10 +30,10 @@ Common environment variables (including feature flags and non-sensitive config)
   value: {{ .Values.common.env.ENABLE_CHAT_AUTO_SELECT | quote }}
 - name: ENABLE_AUDIO_LIGHTRAG_INPUT
   value: {{ .Values.common.env.ENABLE_AUDIO_LIGHTRAG_INPUT | quote }}
+- name: ENABLE_ASSEMBLYAI_TRANSCRIPTION
+  value: {{ .Values.common.env.ENABLE_ASSEMBLYAI_TRANSCRIPTION | quote }}
 - name: ENABLE_RUNPOD_WHISPER_TRANSCRIPTION
   value: {{ .Values.common.env.ENABLE_RUNPOD_WHISPER_TRANSCRIPTION | quote }}
-- name: ENABLE_ENGLISH_TRANSCRIPTION_WITH_LITELLM
-  value: {{ .Values.common.env.ENABLE_ENGLISH_TRANSCRIPTION_WITH_LITELLM | quote }}
 - name: ENABLE_LITELLM_WHISPER_TRANSCRIPTION
   value: {{ .Values.common.env.ENABLE_LITELLM_WHISPER_TRANSCRIPTION | quote }}
 - name: ENABLE_RUNPOD_DIARIZATION
@@ -97,6 +97,11 @@ All secret-based environment variables
     secretKeyRef:
       name: echo-backend-secrets
       key: ANTHROPIC_API_KEY
+- name: ASSEMBLYAI_API_KEY
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: ASSEMBLYAI_API_KEY
 - name: REDIS_URL
   valueFrom:
     secretKeyRef:
