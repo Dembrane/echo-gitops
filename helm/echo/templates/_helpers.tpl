@@ -26,6 +26,8 @@ Common environment variables (including feature flags and non-sensitive config)
 - name: SERVE_API_DOCS
   value: {{ .Values.common.env.SERVE_API_DOCS | quote }}
 # Feature flags
+- name: TRANSCRIPTION_PROVIDER
+  value: {{ .Values.common.env.TRANSCRIPTION_PROVIDER | quote }}
 - name: ENABLE_CHAT_AUTO_SELECT
   value: {{ .Values.common.env.ENABLE_CHAT_AUTO_SELECT | quote }}
 - name: ENABLE_AUDIO_LIGHTRAG_INPUT
@@ -333,4 +335,9 @@ All secret-based environment variables
     secretKeyRef:
       name: echo-backend-secrets
       key: RUNPOD_TOPIC_MODELER_API_KEY
+- name: GEMINI_API_KEY
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: GEMINI_API_KEY
 {{- end }}
