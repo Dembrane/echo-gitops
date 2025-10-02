@@ -56,6 +56,9 @@ Common environment variables (including feature flags and non-sensitive config)
 # LiteLLM API Version (non-sensitive)
 - name: LIGHTRAG_LITELLM_API_VERSION
   value: {{ .Values.common.env.LIGHTRAG_LITELLM_API_VERSION | default "2023-05-15" | quote }}
+# Vertex AI generate endpoint
+- name: VERTEX_GENERATE_URL
+  value: {{ .Values.common.env.VERTEX_GENERATE_URL | quote }}
 # Directus session config
 - name: DIRECTUS_SESSION_COOKIE_NAME
   value: {{ .Values.directus.env.SESSION_COOKIE_NAME | quote }}
@@ -340,4 +343,10 @@ All secret-based environment variables
     secretKeyRef:
       name: echo-backend-secrets
       key: GEMINI_API_KEY
+# Google SA credentials for Vertex
+- name: GOOGLE_APPLICATION_CREDENTIALS_JSON
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: GCP_SA_JSON
 {{- end }}
