@@ -74,8 +74,8 @@ apiServer:
     port: 8000
   resources:
     requests:
-      cpu: "300m"
-      memory: "800Mi"
+      cpu: "500m"
+      memory: "1Gi"
     limits:
       cpu: "1"
       memory: "1.5Gi"
@@ -101,10 +101,10 @@ workerCpu:
   resources:
     requests:
       cpu: "1"
-      memory: "2Gi"
+      memory: "1.5Gi"
     limits:
       cpu: "2"
-      memory: "4Gi"
+      memory: "3Gi"
   env:
     CPU_WORKER_PROCESSES: "2"
     CPU_WORKER_THREADS: "1"
