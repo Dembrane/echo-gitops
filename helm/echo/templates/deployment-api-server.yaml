@@ -25,6 +25,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8000"
     spec:
+      priorityClassName: echo-high
       terminationGracePeriodSeconds: 60
       imagePullSecrets:
         - name: do-registry-secret

@@ -67,7 +67,7 @@ directus:
 
 apiServer:
   replicaCount: 1
-  maxReplicaCount: 4
+  maxReplicaCount: 15
   image:
     repository: "dbr-echo-server"
   service:
@@ -82,7 +82,7 @@ apiServer:
 
 worker:
   replicaCount: 1
-  maxReplicaCount: 4
+  maxReplicaCount: 5
   image:
     repository: "dbr-echo-server"
   resources:
@@ -95,7 +95,7 @@ worker:
 
 workerCpu:
   replicaCount: 1
-  maxReplicaCount: 8
+  maxReplicaCount: 4
   image:
     repository: "dbr-echo-server"
   resources:

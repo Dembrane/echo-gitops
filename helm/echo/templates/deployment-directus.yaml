@@ -23,6 +23,7 @@ spec:
         app: echo
         component: directus
     spec:
+      priorityClassName: echo-high
       terminationGracePeriodSeconds: 60
       imagePullSecrets:
         - name: do-registry-secret
