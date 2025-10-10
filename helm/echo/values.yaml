@@ -78,7 +78,7 @@ apiServer:
       memory: "1.5Gi"
     limits:
       cpu: "1"
-      memory: "1.5Gi"
+      memory: "2.5Gi"
 
 worker:
   replicaCount: 1
@@ -91,7 +91,7 @@ worker:
       memory: "1.5Gi"
     limits:
       cpu: "1"
-      memory: "1.5Gi"
+      memory: "2.5Gi"
 
 workerCpu:
   replicaCount: 1
@@ -138,7 +138,7 @@ neo4j:
       memory: "1Gi"
     limits:
       cpu: "1"
-      memory: "2Gi"
+      memory: "4Gi"
 
 ingress:
   enabled: true
