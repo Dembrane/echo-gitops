@@ -1,45 +1,61 @@
-Run a simple chunked upload flow with k6.
+# k6 Load Tests for Echo Participant Recording
 
-Prereqs:
-- Install k6: https://k6.io/docs/getting-started/installation/
+## Single Participant Test
 
-Files:
-- `userRecording.js`: Recorded flow from the browser (reference).
-- `sendChunks.js`: Script that initiates a conversation, uploads `.webm` chunks, then finishes.
-- `audioChunks/`: Place your chunk files named `chunk_000.webm`, `chunk_001.webm`, ...
-
-Usage (recommended run from the `scripts/k6` directory):
 ```bash
 cd scripts/k6
-k6 run sendChunks.js \
-  -e PROJECT_ID=YOUR_PROJECT_ID \
-  -e START=0 -e END=3 \
-  -e SLEEP=30 \
-  -e CALL_FINISH=true
+k6 run participant_record_test.js
 ```
 
-From project root:
+Optional params:
+- `-e PROJECT_ID=xxx` (default: `8cda68d1-051b-43b3-b0ad-12fb7eaf58a2`)
+- `-e START=0 -e END=10` (chunk range, default: 0-3)
+- `-e SLEEP=30` (seconds between chunks, default: 30)
+
+## Mass Load Test
+
 ```bash
-(cd scripts/k6 && k6 run sendChunks.js \
-  -e PROJECT_ID=YOUR_PROJECT_ID \
-  -e START=0 -e END=25 \
-  -e SLEEP=30 \
-  -e CALL_FINISH=true)
+cd scripts/k6
+k6 run mass_participants_test.js -e VUS=100 -e DURATION=20
+```
+# smoltest
+```bash
+cd scripts/k6
+k6 run mass_participants_test.js -e VUS=20 -e DURATION=10
 ```
 
-Environment variables:
-- `PROJECT_ID` (required): Target project id.
-- `START`, `END` (optional): Inclusive indices for `chunk_XXX.webm` files. Defaults: `START=0`, `END=3`.
-- `SLEEP` (optional): Seconds to wait between uploads. Default: `30`.
-- `CHUNKS_DIR` (optional): Directory of chunks, default `audioChunks` (relative to `scripts/k6`).
-- `CALL_FINISH` (optional): Whether to call `/finish` after last chunk, default `true`.
+Required:
+- `-e VUS=100` (max concurrent participants)
+- `-e DURATION=20` (test duration in minutes)
 
-Behavior:
-- Each run creates exactly one conversation and uploads files `chunk_START..chunk_END`.
-- Each upload uses multipart fields: `chunk` (binary), `timestamp` (ISO), `source=PORTAL_AUDIO`, `run_finish_hook` (`true` on last chunk, else `false`).
-- If `CALL_FINISH=true`, a final `/finish` call is made.
+Optional:
+- `-e PROJECT_ID=xxx` (default: `8cda68d1-051b-43b3-b0ad-12fb7eaf58a2`)
+- `-e MIN_CHUNKS=4` `-e MAX_CHUNKS=10` (chunks per conversation)
+- `-e SLEEP=30` (seconds between chunks, default: 30)
+- `-e THINK_TIME=30` (seconds between conversations, default: 30)
 
-Notes:
-- Do not set `content-type` manually for multipart; k6 sets the boundary automatically.
-- Ensure your chunk files are present and named `chunk_XXX.webm` with zero padding (e.g., `chunk_000.webm`).
+**Load stages:** Ramps from 10% → 25% → 50% → 100% VUs over first 30% of duration, holds 100% for remaining 70%.
 
+**Behavior:** Simulates real recording (30s chunk intervals). No authentication required.
+
+## Observability
+
+run this when running a loadtest:
+
+```bash
+    watch -n 3 'kubectl get pods -n echo-dev -o wide && echo && echo "=== HPA ===" && kubectl get hpa -n echo-dev && echo && echo "=== TOP PODS ===" && 
+     kubectl top pods -n echo-dev --sort-by=memory && echo && echo "=== NODES ===" && kubectl top nodes'
+```
+
+logs: 
+```bash
+kubectl logs -f -n echo-dev -l app=echo,component=api --prefix=true --max-log-requests=10
+```
+
+```bash
+kubectl logs -f -n echo-dev -l app=echo,component=worker-cpu --prefix=true --max-log-requests=10
+```
+
+```bash
+kubectl logs -f -n echo-dev -l app=echo,component=worker --prefix=true --max-log-requests=10
+```
