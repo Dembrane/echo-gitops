@@ -67,7 +67,7 @@ directus:
 
 apiServer:
   replicaCount: 1
-  maxReplicaCount: 4
+  maxReplicaCount: 15
   image:
     repository: "dbr-echo-server"
   service:
@@ -78,11 +78,11 @@ apiServer:
       memory: "1.5Gi"
     limits:
       cpu: "1"
-      memory: "1.5Gi"
+      memory: "2.5Gi"
 
 worker:
   replicaCount: 1
-  maxReplicaCount: 4
+  maxReplicaCount: 5
   image:
     repository: "dbr-echo-server"
   resources:
@@ -91,11 +91,11 @@ worker:
       memory: "1.5Gi"
     limits:
       cpu: "1"
-      memory: "1.5Gi"
+      memory: "2.5Gi"
 
 workerCpu:
   replicaCount: 1
-  maxReplicaCount: 8
+  maxReplicaCount: 4
   image:
     repository: "dbr-echo-server"
   resources:
@@ -138,7 +138,7 @@ neo4j:
       memory: "1Gi"
     limits:
       cpu: "1"
-      memory: "2Gi"
+      memory: "4Gi"
 
 ingress:
   enabled: true
