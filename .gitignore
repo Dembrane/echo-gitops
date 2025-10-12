@@ -23,3 +23,6 @@ ai-infra/k8s/gcp-sa-secret.yaml
 # OS junk
 .DS_Store
 Thumbs.db
+
+secrets-dev.txt
+secrets-prod.txt
