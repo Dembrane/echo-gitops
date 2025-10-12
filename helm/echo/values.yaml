@@ -6,7 +6,7 @@ global:
 common:
   env:
     # Core application config
-    DEBUG_MODE: "0"
+    DEBUG_MODE: "1"
     DIRECTUS_BASE_URL: "https://directus.echo-next.dembrane.com"
     ADMIN_BASE_URL: "https://dashboard.echo-next.dembrane.com"
     PARTICIPANT_BASE_URL: "https://portal.echo-next.dembrane.com"
