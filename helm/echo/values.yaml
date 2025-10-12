@@ -38,8 +38,6 @@ common:
 
     # LiteLLM API Version (non-sensitive)
     LIGHTRAG_LITELLM_API_VERSION: "2023-05-15"
-    # Vertex AI
-    VERTEX_GENERATE_URL: "https://europe-west4-aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/europe-west4/publishers/google/models/gemini-2.5-pro:generateContent"
 
 directus:
   replicaCount: 1
