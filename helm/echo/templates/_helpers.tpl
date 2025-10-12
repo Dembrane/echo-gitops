@@ -340,4 +340,9 @@ All secret-based environment variables
     secretKeyRef:
       name: echo-backend-secrets
       key: GEMINI_API_KEY
+- name: GCP_SA_JSON
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: GCP_SA_JSON
 {{- end }}
