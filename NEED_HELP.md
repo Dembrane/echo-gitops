@@ -13,3 +13,5 @@
 ## monitoring
 - need better dashboards (logs per deployment, metrics per deployment)
 - setup alerting rules for critical services
+
+## protect main branch
