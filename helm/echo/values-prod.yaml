@@ -67,7 +67,7 @@ directus:
 
 apiServer:
   replicaCount: 6
-  maxReplicaCount: 6
+  maxReplicaCount: 10
   image:
     repository: "dbr-echo-server"
   service:
@@ -78,11 +78,11 @@ apiServer:
       memory: "1.5Gi"
     limits:
       cpu: "1"
-      memory: "1.5Gi"
+      memory: "2.5Gi"
 
 worker:
-  replicaCount: 4
-  maxReplicaCount: 4
+  replicaCount: 2
+  maxReplicaCount: 8
   image:
     repository: "dbr-echo-server"
   resources:
@@ -91,11 +91,11 @@ worker:
       memory: "1.5Gi"
     limits:
       cpu: "1"
-      memory: "1.5Gi"
+      memory: "2.5Gi"
 
 workerCpu:
-  replicaCount: 4
-  maxReplicaCount: 21
+  replicaCount: 2
+  maxReplicaCount: 12
   image:
     repository: "dbr-echo-server"
   resources:
