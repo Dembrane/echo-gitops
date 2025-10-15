@@ -55,7 +55,7 @@ directus:
       memory: "2Gi"
   env:
     PUBLIC_URL: "https://directus.dembrane.com"
-    CORS_ORIGIN: "https://dashboard.dembrane.com,https://portal.dembrane.com"
+    CORS_ORIGIN: "https://dashboard.dembrane.com,https://portal.dembrane.com,http://localhost:5173,https://ddw-dembrane.vercel.app"
     SESSION_COOKIE_NAME: "dembrane_session_token"
     SESSION_COOKIE_DOMAIN: "dembrane.com"
     USER_REGISTER_URL_ALLOW_LIST: "https://dashboard.dembrane.com/verify-email"
