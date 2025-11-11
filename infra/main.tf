@@ -89,7 +89,7 @@ resource "digitalocean_kubernetes_cluster" "doks" {
   name     = "dbr-echo-${local.env}-k8s-cluster"
   region   = var.do_region
   vpc_uuid = digitalocean_vpc.echo_vpc.id
-  version  = "1.32.2-do.0"
+  version  = "1.32.5-do.5"
   node_pool {
     name       = "default-pool"
     size       = "s-4vcpu-8gb" # 4vCPU 8GB nodes
@@ -129,8 +129,8 @@ resource "digitalocean_database_connection_pool" "postgres_pool" {
 resource "digitalocean_database_cluster" "redis" {
   name                 = "dbr-echo-${local.env}-redis"
   private_network_uuid = digitalocean_vpc.echo_vpc.id
-  engine               = "redis"
-  version              = "7" # Redis version
+  engine               = "valkey"
+  version              = "7"
   size                 = local.env == "prod" ? "db-s-2vcpu-4gb" : "db-s-1vcpu-1gb"
   eviction_policy      = local.env == "prod" ? "volatile_lru" : "volatile_lru"
   region               = var.do_region
@@ -206,7 +206,7 @@ provider "kubernetes" {
 }
 
 provider "helm" {
-  kubernetes = {
+  kubernetes {
     host                   = data.digitalocean_kubernetes_cluster.doks_data.endpoint
     token                  = data.digitalocean_kubernetes_cluster.doks_data.kube_config[0].token
     cluster_ca_certificate = base64decode(data.digitalocean_kubernetes_cluster.doks_data.kube_config[0].cluster_ca_certificate)
