@@ -1,0 +1,167 @@
+global:
+  imageTag: "testing"  # Will be updated by CI/CD
+  registry: "registry.digitalocean.com/dbr-cr"
+
+# Common configuration shared across services
+common:
+  env:
+    # Core application config
+    DEBUG_MODE: "1"
+    DIRECTUS_BASE_URL: "https://directus.echo-testing.dembrane.com"
+    ADMIN_BASE_URL: "https://dashboard.echo-testing.dembrane.com"
+    PARTICIPANT_BASE_URL: "https://portal.echo-testing.dembrane.com"
+    API_BASE_URL: "https://api.echo-testing.dembrane.com/api"
+    NEO4J_URI: "bolt://echo-neo4j:7687"
+    NEO4J_USERNAME: "neo4j"
+    DISABLE_CORS: "0"
+    DISABLE_REDACTION: "1"
+    DISABLE_SENTRY: "0"
+    SERVE_API_DOCS: "1"
+
+    # Feature flags (same as dev)
+    ENABLE_CHAT_AUTO_SELECT: "1"
+    ENABLE_AUDIO_LIGHTRAG_INPUT: "0"
+    TRANSCRIPTION_PROVIDER: "Dembrane-25-09"
+    ENABLE_ASSEMBLYAI_TRANSCRIPTION: "0"
+    ENABLE_LITELLM_WHISPER_TRANSCRIPTION: "0"
+    ENABLE_RUNPOD_WHISPER_TRANSCRIPTION: "0"
+    ENABLE_ENGLISH_TRANSCRIPTION_WITH_LITELLM: "0"
+    RUNPOD_WHISPER_MAX_REQUEST_THRESHOLD: "30"
+    ENABLE_RUNPOD_DIARIZATION: "0"
+    DISABLE_MULTILINGUAL_DIARIZATION: "1"
+    RUNPOD_DIARIZATION_TIMEOUT: "30"
+
+    # Storage config
+    STORAGE_S3_REGION: "us-east-1"
+    STORAGE_S3_ENDPOINT: "https://ams3.digitaloceanspaces.com"
+    STORAGE_S3_BUCKET: "dbr-echo-testing-uploads"
+
+    # LiteLLM API Version
+    LIGHTRAG_LITELLM_API_VERSION: "2023-05-15"
+
+directus:
+  replicaCount: 1
+  maxReplicaCount: 1
+  image:
+    repository: "dbr-echo-directus"
+  service:
+    port: 8055
+  resources:
+    requests:
+      cpu: "300m"
+      memory: "512Mi"
+    limits:
+      cpu: "800m"
+      memory: "1Gi"
+  env:
+    PUBLIC_URL: "https://directus.echo-testing.dembrane.com"
+    CORS_ORIGIN: "https://dashboard.echo-testing.dembrane.com,https://portal.echo-testing.dembrane.com,http://localhost:5173,http://localhost:5174"
+    SESSION_COOKIE_NAME: "dembrane_session_token_testing"
+    SESSION_COOKIE_DOMAIN: "echo-testing.dembrane.com"
+    USER_REGISTER_URL_ALLOW_LIST: "https://dashboard.echo-testing.dembrane.com/verify-email,http://localhost:5173/verify-email"
+    PASSWORD_RESET_URL_ALLOW_LIST: "https://dashboard.echo-testing.dembrane.com/password-reset,http://localhost:5173/password-reset"
+    USER_INVITE_URL_ALLOW_LIST: "https://dashboard.echo-testing.dembrane.com/invite,http://localhost:5173/invite"
+    AUTH_GOOGLE_ALLOW_PUBLIC_REGISTRATION: "false"
+    AUTH_GOOGLE_DEFAULT_ROLE_ID: 2446660a-ab6c-4801-ad69-5711030cba83
+    AUTH_GOOGLE_REDIRECT_ALLOW_LIST: "https://dashboard.echo-testing.dembrane.com/en-US/projects,https://dashboard.echo-testing.dembrane.com/nl-NL/projects,https://dashboard.echo-testing.dembrane.com/es-ES/projects,https://dashboard.echo-testing.dembrane.com/fr-FR/projects,https://dashboard.echo-testing.dembrane.com/de-DE/projects"
+
+apiServer:
+  replicaCount: 1
+  maxReplicaCount: 5
+  image:
+    repository: "dbr-echo-server"
+  service:
+    port: 8000
+  resources:
+    requests:
+      cpu: "300m"
+      memory: "1Gi"
+    limits:
+      cpu: "800m"
+      memory: "2Gi"
+
+worker:
+  replicaCount: 1
+  maxReplicaCount: 3
+  image:
+    repository: "dbr-echo-server"
+  resources:
+    requests:
+      cpu: "300m"
+      memory: "1Gi"
+    limits:
+      cpu: "800m"
+      memory: "2Gi"
+
+workerCpu:
+  replicaCount: 1
+  maxReplicaCount: 2
+  image:
+    repository: "dbr-echo-server"
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+  env:
+    CPU_WORKER_PROCESSES: "1"
+    CPU_WORKER_THREADS: "1"
+
+workerScheduler:
+  replicaCount: 1
+  maxReplicaCount: 1
+  image:
+    repository: "dbr-echo-server"
+  resources:
+    requests:
+      cpu: "300m"
+      memory: "512Mi"
+    limits:
+      cpu: "600m"
+      memory: "1Gi"
+
+neo4j:
+  image:
+    repository: "neo4j"
+    tag: "5.18.0-community"
+  password: "admin@dembrane"
+  storage:
+    size: "5Gi"  # Smaller than dev
+  config:
+    pagecacheSize: "256M"
+    heapSize: "256M"
+  resources:
+    requests:
+      cpu: "300m"
+      memory: "512Mi"
+    limits:
+      cpu: "800m"
+      memory: "2Gi"
+
+ingress:
+  enabled: true
+  className: "nginx"
+  email: "admin@dembrane.com"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+  clusterIssuerName: "letsencrypt-prod"
+  domain: "echo-testing.dembrane.com"
+  hosts:
+    directus: "directus.echo-testing.dembrane.com"
+    api: "api.echo-testing.dembrane.com"
+  tls:
+    - secretName: "echo-testing-tls"
+      hosts:
+        - "directus.echo-testing.dembrane.com"
+        - "api.echo-testing.dembrane.com"
+
+storage:
+  storageClassName: "do-block-storage"
+
+rollout:
+  maxUnavailable: "0%"
+  maxSurge: "25%"
+
