@@ -73,14 +73,16 @@ kubectl --context=do-ams3-dbr-echo-prod-k8s-cluster \
 
 locals {
   # If workspace is default, use "dev" as the environment name
-  # env: "dev" | "prod"
-  env = terraform.workspace == "default" ? "dev" : "prod"
+  # If workspace is testing, use "testing"
+  # Otherwise use workspace name (prod)
+  # env: "dev" | "testing" | "prod"
+  env = terraform.workspace == "default" ? "dev" : (terraform.workspace == "testing" ? "testing" : terraform.workspace)
 }
 
 resource "digitalocean_vpc" "echo_vpc" {
   name     = "echo-${local.env}-vpc"
   region   = var.do_region
-  ip_range = local.env == "prod" ? "10.10.10.0/24" : "10.10.11.0/24" # RFC1918 private IP ranges, /24 subnet
+  ip_range = local.env == "prod" ? "10.10.10.0/24" : (local.env == "testing" ? "10.10.12.0/24" : "10.10.11.0/24") # RFC1918 private IP ranges, /24 subnet
 }
 
 resource "digitalocean_kubernetes_cluster" "doks" {
@@ -92,8 +94,8 @@ resource "digitalocean_kubernetes_cluster" "doks" {
     name       = "default-pool"
     size       = "s-4vcpu-8gb" # 4vCPU 8GB nodes
     auto_scale = true
-    min_nodes  = local.env == "prod" ? 2 : 1 # prod : dev
-    max_nodes  = local.env == "prod" ? 6 : 3 # prod : dev
+    min_nodes  = local.env == "prod" ? 2 : (local.env == "testing" ? 2 : 1) # prod : testing : dev
+    max_nodes  = local.env == "prod" ? 6 : (local.env == "testing" ? 4 : 3) # prod : testing : dev
     tags       = ["dbr-echo", local.env]
   }
 }
