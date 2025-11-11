@@ -206,7 +206,7 @@ provider "kubernetes" {
 }
 
 provider "helm" {
-  kubernetes {
+  kubernetes = {
     host                   = data.digitalocean_kubernetes_cluster.doks_data.endpoint
     token                  = data.digitalocean_kubernetes_cluster.doks_data.kube_config[0].token
     cluster_ca_certificate = base64decode(data.digitalocean_kubernetes_cluster.doks_data.kube_config[0].cluster_ca_certificate)
