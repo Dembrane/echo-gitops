@@ -74,11 +74,11 @@ apiServer:
     port: 8000
   resources:
     requests:
-      cpu: "300m"
-      memory: "1Gi"
+      cpu: "500m"
+      memory: "1536Mi"
     limits:
-      cpu: "800m"
-      memory: "2Gi"
+      cpu: "1"
+      memory: "2560Mi"
 
 worker:
   replicaCount: 1
@@ -87,11 +87,11 @@ worker:
     repository: "dbr-echo-server"
   resources:
     requests:
-      cpu: "300m"
-      memory: "1Gi"
+      cpu: "500m"
+      memory: "1536Mi"
     limits:
-      cpu: "800m"
-      memory: "2Gi"
+      cpu: "1"
+      memory: "2560Mi"
 
 workerCpu:
   replicaCount: 1
