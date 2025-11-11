@@ -130,7 +130,7 @@ resource "digitalocean_database_cluster" "redis" {
   name                 = "dbr-echo-${local.env}-redis"
   private_network_uuid = digitalocean_vpc.echo_vpc.id
   engine               = "valkey"
-  version              = "7"
+  version              = "8"
   size                 = local.env == "prod" ? "db-s-2vcpu-4gb" : "db-s-1vcpu-1gb"
   eviction_policy      = local.env == "prod" ? "volatile_lru" : "volatile_lru"
   region               = var.do_region
