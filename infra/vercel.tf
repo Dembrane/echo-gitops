@@ -1,8 +1,8 @@
-# Only create Vercel resources for dev environment
-# Skip for prod (same project) and testing (no frontend)
+# Only create Vercel resources for dev and testing
+# Skip for prod (same project)
 
 resource "vercel_project" "portal" {
-  count = local.env == "dev" ? 1 : 0
+  count = local.env == "prod" ? 0 : 1
 
   name                                 = "echo-portal"
   auto_assign_custom_domains           = true
@@ -15,14 +15,14 @@ resource "vercel_project" "portal" {
 }
 
 resource "vercel_custom_environment" "portal_env_staging" {
-  count = local.env == "dev" ? 1 : 0
+  count = local.env == "prod" ? 0 : 1
 
   project_id = vercel_project.portal[0].id
   name       = "staging"
 }
 
 resource "vercel_project" "dashboard" {
-  count = local.env == "dev" ? 1 : 0
+  count = local.env == "prod" ? 0 : 1
 
   name                                 = "echo-dashboard"
   auto_assign_custom_domains           = true
@@ -35,7 +35,7 @@ resource "vercel_project" "dashboard" {
 }
 
 resource "vercel_custom_environment" "dashboard_env_staging" {
-  count = local.env == "dev" ? 1 : 0
+  count = local.env == "prod" ? 0 : 1
 
   project_id = vercel_project.dashboard[0].id
   name       = "staging"
