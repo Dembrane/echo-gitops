@@ -28,4 +28,5 @@ ai-infra/k8s/gcp-sa-secret.yaml
 Thumbs.db
 
 secrets-dev.txt
-secrets-prod.txt
+secrets-prod.txtTESTING_STAGE_IMPLEMENTATION.md
+REBALANCE_SUMMARY.md
