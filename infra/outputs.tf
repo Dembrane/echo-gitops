@@ -22,7 +22,7 @@ output "postgres_pool_uri" {
 }
 
 output "registry_url" {
-  value       = local.env == "prod" ? null : digitalocean_container_registry.registry[0].endpoint
+  value       = local.env == "dev" ? digitalocean_container_registry.registry[0].endpoint : data.digitalocean_container_registry.shared_registry.endpoint
   description = "Container registry URL"
 }
 
