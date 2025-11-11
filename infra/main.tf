@@ -148,8 +148,8 @@ resource "digitalocean_spaces_bucket" "uploads" {
 }
 
 resource "digitalocean_container_registry" "registry" {
-  # already created in dev
-  count = local.env == "prod" ? 0 : 1
+  # only create in dev, shared with prod/testing
+  count = local.env == "dev" ? 1 : 0
 
   name                   = "dbr-cr"
   subscription_tier_slug = "basic"
