@@ -42,19 +42,19 @@ output "spaces_endpoint" {
 // bucket name (prod) : dbr-echo-prod-uploads.ams3.digitaloceanspaces.com
 
 output "vercel_dashboard_project_id" {
-  value = local.env != "prod" ? vercel_project.dashboard[0].id : null
+  value = local.env == "dev" ? vercel_project.dashboard[0].id : null
 }
 
 output "vercel_dashboard_staging_environment_id" {
-  value = local.env != "prod" ? vercel_custom_environment.dashboard_env_staging[0].id : null
+  value = local.env == "dev" ? vercel_custom_environment.dashboard_env_staging[0].id : null
 }
 
 output "vercel_portal_project_id" {
-  value = local.env != "prod" ? vercel_project.portal[0].id : null
+  value = local.env == "dev" ? vercel_project.portal[0].id : null
 }
 
 output "vercel_portal_staging_environment_id" {
-  value = local.env != "prod" ? vercel_custom_environment.portal_env_staging[0].id : null
+  value = local.env == "dev" ? vercel_custom_environment.portal_env_staging[0].id : null
 }
 
 # output "ingress_lb_ip" {
