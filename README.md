@@ -156,3 +156,18 @@ The repository is structured as follows:
     ```bash
     kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
     ```
+
+### Accessing the Monitoring Stack
+
+- Grafana (dev): https://grafana-echo-dev.echo-next.dembrane.com
+- Prometheus (dev): https://prometheus-echo-dev.echo-next.dembrane.com
+- Grafana (prod): https://grafana-echo-prod.dembrane.com
+- Prometheus (prod): https://prometheus-echo-prod.dembrane.com
+
+Quick 3-second refresh monitoring snapshot:
+
+```bash
+watch -n 3 ./scripts/dev-cluster-health.sh
+```
+
+The script summarizes deployments, HPAs, pod status, and average CPU/memory per service using `kubectl` and `kubectl top`.
