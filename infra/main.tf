@@ -161,7 +161,7 @@ data "digitalocean_container_registry" "shared_registry" {
 }
 
 resource "digitalocean_container_registry_docker_credentials" "registry_credentials" {
-  registry_name = local.env == "prod" ? data.digitalocean_container_registry.shared_registry.name : digitalocean_container_registry.registry[0].name
+  registry_name = local.env == "dev" ? digitalocean_container_registry.registry[0].name : data.digitalocean_container_registry.shared_registry.name
 }
 
 resource "time_sleep" "wait_for_kubernetes" {
