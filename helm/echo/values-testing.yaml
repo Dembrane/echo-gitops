@@ -63,7 +63,7 @@ directus:
     USER_INVITE_URL_ALLOW_LIST: "https://dashboard.echo-testing.dembrane.com/invite,http://localhost:5173/invite"
     AUTH_GOOGLE_ALLOW_PUBLIC_REGISTRATION: "false"
     AUTH_GOOGLE_DEFAULT_ROLE_ID: 2446660a-ab6c-4801-ad69-5711030cba83
-    AUTH_GOOGLE_REDIRECT_ALLOW_LIST: "https://dashboard.echo-testing.dembrane.com/en-US/projects,https://dashboard.echo-testing.dembrane.com/nl-NL/projects,https://dashboard.echo-testing.dembrane.com/es-ES/projects,https://dashboard.echo-testing.dembrane.com/fr-FR/projects,https://dashboard.echo-testing.dembrane.com/de-DE/projects"
+    AUTH_GOOGLE_REDIRECT_ALLOW_LIST: "https://dashboard.echo-testing.dembrane.com/en-US/projects,https://dashboard.echo-testing.dembrane.com/nl-NL/projects,https://dashboard.echo-testing.dembrane.com/es-ES/projects,https://dashboard.echo-testing.dembrane.com/fr-FR/projects,https://dashboard.echo-testing.dembrane.com/de-DE/projects,https://portal.echo-testing.dembrane.com/en-US/projects,https://portal.echo-testing.dembrane.com/nl-NL/projects,https://portal.echo-testing.dembrane.com/es-ES/projects,https://portal.echo-testing.dembrane.com/fr-FR/projects,https://portal.echo-testing.dembrane.com/de-DE/projects"
 
 apiServer:
   replicaCount: 1
@@ -147,6 +147,12 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://dashboard.echo-testing.dembrane.com,https://portal.echo-testing.dembrane.com,http://localhost:5173,http://localhost:5174"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    nginx.ingress.kubernetes.io/cors-max-age: "3600"
   clusterIssuerName: "letsencrypt-prod"
   domain: "echo-testing.dembrane.com"
   hosts:
