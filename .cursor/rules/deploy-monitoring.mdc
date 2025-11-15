@@ -67,3 +67,117 @@ kubectl -n monitoring get configmap grafana-dashboards-config -o json | jq -r '.
 - Apply only out-of-sync changes.
 - Avoid replacing or restarting app workloads; only monitoring components should roll.
 - Use ArgoCD-driven changes only (no manual edits in-cluster).
+
+---
+
+### Testing Environment Deployment
+
+Use this workflow for deploying to the testing environment via the automated CI/CD pipeline.
+
+#### Overview
+- Testing deploys automatically from `testing` branch in echo repo
+- CI/CD handles: build → test → deploy → validate
+- Manual interventions should be rare
+
+#### Standard Workflow (Recommended)
+
+1. Create feature branch and PR to `testing`:
+```bash
+cd echo
+git checkout testing
+git pull
+git checkout -b feature/my-feature
+# Make changes
+git push -u origin feature/my-feature
+# Create PR to testing branch on GitHub
+```
+
+2. PR checks run automatically:
+- Linting (ruff)
+- Type checking (mypy)
+- Unit tests (pytest)
+- Build validation
+
+3. On success, PR auto-merges to testing
+
+4. Deployment pipeline runs:
+- Builds Docker images
+- Tags as `<commit-sha>` and `testing`
+- Updates gitops repo
+- ArgoCD deploys
+- Smoke tests run
+- Slack notification sent
+
+#### Manual Deployment (Emergency Only)
+
+If you need to bypass the PR process:
+
+```bash
+cd echo
+git checkout testing
+# Make urgent fix
+git commit -am "fix: urgent issue"
+git push origin testing
+# Deployment triggers automatically
+```
+
+#### Monitoring Deployment
+
+Check GitHub Actions:
+- PR workflow: Validation before merge
+- Deploy workflow: Build, deploy, test
+
+Check ArgoCD:
+```bash
+kubectl get application -n argocd echo-testing
+```
+
+Check Slack:
+- #alerts-devops will receive deployment notifications
+
+#### Rollback
+
+If tests fail or issues detected:
+
+**Option 1: Revert commit** (cleanest)
+```bash
+cd echo-gitops
+git revert HEAD
+git push origin main
+```
+
+**Option 2: Manual imageTag update**
+```bash
+cd echo-gitops
+# Edit helm/echo/values-testing.yaml
+# Change imageTag to previous working version
+git add helm/echo/values-testing.yaml
+git commit -m "Rollback testing to <previous-sha>"
+git push origin main
+```
+
+#### Debugging
+
+**Check pod status:**
+```bash
+kubectl --context=do-ams3-dbr-echo-testing-k8s-cluster \
+  get pods -n echo-testing
+```
+
+**Check logs:**
+```bash
+kubectl logs -n echo-testing deployment/echo-api-server -f
+```
+
+**Check tests:**
+```bash
+# Go to GitHub Actions
+# Find Deploy to Testing workflow
+# Check smoke-tests job
+```
+
+#### Guardrails
+- All changes must pass tests before deploying
+- Smoke tests validate critical functionality post-deployment
+- Failed tests trigger Slack alerts with rollback instructions
+- Testing environment mirrors prod/dev architecture
