@@ -29,7 +29,7 @@ secrets:
 # add ur secrets .env style (key=value pairs) in secrets.txt
 ./secret-manager.sh dev batch secrets.txt --dry-run
 
-./secret-manager.sh dev batch secrets-dev.txt
+./secret-manager.sh dev batch secrets.txt
 
 kubeseal --context=do-ams3-dbr-echo-dev-k8s-cluster \
   --controller-namespace=kube-system \
@@ -41,7 +41,7 @@ kubectl --context=do-ams3-dbr-echo-dev-k8s-cluster \
 
 # for prod:
 
-./secret-manager.sh prod batch secrets-prod.txt
+./secret-manager.sh prod batch secrets.txt
 
 kubeseal --context=do-ams3-dbr-echo-prod-k8s-cluster \
   --controller-namespace=kube-system \
@@ -50,6 +50,20 @@ kubeseal --context=do-ams3-dbr-echo-prod-k8s-cluster \
 
 kubectl --context=do-ams3-dbr-echo-prod-k8s-cluster \
   apply -f secrets/sealed-backend-secrets-prod.yaml
+
+# for testing
+
+./secret-manager.sh testing batch secrets.txt
+
+kubeseal --context=do-ams3-dbr-echo-testing-k8s-cluster \
+  --controller-namespace=kube-system \
+  --controller-name=sealed-secrets \
+  < secrets/backend-secrets-testing.yaml > secrets/sealed-backend-secrets-testing.yaml
+
+kubectl --context=do-ams3-dbr-echo-testing-k8s-cluster \
+  apply -f secrets/sealed-backend-secrets-testing.yaml
+
+rm secrets/backend-secrets-testing.yaml
 
 */
 

@@ -1,0 +1,11 @@
+# Additional non-prod environment variables required for the new LLM + embedding flows.
+common:
+  env:
+    LLM__MULTI_MODAL_PRO__MODEL: "vertex_ai/gemini-2.5-pro"
+    LLM__MULTI_MODAL_PRO__VERTEX_LOCATION: "europe-west4"
+    LLM__MULTI_MODAL_FAST__MODEL: "vertex_ai/gemini-2.5-flash"
+    LLM__MULTI_MODAL_FAST__VERTEX_LOCATION: "europe-west4"
+    LLM__TEXT_FAST__MODEL: "azure/gpt-4.1"
+    LLM__TEXT_FAST__API_VERSION: "2025-01-01-preview"
+    EMBEDDING_MODEL: "vertex_ai/text-embedding-004"
+    EMBEDDING_BASE_URL: "https://europe-west4-aiplatform.googleapis.com"

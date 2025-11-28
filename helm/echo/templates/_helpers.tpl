@@ -62,6 +62,39 @@ Common environment variables (including feature flags and non-sensitive config)
 # Build version
 - name: BUILD_VERSION
   value: {{ .Values.global.imageTag | quote }}
+# LLM routing / embeddings (non-sensitive)
+{{- with (default "" .Values.common.env.LLM__MULTI_MODAL_PRO__MODEL) }}
+- name: LLM__MULTI_MODAL_PRO__MODEL
+  value: {{ . | quote }}
+{{- end }}
+{{- with (default "" .Values.common.env.LLM__MULTI_MODAL_PRO__VERTEX_LOCATION) }}
+- name: LLM__MULTI_MODAL_PRO__VERTEX_LOCATION
+  value: {{ . | quote }}
+{{- end }}
+{{- with (default "" .Values.common.env.LLM__MULTI_MODAL_FAST__MODEL) }}
+- name: LLM__MULTI_MODAL_FAST__MODEL
+  value: {{ . | quote }}
+{{- end }}
+{{- with (default "" .Values.common.env.LLM__MULTI_MODAL_FAST__VERTEX_LOCATION) }}
+- name: LLM__MULTI_MODAL_FAST__VERTEX_LOCATION
+  value: {{ . | quote }}
+{{- end }}
+{{- with (default "" .Values.common.env.LLM__TEXT_FAST__MODEL) }}
+- name: LLM__TEXT_FAST__MODEL
+  value: {{ . | quote }}
+{{- end }}
+{{- with (default "" .Values.common.env.LLM__TEXT_FAST__API_VERSION) }}
+- name: LLM__TEXT_FAST__API_VERSION
+  value: {{ . | quote }}
+{{- end }}
+{{- with (default "" .Values.common.env.EMBEDDING_MODEL) }}
+- name: EMBEDDING_MODEL
+  value: {{ . | quote }}
+{{- end }}
+{{- with (default "" .Values.common.env.EMBEDDING_BASE_URL) }}
+- name: EMBEDDING_BASE_URL
+  value: {{ . | quote }}
+{{- end }}
 {{- end }}
 
 {{/*
@@ -345,4 +378,24 @@ All secret-based environment variables
     secretKeyRef:
       name: echo-backend-secrets
       key: GCP_SA_JSON
+- name: LLM__MULTI_MODAL_PRO__GCP_SA_JSON
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: GCP_SA_JSON
+- name: LLM__MULTI_MODAL_FAST__GCP_SA_JSON
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: GCP_SA_JSON
+- name: LLM__TEXT_FAST__API_KEY
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: LLM__TEXT_FAST__API_KEY
+- name: LLM__TEXT_FAST__API_BASE
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: LLM__TEXT_FAST__API_BASE
 {{- end }}

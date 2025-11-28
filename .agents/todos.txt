@@ -1,0 +1,9 @@
+- Automate Terraform workspace selection/apply flow before infra runs → infra/main.tf:3
+- Extend infra to cover Azure LLMs and Runpod service targets → NEED_HELP.md:4-6
+- Manage application secrets directly via Terraform instead of manual sealing → NEED_HELP.md:6
+- Replace Vercel-managed frontend secrets with centralized workflow → NEED_HELP.md:7
+- Add liveness/readiness probes for Dramatiq worker deployments → NEED_HELP.md:10
+- Revisit Helm values for resource optimization in each environment → NEED_HELP.md:11
+- Build richer monitoring dashboards and critical alert rules → NEED_HELP.md:13-15
+- Enforce protection rules on `main` branch → NEED_HELP.md:17
+- Filter `%2Cerror%2C` noise from Directus logs → NEED_HELP.md:19

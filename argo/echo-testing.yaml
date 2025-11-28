@@ -12,6 +12,7 @@ spec:
     helm:
       valueFiles:
         - values-testing.yaml
+        - values-extended-env.yaml
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: echo-testing
@@ -21,4 +22,3 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-

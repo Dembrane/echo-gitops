@@ -27,7 +27,12 @@ ai-infra/k8s/gcp-sa-secret.yaml
 .DS_Store
 Thumbs.db
 
+secrets.txt
 secrets-dev.txt
-secrets-prod.txtTESTING_STAGE_IMPLEMENTATION.md
+secrets-prod.txt
+secrets-testing.txt
+
+# ?
+TESTING_STAGE_IMPLEMENTATION.md
 REBALANCE_SUMMARY.md
 TESTING_STAGE_IMPLEMENTATION.md

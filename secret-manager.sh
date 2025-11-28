@@ -3,13 +3,14 @@
 # Function to display usage information
 usage() {
     echo "Usage: $0 [environment] [operation] [key or input_file] [options]"
-    echo "Environment: dev, prod (default: dev)"
+    echo "Environment: dev, testing, prod (default: dev)"
     echo "Operation: list, get, update, batch, compare (default: list)"
     echo "Key: For 'get' operation, the key to retrieve"
     echo "Input_file: For 'batch' operation, path to file with key=value pairs"
     echo "Options:"
-    echo "  --dry-run    Show what would be updated without making changes"
-    echo "  --show-values  When listing keys, also show their plaintext values"
+    echo "  --dry-run        Show what would be updated without making changes"
+    echo "  --show-values    When listing keys, also show their plaintext values"
+    echo "  --live           Fetch current values from the Kubernetes Secret instead of local file (list/get only)"
     echo ""
     echo "Example:"
     echo "  $0 dev list                      - List all keys in backend-secrets-dev.yaml"
@@ -35,8 +36,21 @@ else
     KEY_OR_FILE=$3
 fi
 
+SUPPORTED_ENVIRONMENTS=(dev testing prod)
+
+TEMP_SECRETS_FILE=""
+
+cleanup() {
+    if [[ -n "$TEMP_SECRETS_FILE" && -f "$TEMP_SECRETS_FILE" ]]; then
+        rm -f "$TEMP_SECRETS_FILE"
+    fi
+}
+
+trap cleanup EXIT
+
 DRY_RUN=false
 SHOW_VALUES=false
+LIVE_MODE=false
 
 # Check for options
 for arg in "$@"; do
@@ -44,6 +58,8 @@ for arg in "$@"; do
         DRY_RUN=true
     elif [[ "$arg" == "--show-values" ]]; then
         SHOW_VALUES=true
+    elif [[ "$arg" == "--live" ]]; then
+        LIVE_MODE=true
     fi
 done
 
@@ -52,12 +68,90 @@ if [[ "$3" == "--dry-run" || "$3" == "--show-values" ]]; then
     KEY_OR_FILE=""
 fi
 
+ensure_valid_environment() {
+    local env=$1
+    for allowed in "${SUPPORTED_ENVIRONMENTS[@]}"; do
+        if [[ "$env" == "$allowed" ]]; then
+            return 0
+        fi
+    done
+    echo "Error: Unsupported environment '$env'. Supported: ${SUPPORTED_ENVIRONMENTS[*]}"
+    exit 1
+}
+
+namespace_for_env() {
+    local env=$1
+    case "$env" in
+        dev) echo "echo-dev" ;;
+        testing) echo "echo-testing" ;;
+        prod) echo "echo-prod" ;;
+        *) echo "echo-$env" ;;
+    esac
+}
+
+context_for_env() {
+    local env=$1
+    case "$env" in
+        dev) echo "do-ams3-dbr-echo-dev-k8s-cluster" ;;
+        testing) echo "do-ams3-dbr-echo-testing-k8s-cluster" ;;
+        prod) echo "do-ams3-dbr-echo-prod-k8s-cluster" ;;
+        *) echo "" ;;
+    esac
+}
+
+ensure_secrets_file() {
+    if [ -f "$SECRETS_FILE" ]; then
+        return
+    fi
+
+    local namespace=$(namespace_for_env "$ENVIRONMENT")
+
+    cat <<EOF > "$SECRETS_FILE"
+apiVersion: v1
+kind: Secret
+metadata:
+  name: echo-backend-secrets
+  namespace: $namespace
+type: Opaque
+data:
+EOF
+
+    echo "Initialized $SECRETS_FILE for $ENVIRONMENT environment"
+}
+
 # Check if the file exists (skip for compare operation)
+if [[ "$LIVE_MODE" = true && "$OPERATION" != "list" && "$OPERATION" != "get" ]]; then
+    echo "Error: --live is only supported with list/get operations"
+    exit 1
+fi
+
+if [[ "$LIVE_MODE" = true && "$OPERATION" == "compare" ]]; then
+    echo "Error: --live cannot be used with compare operation"
+    exit 1
+fi
+
 if [[ "$OPERATION" != "compare" ]]; then
-    SECRETS_FILE="secrets/backend-secrets-$ENVIRONMENT.yaml"
-    if [ ! -f "$SECRETS_FILE" ]; then
-        echo "Error: $SECRETS_FILE does not exist"
-        exit 1
+    ensure_valid_environment "$ENVIRONMENT"
+    if [[ "$LIVE_MODE" = true ]]; then
+        if ! command -v kubectl >/dev/null 2>&1; then
+            echo "Error: kubectl is required for --live mode"
+            exit 1
+        fi
+        namespace=$(namespace_for_env "$ENVIRONMENT")
+        ctx_value=$(context_for_env "$ENVIRONMENT")
+        if [[ -z "$ctx_value" ]]; then
+            echo "Error: no kubernetes context configured for environment '$ENVIRONMENT'"
+            exit 1
+        fi
+        TEMP_SECRETS_FILE=$(mktemp)
+        if ! kubectl --context="$ctx_value" get secret echo-backend-secrets -n "$namespace" -o yaml > "$TEMP_SECRETS_FILE"; then
+            echo "Error: failed to fetch kubernetes secret 'echo-backend-secrets' in namespace '$namespace' using context '$ctx_value'"
+            exit 1
+        fi
+        SECRETS_FILE="$TEMP_SECRETS_FILE"
+    else
+        SECRETS_FILE="secrets/backend-secrets-$ENVIRONMENT.yaml"
+        ensure_secrets_file
     fi
 fi
 
