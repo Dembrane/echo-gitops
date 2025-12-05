@@ -11,8 +11,8 @@ spec:
     path: helm/echo
     helm:
       valueFiles:
-        - values-extended-env.yaml
         - values.yaml
+        - values-extended-env.yaml
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: echo-dev

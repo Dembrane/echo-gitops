@@ -12,6 +12,7 @@ spec:
     helm:
       valueFiles:
         - values-prod.yaml
+        - values-extended-env.yaml
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: echo-prod
