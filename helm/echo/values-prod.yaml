@@ -28,8 +28,8 @@ common:
     STORAGE_S3_BUCKET: "dbr-echo-prod-uploads"
 
 directus:
-  replicaCount: 1
-  maxReplicaCount: 1
+  replicaCount: 2
+  maxReplicaCount: 2
   image:
     repository: "dbr-echo-directus"
   service:
