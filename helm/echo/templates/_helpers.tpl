@@ -24,8 +24,12 @@ Common environment variables (including feature flags and non-sensitive config)
 # Feature flags
 - name: TRANSCRIPTION_PROVIDER
   value: {{ .Values.common.env.TRANSCRIPTION_PROVIDER | quote }}
-- name: ENABLE_CHAT_AUTO_SELECT
-  value: {{ .Values.common.env.ENABLE_CHAT_AUTO_SELECT | quote }}
+- name: FEATURE_FLAGS__ENABLE_CHAT_AUTO_SELECT
+  value: {{ .Values.common.env.FEATURE_FLAGS__ENABLE_CHAT_AUTO_SELECT | quote }}
+- name: FEATURE_FLAGS__ENABLE_CHAT_SELECT_ALL
+  value: {{ .Values.common.env.FEATURE_FLAGS__ENABLE_CHAT_SELECT_ALL | quote }}
+- name: FEATURE_FLAGS__ENABLE_WEBHOOKS
+  value: {{ .Values.common.env.FEATURE_FLAGS__ENABLE_WEBHOOKS | quote }}
 # Storage config
 - name: STORAGE_S3_REGION
   value: {{ .Values.common.env.STORAGE_S3_REGION | quote }}
@@ -125,7 +129,27 @@ All secret-based environment variables
     secretKeyRef:
       name: echo-backend-secrets
       key: GCP_SA_JSON
+- name: LLM__MULTI_MODAL_PRO_2__GCP_SA_JSON
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: GCP_SA_JSON
+- name: LLM__MULTI_MODAL_PRO_3__GCP_SA_JSON
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: GCP_SA_JSON
 - name: LLM__MULTI_MODAL_FAST__GCP_SA_JSON
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: GCP_SA_JSON
+- name: LLM__MULTI_MODAL_FAST_2__GCP_SA_JSON
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: GCP_SA_JSON
+- name: LLM__MULTI_MODAL_FAST_3__GCP_SA_JSON
   valueFrom:
     secretKeyRef:
       name: echo-backend-secrets

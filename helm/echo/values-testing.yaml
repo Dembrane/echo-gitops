@@ -6,7 +6,7 @@ global:
 common:
   env:
     # Core application config
-    DEBUG_MODE: "1"
+    DEBUG_MODE: "0"
     DIRECTUS_BASE_URL: "https://directus.echo-testing.dembrane.com"
     ADMIN_BASE_URL: "https://dashboard.echo-testing.dembrane.com"
     PARTICIPANT_BASE_URL: "https://portal.echo-testing.dembrane.com"
@@ -17,8 +17,10 @@ common:
     SERVE_API_DOCS: "1"
 
     # Feature flags (same as dev)
-    ENABLE_CHAT_AUTO_SELECT: "1"
     TRANSCRIPTION_PROVIDER: "Dembrane-25-09"
+    FEATURE_FLAGS__ENABLE_CHAT_AUTO_SELECT: "0"
+    FEATURE_FLAGS__ENABLE_CHAT_SELECT_ALL: "1"
+    FEATURE_FLAGS__ENABLE_WEBHOOKS: "1"
 
     # Storage config
     STORAGE_S3_REGION: "us-east-1"

@@ -3,9 +3,24 @@ common:
   env:
     LLM__MULTI_MODAL_PRO__MODEL: "vertex_ai/gemini-2.5-pro"
     LLM__MULTI_MODAL_PRO__VERTEX_LOCATION: "europe-west4"
+
+    LLM__MULTI_MODAL_PRO_2__MODEL: "vertex_ai/gemini-2.5-pro"
+    LLM__MULTI_MODAL_PRO_2__VERTEX_LOCATION: "europe-west1"
+
+    LLM__MULTI_MODAL_PRO_3__MODEL: "vertex_ai/gemini-2.5-pro"
+    LLM__MULTI_MODAL_PRO_3__VERTEX_LOCATION: "europe-west8"
+
     LLM__MULTI_MODAL_FAST__MODEL: "vertex_ai/gemini-2.5-flash"
     LLM__MULTI_MODAL_FAST__VERTEX_LOCATION: "europe-west4"
+
+    LLM__MULTI_MODAL_FAST_2__MODEL: "vertex_ai/gemini-2.5-flash"
+    LLM__MULTI_MODAL_FAST_2__VERTEX_LOCATION: "europe-west1"
+    
+    LLM__MULTI_MODAL_FAST_3__MODEL: "vertex_ai/gemini-2.5-flash"
+    LLM__MULTI_MODAL_FAST_3__VERTEX_LOCATION: "europe-west8"
+
     LLM__TEXT_FAST__MODEL: "azure/gpt-4.1"
     LLM__TEXT_FAST__API_VERSION: "2025-01-01-preview"
+
     EMBEDDING_MODEL: "vertex_ai/text-embedding-004"
     EMBEDDING_BASE_URL: "https://europe-west4-aiplatform.googleapis.com"
