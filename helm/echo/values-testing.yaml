@@ -1,5 +1,5 @@
 global:
-  imageTag: "f58fd32"  # Will be updated by CI/CD
+  imageTag: "e3d661f"  # Will be updated by CI/CD
   registry: "registry.digitalocean.com/dbr-cr"
 
 # Common configuration shared across services
