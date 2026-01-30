@@ -55,7 +55,7 @@ directus:
 
 apiServer:
   replicaCount: 1
-  maxReplicaCount: 15
+  maxReplicaCount: 5
   image:
     repository: "dbr-echo-server"
   service:

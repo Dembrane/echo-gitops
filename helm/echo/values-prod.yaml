@@ -11,8 +11,6 @@ common:
     ADMIN_BASE_URL: "https://dashboard.dembrane.com"
     PARTICIPANT_BASE_URL: "https://portal.dembrane.com"
     API_BASE_URL: "https://api.dembrane.com/api"
-    NEO4J_URI: "bolt://echo-neo4j:7687"
-    NEO4J_USERNAME: "neo4j"
     DISABLE_CORS: "0"
     DISABLE_REDACTION: "1"
     DISABLE_SENTRY: "0"
@@ -21,8 +19,8 @@ common:
     # Feature flags
     TRANSCRIPTION_PROVIDER: "Dembrane-25-09"
     FEATURE_FLAGS__ENABLE_CHAT_AUTO_SELECT: "0"
-    FEATURE_FLAGS__ENABLE_CHAT_SELECT_ALL: "0"
-    FEATURE_FLAGS__ENABLE_WEBHOOKS: "0"
+    FEATURE_FLAGS__ENABLE_CHAT_SELECT_ALL: "1"
+    FEATURE_FLAGS__ENABLE_WEBHOOKS: "1"
 
     # Storage config
     STORAGE_S3_REGION: "us-east-1"
