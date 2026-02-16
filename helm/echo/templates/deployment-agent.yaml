@@ -1,0 +1,74 @@
+{{- if .Values.agent.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo-agent
+  labels:
+    app: echo
+    component: agent
+spec:
+  replicas: {{ .Values.agent.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: {{ .Values.rollout.maxUnavailable | quote }}
+      maxSurge: {{ .Values.rollout.maxSurge | quote }}
+  selector:
+    matchLabels:
+      app: echo
+      component: agent
+  template:
+    metadata:
+      labels:
+        app: echo
+        component: agent
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: {{ .Values.agent.service.port | quote }}
+    spec:
+      priorityClassName: echo-low
+      terminationGracePeriodSeconds: 60
+      imagePullSecrets:
+        - name: do-registry-secret
+      containers:
+        - name: agent
+          image: {{ printf "%s/%s:%s" .Values.global.registry .Values.agent.image.repository .Values.global.imageTag | quote }}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: {{ .Values.agent.service.port }}
+              name: http
+          env:
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: GEMINI_API_KEY
+{{- range $name, $value := .Values.agent.env }}
+            - name: {{ $name }}
+              value: {{ $value | quote }}
+{{- end }}
+          resources:
+            requests:
+              cpu: {{ .Values.agent.resources.requests.cpu | quote }}
+              memory: {{ .Values.agent.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.agent.resources.limits.cpu | quote }}
+              memory: {{ .Values.agent.resources.limits.memory | quote }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+{{- end }}

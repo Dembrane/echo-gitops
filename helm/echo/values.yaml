@@ -68,6 +68,25 @@ apiServer:
       cpu: "1"
       memory: "2.5Gi"
 
+agent:
+  enabled: false
+  replicaCount: 1
+  image:
+    repository: "dbr-echo-agent"
+  service:
+    port: 8001
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+  env:
+    ECHO_API_URL: "http://echo-api:8000/api"
+    AGENT_GRAPH_RECURSION_LIMIT: "80"
+    AGENT_CORS_ORIGINS: "http://localhost:5173,http://localhost:5174"
+
 worker:
   replicaCount: 1
   maxReplicaCount: 5

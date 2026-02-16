@@ -1,0 +1,19 @@
+{{- if .Values.agent.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-agent
+  labels:
+    app: echo
+    component: agent
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.agent.service.port }}
+      targetPort: {{ .Values.agent.service.port }}
+      protocol: TCP
+      name: http
+  selector:
+    app: echo
+    component: agent
+{{- end }}

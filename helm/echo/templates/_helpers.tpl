@@ -13,6 +13,10 @@ Common environment variables (including feature flags and non-sensitive config)
   value: {{ .Values.common.env.PARTICIPANT_BASE_URL | quote }}
 - name: API_BASE_URL
   value: {{ .Values.common.env.API_BASE_URL | quote }}
+{{- with (default "" .Values.common.env.AGENT_SERVICE_URL) }}
+- name: AGENT_SERVICE_URL
+  value: {{ . | quote }}
+{{- end }}
 - name: DISABLE_CORS
   value: {{ .Values.common.env.DISABLE_CORS | quote }}
 - name: DISABLE_REDACTION
