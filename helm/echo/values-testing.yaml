@@ -23,6 +23,9 @@ common:
     FEATURE_FLAGS__ENABLE_CHAT_SELECT_ALL: "1"
     FEATURE_FLAGS__ENABLE_WEBHOOKS: "1"
 
+    # AssemblyAI webhook (Stage 1: enable webhook-driven transcription in testing)
+    ASSEMBLYAI_WEBHOOK_URL: "https://api.echo-testing.dembrane.com/api/webhooks/assemblyai"
+
     # Storage config
     STORAGE_S3_REGION: "us-east-1"
     STORAGE_S3_ENDPOINT: "https://ams3.digitaloceanspaces.com"
