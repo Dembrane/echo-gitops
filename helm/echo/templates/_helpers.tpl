@@ -80,6 +80,11 @@ Common environment variables (including feature flags and non-sensitive config)
 - name: EMBEDDING_BASE_URL
   value: {{ . | quote }}
 {{- end }}
+# AssemblyAI webhook (optional — only set when webhook mode is enabled)
+{{- with (default "" .Values.common.env.ASSEMBLYAI_WEBHOOK_URL) }}
+- name: ASSEMBLYAI_WEBHOOK_URL
+  value: {{ . | quote }}
+{{- end }}
 {{- end }}
 
 {{/*
@@ -168,4 +173,11 @@ All secret-based environment variables
     secretKeyRef:
       name: echo-backend-secrets
       key: LLM__TEXT_FAST__API_BASE
+# AssemblyAI webhook secret (optional — pods start fine when key is absent)
+- name: ASSEMBLYAI_WEBHOOK_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: ASSEMBLYAI_WEBHOOK_SECRET
+      optional: true
 {{- end }}
