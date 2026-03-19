@@ -43,6 +43,11 @@ spec:
                 secretKeyRef:
                   name: echo-backend-secrets
                   key: GEMINI_API_KEY
+            - name: GCP_SA_JSON
+              valueFrom:
+                secretKeyRef:
+                  name: echo-backend-secrets
+                  key: GCP_SA_JSON
 {{- range $name, $value := .Values.agent.env }}
             - name: {{ $name }}
               value: {{ $value | quote }}
