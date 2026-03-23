@@ -11,6 +11,7 @@ common:
     ADMIN_BASE_URL: "https://dashboard.echo-next.dembrane.com"
     PARTICIPANT_BASE_URL: "https://portal.echo-next.dembrane.com"
     API_BASE_URL: "https://api.echo-next.dembrane.com/api"
+    AGENT_SERVICE_URL: "http://echo-agent:8001"
     DISABLE_CORS: "0"
     DISABLE_REDACTION: "1"
     DISABLE_SENTRY: "0"
@@ -69,7 +70,7 @@ apiServer:
       memory: "2.5Gi"
 
 agent:
-  enabled: false
+  enabled: true
   replicaCount: 1
   image:
     repository: "dbr-echo-agent"
@@ -84,8 +85,10 @@ agent:
       memory: "1Gi"
   env:
     ECHO_API_URL: "http://echo-api:8000/api"
+    LLM_MODEL: "claude-opus-4-6"
+    VERTEX_LOCATION: "europe-west1"
     AGENT_GRAPH_RECURSION_LIMIT: "80"
-    AGENT_CORS_ORIGINS: "http://localhost:5173,http://localhost:5174"
+    AGENT_CORS_ORIGINS: "https://dashboard.echo-next.dembrane.com,https://portal.echo-next.dembrane.com,http://localhost:5173,http://localhost:5174"
 
 worker:
   replicaCount: 1
