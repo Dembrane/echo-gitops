@@ -68,8 +68,24 @@ Common environment variables (including feature flags and non-sensitive config)
 - name: LLM__TEXT_FAST__MODEL
   value: {{ . | quote }}
 {{- end }}
-{{- with (default "" .Values.common.env.LLM__TEXT_FAST__API_VERSION) }}
-- name: LLM__TEXT_FAST__API_VERSION
+{{- with (default "" .Values.common.env.LLM__TEXT_FAST__VERTEX_LOCATION) }}
+- name: LLM__TEXT_FAST__VERTEX_LOCATION
+  value: {{ . | quote }}
+{{- end }}
+{{- with (default "" .Values.common.env.LLM__TEXT_FAST_2__MODEL) }}
+- name: LLM__TEXT_FAST_2__MODEL
+  value: {{ . | quote }}
+{{- end }}
+{{- with (default "" .Values.common.env.LLM__TEXT_FAST_2__VERTEX_LOCATION) }}
+- name: LLM__TEXT_FAST_2__VERTEX_LOCATION
+  value: {{ . | quote }}
+{{- end }}
+{{- with (default "" .Values.common.env.LLM__TEXT_FAST_3__MODEL) }}
+- name: LLM__TEXT_FAST_3__MODEL
+  value: {{ . | quote }}
+{{- end }}
+{{- with (default "" .Values.common.env.LLM__TEXT_FAST_3__VERTEX_LOCATION) }}
+- name: LLM__TEXT_FAST_3__VERTEX_LOCATION
   value: {{ . | quote }}
 {{- end }}
 {{- with (default "" .Values.common.env.EMBEDDING_MODEL) }}
@@ -163,16 +179,21 @@ All secret-based environment variables
     secretKeyRef:
       name: echo-backend-secrets
       key: GCP_SA_JSON
-- name: LLM__TEXT_FAST__API_KEY
+- name: LLM__TEXT_FAST__GCP_SA_JSON
   valueFrom:
     secretKeyRef:
       name: echo-backend-secrets
-      key: LLM__TEXT_FAST__API_KEY
-- name: LLM__TEXT_FAST__API_BASE
+      key: GCP_SA_JSON
+- name: LLM__TEXT_FAST_2__GCP_SA_JSON
   valueFrom:
     secretKeyRef:
       name: echo-backend-secrets
-      key: LLM__TEXT_FAST__API_BASE
+      key: GCP_SA_JSON
+- name: LLM__TEXT_FAST_3__GCP_SA_JSON
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: GCP_SA_JSON
 # AssemblyAI webhook secret (optional — pods start fine when key is absent)
 - name: ASSEMBLYAI_WEBHOOK_SECRET
   valueFrom:
