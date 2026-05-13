@@ -1,0 +1,185 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: warning-digest-script
+  namespace: monitoring
+data:
+  digest.py: |
+    """
+    Weekly warning digest -> #prod-alerts.
+
+    Queries prometheus for the ALERTS metric over the past 7d, groups by
+    alertname, and posts a single summary to slack via the webhook
+    mounted at /etc/secrets/slack-webhook-url.
+
+    No third-party deps — urllib only.
+
+    Filed against ECHO-817. Companion to ECHO-813 which dropped
+    severity=warning notifications.
+    """
+    import json
+    import os
+    import sys
+    import urllib.parse
+    import urllib.request
+    from collections import defaultdict
+
+    PROMETHEUS_URL = os.environ.get(
+        "PROMETHEUS_URL", "http://prometheus.monitoring.svc:9090"
+    )
+    SLACK_WEBHOOK_PATH = os.environ.get(
+        "SLACK_WEBHOOK_PATH", "/etc/secrets/slack-webhook-url"
+    )
+    LOOKBACK = os.environ.get("LOOKBACK", "7d")
+    EVAL_INTERVAL_SECONDS = int(os.environ.get("EVAL_INTERVAL_SECONDS", "15"))
+
+
+    def query_prom(promql: str) -> list:
+        url = f"{PROMETHEUS_URL}/api/v1/query?{urllib.parse.urlencode({'query': promql})}"
+        with urllib.request.urlopen(url, timeout=15) as r:
+            body = json.loads(r.read())
+        if body.get("status") != "success":
+            raise RuntimeError(f"prometheus query failed: {body}")
+        return body["data"]["result"]
+
+
+    def main() -> int:
+        # count_over_time on ALERTS{...firing,warning} gives the number of
+        # 15s evaluations during which the alert was firing.
+        firing_samples_q = (
+            f'sum by (alertname) ('
+            f'  count_over_time('
+            f'    ALERTS{{alertstate="firing", severity="warning"}}[{LOOKBACK}]'
+            f'  )'
+            f')'
+        )
+        # changes() approximates the number of distinct firing events.
+        events_q = (
+            f'sum by (alertname) ('
+            f'  changes('
+            f'    ALERTS_FOR_STATE{{severity="warning"}}[{LOOKBACK}]'
+            f'  )'
+            f')'
+        )
+
+        try:
+            firing_samples = query_prom(firing_samples_q)
+            events = query_prom(events_q)
+        except Exception as e:
+            print(f"prometheus query error: {e}", file=sys.stderr)
+            return 1
+
+        by_name: dict = defaultdict(lambda: {"minutes": 0, "events": 0})
+        for row in firing_samples:
+            name = row["metric"].get("alertname", "?")
+            samples = float(row["value"][1])
+            minutes = int(samples * EVAL_INTERVAL_SECONDS / 60)
+            by_name[name]["minutes"] = minutes
+        for row in events:
+            name = row["metric"].get("alertname", "?")
+            # /2 because changes() counts both 0->1 and 1->0 transitions
+            by_name[name]["events"] = max(1, int(float(row["value"][1]) / 2))
+
+        if not by_name:
+            text = (
+                f":white_check_mark: *Warning digest — last {LOOKBACK}*"
+                "\nNo warnings fired."
+            )
+        else:
+            lines = [
+                f":bar_chart: *Warning digest — last {LOOKBACK}*  "
+                f"({len(by_name)} unique alertnames)"
+            ]
+            for name in sorted(by_name, key=lambda n: -by_name[n]["minutes"]):
+                row = by_name[name]
+                lines.append(
+                    f"• *{name}* — {row['events']} firing event(s), "
+                    f"~{row['minutes']} min total"
+                )
+            text = "\n".join(lines)
+
+        try:
+            with open(SLACK_WEBHOOK_PATH) as f:
+                webhook = f.read().strip()
+        except FileNotFoundError:
+            print(
+                f"slack webhook secret not at {SLACK_WEBHOOK_PATH}",
+                file=sys.stderr,
+            )
+            return 1
+
+        payload = json.dumps({"text": text}).encode()
+        req = urllib.request.Request(
+            webhook,
+            data=payload,
+            headers={"Content-Type": "application/json"},
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=15) as r:
+                print(f"slack post: HTTP {r.status}")
+        except Exception as e:
+            print(f"slack post failed: {e}", file=sys.stderr)
+            return 1
+        return 0
+
+
+    if __name__ == "__main__":
+        sys.exit(main())
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: warning-digest
+  namespace: monitoring
+  labels:
+    app: warning-digest
+spec:
+  # Mon 9am Europe/Amsterdam. timeZone support requires k8s >= 1.27.
+  # If the cluster is older, drop timeZone and use UTC (8am UTC ≈ 9-10am
+  # Amsterdam depending on DST).
+  schedule: "0 9 * * 1"
+  timeZone: "Europe/Amsterdam"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: digest
+              image: python:3.11-slim
+              command: ["python", "/scripts/digest.py"]
+              env:
+                - name: PROMETHEUS_URL
+                  value: "http://prometheus.monitoring.svc:9090"
+                - name: SLACK_WEBHOOK_PATH
+                  value: "/etc/secrets/slack-webhook-url"
+                - name: LOOKBACK
+                  value: "7d"
+                - name: EVAL_INTERVAL_SECONDS
+                  value: "15"
+              volumeMounts:
+                - name: script
+                  mountPath: /scripts
+                  readOnly: true
+                - name: secrets
+                  mountPath: /etc/secrets
+                  readOnly: true
+              resources:
+                requests:
+                  cpu: "10m"
+                  memory: "32Mi"
+                limits:
+                  cpu: "100m"
+                  memory: "128Mi"
+          volumes:
+            - name: script
+              configMap:
+                name: warning-digest-script
+                defaultMode: 0o555
+            - name: secrets
+              secret:
+                secretName: monitoring-secrets
