@@ -295,23 +295,32 @@ data:
           summary: "Critical error rate via ingress on {{ "{{" }} $labels.svc {{ "}}" }}"
           description: "5xx ratio > 20% over 5m: {{ "{{" }} $value {{ "}}" }}"
 
+      # Latency thresholds raised from 0.5s/10m -> 1s/15m (warning) and
+      # 1.5s/5m -> 3s/10m (critical) per ECHO-813. Starting values; tune
+      # once we have p95 distribution data from the cluster.
+      #
+      # Note: nginx_ingress_controller_request_duration_seconds is bucketed
+      # by `svc` (service-level), not by path. Long-tail endpoints
+      # (transcription, LLM streaming) get aggregated into the `api` svc's
+      # p95 and can drag it up. Path-level alerting would need a route
+      # label that isn't currently extracted — separate follow-up.
       - alert: IngressHighLatencyP95
-        expr: histogram_quantile(0.95, sum by (svc, le) ( label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 0.5
-        for: 10m
+        expr: histogram_quantile(0.95, sum by (svc, le) ( label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 1
+        for: 15m
         labels:
           severity: warning
         annotations:
           summary: "High p95 latency via ingress on {{ "{{" }} $labels.svc {{ "}}" }}"
-          description: "> 0.5s over 10m: {{ "{{" }} $value {{ "}}" }}"
+          description: "> 1s over 15m: {{ "{{" }} $value {{ "}}" }}"
 
       - alert: IngressCriticalLatencyP95
-        expr: histogram_quantile(0.95, sum by (svc, le) ( label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 1.5
-        for: 5m
+        expr: histogram_quantile(0.95, sum by (svc, le) ( label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 3
+        for: 10m
         labels:
           severity: critical
         annotations:
           summary: "Critical p95 latency via ingress on {{ "{{" }} $labels.svc {{ "}}" }}"
-          description: "> 1.5s over 5m: {{ "{{" }} $value {{ "}}" }}"
+          description: "> 3s over 10m: {{ "{{" }} $value {{ "}}" }}"
 
       - alert: CrashLoopBackOff
         expr: sum by (namespace, pod, container) (kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff", namespace="echo-prod"}) > 0
@@ -365,3 +374,17 @@ data:
         annotations:
           summary: "Unavailable replicas for {{ "{{" }} $labels.deployment {{ "}}" }}"
           description: "Available replicas < desired for 10m. Check rollout status, image pulls, probes, and node capacity."
+
+    - name: pipeline
+      rules:
+      # Always-firing canary that confirms prometheus is evaluating rules
+      # and alertmanager is receiving them. Routed to a null receiver in
+      # alertmanager so it never pages — a future dead-man's-switch
+      # consumer can poll the alertmanager API for its presence.
+      - alert: Watchdog
+        expr: vector(1)
+        labels:
+          severity: none
+        annotations:
+          summary: "Alerting pipeline is alive"
+          description: "Canary alert. Absence indicates prometheus or alertmanager is broken."
