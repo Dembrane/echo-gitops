@@ -105,9 +105,7 @@ spec:
                 path: nginx-ingress-dashboard.json
               - key: loki-logs-dashboard.json
                 path: loki-logs-dashboard.json
-              - key: echo-application-dashboard.json
-                path: echo-application-dashboard.json 
               - key: prod-overview.json
                 path: prod-overview.json
-              - key: prod-health.json
-                path: prod-health.json
+              - key: health.json
+                path: health.json

@@ -69,6 +69,37 @@ Three forces lined up:
 
 **How to apply:** if a contributor proposes app-of-apps adoption, point them at this doc.
 
+## Day 0 progress (2026-05-15)
+
+A "ship the pending monitoring fix" task surfaced additional cruft, most of which got cleaned up the same day. Captured here so future-me knows what's been done.
+
+### Shipped to prod and dev
+
+- Monitoring stack live on dev for the first time (Grafana, Prometheus, Loki, Alertmanager, blackbox-exporter, kube-state-metrics, node-exporter, promtail)
+- Prod monitoring caught up to `main` (the 8-month drift bug from `triage-2026-05-14.md` is closed; PRs #22 / #23 / #24 finally deployed)
+- Helm/Python `{{ }}` brace collision in `cronjob-warning-digest.yaml` fixed (was silently blocking the chart from rendering for weeks)
+- Loki queries in the Health dashboard now respect the `$namespace` variable (was hardcoded to `echo-prod`)
+- "Prod Health" dashboard renamed to "Health"; the namespace value is now injected per-env via `.Values.dashboards.namespace` in `helm/monitoring/values.yaml` (echo-dev) and `values-prod.yaml` (echo-prod), so the dashboard works correctly on either cluster
+- "Pods stuck" table added to the Health dashboard for ImagePullBackOff / CrashLoopBackOff / ErrImagePull visibility (the 29-day broken echo-agent in the triage doc would have been spotted here)
+- `prometheus.io/scrape` annotations removed from all 5 echo workloads (no `/metrics` endpoint exists; scrapes were producing ~17k 404s/day per api pod)
+- 83 dead Prometheus pods reaped from prod
+- All `argo/*.yaml` Application files standardized to `targetRevision: main`
+
+### Cleaned up (dead infrastructure / orphan code)
+
+- `helm/monitoring/SETUP_AUTH.md` and `secrets/sealed-monitoring-auth-secret-dev.yaml` deleted: basic-auth was scaffolded but never enabled (`ingress.basicAuth.enabled: false` in both values files)
+- `echo-application-dashboard.json` deleted: queried app-emitted metrics that don't exist (Decision 1 confirms they never will)
+- `echo-comprehensive-dashboard.json` deleted: wasn't even in `deployment-grafana.yaml`'s items list, so Grafana never loaded it
+- Empty `echo-dev` namespace on prod cluster deleted (created 422d ago by manual `kubectl apply`, sat empty since)
+- Obsolete `# NOTE: Loki queries are hardcoded` comment removed from `configmap-grafana-dashboards.yaml` (the hardcoding it warned about is what we fixed)
+
+### Confirmed for follow-up
+
+- **Neo4j workload is fully unused**: zero app imports across `server/`, `agent/`, `frontend/`; no `NEO4J_*` env injection anywhere. Helm chart deploys it unconditionally for no purpose. Strengthens Decision 5: safe to delete independently of any other migration phase, after a one-off `neo4j-admin database dump` for safety.
+- **`prod-overview.json`** still has a hardcoded `"query": "echo-prod"` namespace dropdown (same pattern Health had pre-fix). Worth either parameterizing the same way or retiring if no one uses it.
+- **`blackbox-exporter` Deployment on prod** (270d old) is not GitOps-managed: an ad-hoc `kubectl apply` from somewhere. Needs deliberate handling in Phase 2 (capture its config, recreate on Cloud Run, or accept that uptime probes move to Cloud Monitoring's synthetic checks).
+- **Worker memory pattern is suspicious**: workers showed steady climb (16→20 GiB over 3h) before our rolling restart dropped them to ~4 GiB. Either legitimate queue depth growth OR an aiohttp session leak (consistent with the triage's "Unclosed client session" log pattern). Watch over the next 24h to decide. If leak, Decision 2 (Node rewrite) resolves it without further investment in Python fixes.
+
 ## Phasing
 
 ### Phase 0: runway, no disturbance to running stack

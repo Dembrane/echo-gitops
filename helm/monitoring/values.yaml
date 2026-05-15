@@ -82,3 +82,7 @@ alerting:
   enabled: true
   slack:
     channel: "#prod-alerts"
+
+# Dashboards (env-specific variables injected into configmap-grafana-dashboards)
+dashboards:
+  namespace: "echo-dev"
