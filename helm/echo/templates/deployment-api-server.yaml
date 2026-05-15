@@ -21,9 +21,6 @@ spec:
       labels:
         app: echo
         component: api
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "8000"
     spec:
       priorityClassName: echo-high
       terminationGracePeriodSeconds: 60

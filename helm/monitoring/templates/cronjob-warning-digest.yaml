@@ -47,19 +47,19 @@ data:
         # count_over_time on ALERTS{...firing,warning} gives the number of
         # 15s evaluations during which the alert was firing.
         firing_samples_q = (
-            f'sum by (alertname) ('
-            f'  count_over_time('
-            f'    ALERTS{{alertstate="firing", severity="warning"}}[{LOOKBACK}]'
-            f'  )'
-            f')'
+            'sum by (alertname) ('
+            '  count_over_time('
+            '    ALERTS{alertstate="firing", severity="warning"}[' + LOOKBACK + ']'
+            '  )'
+            ')'
         )
         # changes() approximates the number of distinct firing events.
         events_q = (
-            f'sum by (alertname) ('
-            f'  changes('
-            f'    ALERTS_FOR_STATE{{severity="warning"}}[{LOOKBACK}]'
-            f'  )'
-            f')'
+            'sum by (alertname) ('
+            '  changes('
+            '    ALERTS_FOR_STATE{severity="warning"}[' + LOOKBACK + ']'
+            '  )'
+            ')'
         )
 
         try:

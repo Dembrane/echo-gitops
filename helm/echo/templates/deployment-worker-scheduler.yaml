@@ -21,9 +21,6 @@ spec:
       labels:
         app: echo
         component: worker-scheduler
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "8000"
     spec:
       priorityClassName: echo-low
       terminationGracePeriodSeconds: 120

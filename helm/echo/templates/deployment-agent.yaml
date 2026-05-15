@@ -22,9 +22,6 @@ spec:
       labels:
         app: echo
         component: agent
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: {{ .Values.agent.service.port | quote }}
     spec:
       priorityClassName: echo-low
       terminationGracePeriodSeconds: 60

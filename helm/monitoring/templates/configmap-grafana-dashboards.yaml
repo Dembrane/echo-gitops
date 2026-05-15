@@ -1158,7 +1158,7 @@ data:
       "annotations": {"list": []},
       "title": "Prod Health",
       "uid": "prod-health",
-      "description": "Loki queries are hardcoded to namespace echo-prod (do not use $namespace in logs panels)",
+      "description": "Prod/dev health overview. Use the namespace dropdown to switch environments.",
       "timezone": "",
       "schemaVersion": 38,
       "version": 1,
@@ -1233,13 +1233,13 @@ data:
           "fieldConfig": {"defaults": {"unit": "short"}},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"echo-prod\", component=\"api\"} |~ \"\\\\b(ERROR|FATAL|CRITICAL|Exception|Traceback)\\\\b|\\\\[(error|fatal|critical)\\\\]\")[5m]))"}
+            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"$namespace\", component=\"api\"} |~ \"\\\\b(ERROR|FATAL|CRITICAL|Exception|Traceback)\\\\b|\\\\[(error|fatal|critical)\\\\]\")[5m]))"}
           ]
         },
         {"type": "logs", "title": "API Error Logs", "id": 202, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 36},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "{namespace=\"echo-prod\", component=\"api\"} |~ \"\\\\b(ERROR|FATAL|CRITICAL|Exception|Traceback)\\\\b|\\\\[(error|fatal|critical)\\\\]\""}
+            {"refId": "A", "expr": "{namespace=\"$namespace\", component=\"api\"} |~ \"\\\\b(ERROR|FATAL|CRITICAL|Exception|Traceback)\\\\b|\\\\[(error|fatal|critical)\\\\]\""}
           ],
           "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
         },
@@ -1247,13 +1247,13 @@ data:
           "fieldConfig": {"defaults": {"unit": "short"}},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"echo-prod\", component=\"directus\"} |~ \"\\\\b(ERROR|FATAL|CRITICAL|Exception|Traceback)\\\\b|\\\\[(error|fatal|critical)\\\\]\")[5m]))"}
+            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"$namespace\", component=\"directus\"} |~ \"\\\\b(ERROR|FATAL|CRITICAL|Exception|Traceback)\\\\b|\\\\[(error|fatal|critical)\\\\]\")[5m]))"}
           ]
         },
         {"type": "logs", "title": "Directus Error Logs", "id": 204, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 44},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "{namespace=\"echo-prod\", component=\"directus\"} |~ \"\\\\b(ERROR|FATAL|CRITICAL|Exception|Traceback)\\\\b|\\\\[(error|fatal|critical)\\\\]\""}
+            {"refId": "A", "expr": "{namespace=\"$namespace\", component=\"directus\"} |~ \"\\\\b(ERROR|FATAL|CRITICAL|Exception|Traceback)\\\\b|\\\\[(error|fatal|critical)\\\\]\""}
           ],
           "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
         },
@@ -1261,13 +1261,13 @@ data:
           "fieldConfig": {"defaults": {"unit": "short"}},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"echo-prod\", component=\"worker\"} |~ \"\\\\b(ERROR|FATAL|CRITICAL|Exception|Traceback)\\\\b|\\\\[(error|fatal|critical)\\\\]\")[5m]))"}
+            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"$namespace\", component=\"worker\"} |~ \"\\\\b(ERROR|FATAL|CRITICAL|Exception|Traceback)\\\\b|\\\\[(error|fatal|critical)\\\\]\")[5m]))"}
           ]
         },
         {"type": "logs", "title": "Worker Error Logs", "id": 206, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 52},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "{namespace=\"echo-prod\", component=\"worker\"} |~ \"\\\\b(ERROR|FATAL|CRITICAL|Exception|Traceback)\\\\b|\\\\[(error|fatal|critical)\\\\]\""}
+            {"refId": "A", "expr": "{namespace=\"$namespace\", component=\"worker\"} |~ \"\\\\b(ERROR|FATAL|CRITICAL|Exception|Traceback)\\\\b|\\\\[(error|fatal|critical)\\\\]\""}
           ],
           "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
         },
@@ -1275,30 +1275,28 @@ data:
           "fieldConfig": {"defaults": {"unit": "short"}},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"echo-prod\", component=\"worker-cpu\"} |~ \"\\\\b(ERROR|FATAL|CRITICAL|Exception|Traceback)\\\\b|\\\\[(error|fatal|critical)\\\\]\")[5m]))"}
+            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"$namespace\", component=\"worker-cpu\"} |~ \"\\\\b(ERROR|FATAL|CRITICAL|Exception|Traceback)\\\\b|\\\\[(error|fatal|critical)\\\\]\")[5m]))"}
           ]
         },
         {"type": "logs", "title": "Worker-CPU Error Logs", "id": 208, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 60},
           "datasource": {"type": "loki", "uid": "loki"},
           "targets": [
-            {"refId": "A", "expr": "{namespace=\"echo-prod\", component=\"worker-cpu\"} |~ \"\\\\b(ERROR|FATAL|CRITICAL|Exception|Traceback)\\\\b|\\\\[(error|fatal|critical)\\\\]\""}
+            {"refId": "A", "expr": "{namespace=\"$namespace\", component=\"worker-cpu\"} |~ \"\\\\b(ERROR|FATAL|CRITICAL|Exception|Traceback)\\\\b|\\\\[(error|fatal|critical)\\\\]\""}
           ],
           "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
         }
         ,
-        {"type": "timeseries", "title": "Neo4j Error logs (5m count)", "id": 209, "gridPos": {"h": 8, "w": 6, "x": 0, "y": 68},
-          "fieldConfig": {"defaults": {"unit": "short"}},
-          "datasource": {"type": "loki", "uid": "loki"},
+        {"type": "table", "title": "Pods stuck (ImagePullBackOff / CrashLoop / ErrImagePull)", "id": 300, "gridPos": {"h": 6, "w": 24, "x": 0, "y": 68},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
           "targets": [
-            {"refId": "A", "expr": "sum(count_over_time(({namespace=\"echo-prod\", container=\"neo4j\"} |~ \"\\\\b(ERROR|FATAL|CRITICAL|Exception|Traceback)\\\\b|\\\\[(error|fatal|critical)\\\\]\")[5m]))"}
-          ]
-        },
-        {"type": "logs", "title": "Neo4j Error Logs", "id": 210, "gridPos": {"h": 8, "w": 18, "x": 6, "y": 68},
-          "datasource": {"type": "loki", "uid": "loki"},
-          "targets": [
-            {"refId": "A", "expr": "{namespace=\"echo-prod\", container=\"neo4j\"} |~ \"\\\\b(ERROR|FATAL|CRITICAL|Exception|Traceback)\\\\b|\\\\[(error|fatal|critical)\\\\]\""}
+            {"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "kube_pod_container_status_waiting_reason{namespace=\"$namespace\", reason=~\"ImagePullBackOff|CrashLoopBackOff|ErrImagePull|CreateContainerConfigError\"} > 0", "instant": true, "format": "table"}
           ],
-          "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true}
+          "options": {"showHeader": true},
+          "transformations": [
+            {"id": "labelsToFields", "options": {}},
+            {"id": "organize", "options": {"excludeByName": {"Time": true, "__name__": true, "job": true, "endpoint": true, "instance": true, "service": true, "uid": true, "namespace": true, "container": true}, "indexByName": {"pod": 0, "reason": 1, "Value": 2}}}
+          ],
+          "fieldConfig": {"defaults": {"custom": {"displayMode": "color-background"}, "thresholds": {"mode": "absolute", "steps": [{"color": "red"}]}}, "overrides": []}
         }
       ]
     }
