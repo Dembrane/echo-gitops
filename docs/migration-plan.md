@@ -92,6 +92,9 @@ A "ship the pending monitoring fix" task surfaced additional cruft, most of whic
 - `echo-comprehensive-dashboard.json` deleted: wasn't even in `deployment-grafana.yaml`'s items list, so Grafana never loaded it
 - Empty `echo-dev` namespace on prod cluster deleted (created 422d ago by manual `kubectl apply`, sat empty since)
 - Obsolete `# NOTE: Loki queries are hardcoded` comment removed from `configmap-grafana-dashboards.yaml` (the hardcoding it warned about is what we fixed)
+- `Kubernetes Cluster Monitoring` dashboard deleted (duplicated the standard "Kubernetes Overview" dashboard)
+- `Prod Overview` dashboard deleted (had the same hardcoded-namespace bug Health used to have, and overlapped Health's content)
+- `[Updated]` prefix stripped from 4 dashboard titles (Kubernetes Overview, Node Exporter Full, Nginx Ingress Controller, Loki Logs) — was meaningful when duplicates existed, now just noise
 
 ### Confirmed for follow-up
 

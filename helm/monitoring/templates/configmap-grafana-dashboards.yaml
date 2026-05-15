@@ -213,289 +213,10 @@ data:
       },
       "timepicker": {},
       "timezone": "",
-      "title": "[Updated] Kubernetes Overview",
+      "title": "Kubernetes Overview",
       "uid": "kubernetes-overview",
       "version": 1,
       "weekStart": ""
-    }
-  k8s-cluster-monitoring.json: |
-    {
-      "annotations": {
-        "list": []
-      },
-      "editable": true,
-      "fiscalYearStartMonth": 0,
-      "graphTooltip": 0,
-      "id": 315,
-      "links": [],
-      "liveNow": false,
-      "panels": [
-        {
-          "title": "Cluster Pod Status",
-          "type": "graph",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 0
-          },
-          "targets": [
-            {
-              "expr": "sum(kube_pod_status_phase) by (phase)",
-              "legendFormat": "{{ "{{" }}phase{{ "}}" }} Pods"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {
-              "unit": "none"
-            }
-          }
-        },
-        {
-          "title": "CPU Usage by Node",
-          "type": "graph",
-          "datasource": {
-            "type": "prometheus", 
-            "uid": "prometheus"
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 0
-          },
-          "targets": [
-            {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{image!=\"\"}[5m])) by (instance)",
-              "legendFormat": "{{ "{{" }}instance{{ "}}" }}"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {
-              "unit": "none"
-            }
-          }
-        },
-        {
-          "title": "Memory Usage by Node",
-          "type": "graph",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 8
-          },
-          "targets": [
-            {
-              "expr": "sum(container_memory_usage_bytes{image!=\"\"}) by (instance)",
-              "legendFormat": "{{ "{{" }}instance{{ "}}" }}"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {
-              "unit": "bytes"
-            }
-          }
-        },
-        {
-          "title": "Memory Usage by Namespace",
-          "type": "graph",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 8
-          },
-          "targets": [
-            {
-              "expr": "sum(container_memory_usage_bytes{image!=\"\"}) by (namespace)",
-              "legendFormat": "{{ "{{" }}namespace{{ "}}" }}"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {
-              "unit": "bytes"
-            }
-          }
-        },
-        {
-          "title": "Network I/O Pressure",
-          "type": "graph",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 16
-          },
-          "targets": [
-            {
-              "expr": "sum(rate(container_network_receive_bytes_total{image!=\"\"}[5m])) by (instance)",
-              "legendFormat": "{{ "{{" }}instance{{ "}}" }} - Received"
-            },
-            {
-              "expr": "sum(rate(container_network_transmit_bytes_total{image!=\"\"}[5m])) by (instance)",
-              "legendFormat": "{{ "{{" }}instance{{ "}}" }} - Transmitted"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {
-              "unit": "bytes"
-            }
-          }
-        },
-        {
-          "title": "File System Usage by Node",
-          "type": "graph",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 16
-          },
-          "targets": [
-            {
-              "expr": "sum(container_fs_usage_bytes{image!=\"\"}) by (instance)",
-              "legendFormat": "{{ "{{" }}instance{{ "}}" }} - Usage"
-            },
-            {
-              "expr": "sum(container_fs_limit_bytes{image!=\"\"}) by (instance)",
-              "legendFormat": "{{ "{{" }}instance{{ "}}" }} - Limit"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {
-              "unit": "bytes"
-            }
-          }
-        },
-        {
-          "title": "CPU Usage by Pod",
-          "type": "graph",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 24
-          },
-          "targets": [
-            {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{image!=\"\", pod!=\"\"}[5m])) by (pod, namespace)",
-              "legendFormat": "{{ "{{" }}namespace{{ "}}" }} / {{ "{{" }}pod{{ "}}" }}"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {
-              "unit": "none"
-            }
-          }
-        },
-        {
-          "title": "Memory Usage by Pod", 
-          "type": "graph",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 24
-          },
-          "targets": [
-            {
-              "expr": "sum(container_memory_usage_bytes{image!=\"\", pod!=\"\"}) by (pod, namespace)",
-              "legendFormat": "{{ "{{" }}namespace{{ "}}" }} / {{ "{{" }}pod{{ "}}" }}"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {
-              "unit": "bytes"
-            }
-          }
-        },
-        {
-          "title": "Systemd CPU Usage",
-          "type": "graph",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 32
-          },
-          "targets": [
-            {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{systemd_service_name!=\"\"}[5m])) by (systemd_service_name)",
-              "legendFormat": "{{ "{{" }}systemd_service_name{{ "}}" }}"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {
-              "unit": "none"
-            }
-          }
-        },
-        {
-          "title": "Systemd Memory Usage",
-          "type": "graph",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 32
-          },
-          "targets": [
-            {
-              "expr": "sum(container_memory_usage_bytes{systemd_service_name!=\"\"}) by (systemd_service_name)",
-              "legendFormat": "{{ "{{" }}systemd_service_name{{ "}}" }}"
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {
-              "unit": "bytes"
-            }
-          }
-        }
-      ],
-      "schemaVersion": 38,
-      "style": "dark",
-      "tags": ["kubernetes", "monitoring"],
-      "title": "Kubernetes Cluster Monitoring",
-      "uid": "k8s-cluster-monitoring",
-      "version": 1,
-      "description": "Monitors Kubernetes cluster using Prometheus. Shows overall cluster CPU / Memory / Filesystem usage as well as individual pod, containers, systemd services statistics. Uses cAdvisor metrics only."
     }
   node-exporter-dashboard.json: |
     {
@@ -506,7 +227,7 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
       "id": 1860,
-      "title": "[Updated] Node Exporter Full",
+      "title": "Node Exporter Full",
       "uid": "node-exporter-full",
       "version": 1,
       "panels": [
@@ -599,7 +320,7 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
       "id": 9614,
-      "title": "[Updated] Nginx Ingress Controller",
+      "title": "Nginx Ingress Controller",
       "uid": "nginx-ingress",
       "version": 1,
       "panels": [
@@ -662,7 +383,7 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
       "id": 12019,
-      "title": "[Updated] Loki Logs",
+      "title": "Loki Logs",
       "uid": "loki-logs",
       "version": 1,
       "panels": [
@@ -714,42 +435,6 @@ data:
       "schemaVersion": 38,
       "style": "dark",
       "tags": ["loki", "logs"]
-    }
-  prod-overview.json: |
-    {
-      "annotations": {"list": []},
-      "title": "Prod Overview",
-      "uid": "prod-overview",
-      "timezone": "",
-      "schemaVersion": 38,
-      "version": 1,
-      "refresh": "30s",
-      "time": {"from": "now-3h", "to": "now"},
-      "templating": {
-        "list": [
-          {"type": "custom", "name": "namespace", "query": "echo-prod", "current": {"text": "echo-prod", "value": "echo-prod", "selected": true}},
-          {"type": "query", "name": "service", "datasource": {"type": "prometheus", "uid": "prometheus"}, "query": "label_values(nginx_ingress_controller_requests{namespace=\"$namespace\"}, exported_service)", "refresh": 2, "includeAll": true, "multi": true, "current": {"text": "All", "value": [".*"], "selected": true}}
-        ]
-      },
-      "panels": [
-        {"type": "timeseries", "title": "RPS per service", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
-          "targets": [{"expr": "sum by (svc) ( label_replace(rate({__name__=~\"nginx_ingress_controller_requests(_total)?\", namespace=\"$namespace\"}[5m]), \"svc\", \"$1\", \"exported_service\", \"(.*)\") or label_replace(rate({__name__=~\"nginx_ingress_controller_requests(_total)?\", namespace=\"$namespace\"}[5m]), \"svc\", \"$1\", \"service\", \"(.*)\") )", "refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}}],
-          "fieldConfig": {"defaults": {"unit": "req/s"}} },
-        {"type": "timeseries", "title": "p95 latency per service", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
-          "targets": [{"expr": "histogram_quantile(0.95, sum by (svc, le) ( label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m]), \"svc\", \"$1\", \"exported_service\", \"(.*)\") or label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m]), \"svc\", \"$1\", \"service\", \"(.*)\") ))", "refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}}],
-          "fieldConfig": {"defaults": {"unit": "s"}} },
-        {"type": "timeseries", "title": "HTTP 5xx error % per service", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
-          "targets": [{"expr": "(sum by (svc)( label_replace(rate({__name__=~\"nginx_ingress_controller_requests(_total)?\", status=~\"5..\", namespace=\"$namespace\"}[5m]), \"svc\", \"$1\", \"exported_service\", \"(.*)\") or label_replace(rate({__name__=~\"nginx_ingress_controller_requests(_total)?\", status=~\"5..\", namespace=\"$namespace\"}[5m]), \"svc\", \"$1\", \"service\", \"(.*)\") )) / (sum by (svc)( label_replace(rate({__name__=~\"nginx_ingress_controller_requests(_total)?\", namespace=\"$namespace\"}[5m]), \"svc\", \"$1\", \"exported_service\", \"(.*)\") or label_replace(rate({__name__=~\"nginx_ingress_controller_requests(_total)?\", namespace=\"$namespace\"}[5m]), \"svc\", \"$1\", \"service\", \"(.*)\") ))", "refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}}],
-          "fieldConfig": {"defaults": {"unit": "percentunit", "thresholds": {"mode": "absolute", "steps": [{"color": "green"}, {"color": "yellow", "value": 0.01}, {"color": "red", "value": 0.05}]}}}},
-        {"type": "timeseries", "title": "CPU by Deployment", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
-          "targets": [{"expr": "sum by (deployment) ( (sum by (pod, namespace) (rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", image!=\"\", container!=\"POD\", container!=\"\"}[5m]))) * on(pod, namespace) group_left(owner_name) kube_pod_owner{owner_kind=\"ReplicaSet\"} * on(owner_name, namespace) group_left(deployment) kube_replicaset_owner{owner_kind=\"Deployment\"} )", "legendFormat": "{{ "{{" }}deployment{{ "}}" }}", "refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}}],
-          "fieldConfig": {"defaults": {"unit": "cores"}} },
-        {"type": "timeseries", "title": "Memory by Deployment", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
-          "targets": [{"expr": "sum by (deployment) ( (sum by (pod, namespace) (container_memory_usage_bytes{namespace=\"$namespace\", image!=\"\", container!=\"POD\", container!=\"\"})) * on(pod, namespace) group_left(owner_name) kube_pod_owner{owner_kind=\"ReplicaSet\"} * on(owner_name, namespace) group_left(deployment) kube_replicaset_owner{owner_kind=\"Deployment\"} )", "legendFormat": "{{ "{{" }}deployment{{ "}}" }}", "refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}}],
-          "fieldConfig": {"defaults": {"unit": "bytes"}} },
-        {"type": "timeseries", "title": "Pod restarts (1h)", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
-          "targets": [{"expr": "sum by (pod) (increase(kube_pod_container_status_restarts_total{namespace=\"$namespace\"}[1h]))", "refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}}]}
-      ]
     }
   health.json: |
     {

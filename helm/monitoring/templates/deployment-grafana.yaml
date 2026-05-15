@@ -97,15 +97,11 @@ spec:
             items:
               - key: kubernetes-dashboard.json
                 path: kubernetes-dashboard.json
-              - key: k8s-cluster-monitoring.json
-                path: k8s-cluster-monitoring.json
               - key: node-exporter-dashboard.json
                 path: node-exporter-dashboard.json
               - key: nginx-ingress-dashboard.json
                 path: nginx-ingress-dashboard.json
               - key: loki-logs-dashboard.json
                 path: loki-logs-dashboard.json
-              - key: prod-overview.json
-                path: prod-overview.json
               - key: health.json
                 path: health.json
