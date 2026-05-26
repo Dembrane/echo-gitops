@@ -101,6 +101,22 @@ Common environment variables (including feature flags and non-sensitive config)
 - name: ASSEMBLYAI_WEBHOOK_URL
   value: {{ . | quote }}
 {{- end }}
+{{- with (default "" .Values.common.env.LLM__OPEN_SOURCE__MODEL) }}
+- name: LLM__OPEN_SOURCE__MODEL
+  value: {{ . | quote }}
+{{- end }}
+{{- with (default "" .Values.common.env.LLM__OPEN_SOURCE__VERTEX_LOCATION) }}
+- name: LLM__OPEN_SOURCE__VERTEX_LOCATION
+  value: {{ . | quote }}
+{{- end }}
+{{- with (default "" .Values.common.env.LLM__OPEN_SOURCE__VERTEX_PROJECT) }}
+- name: LLM__OPEN_SOURCE__VERTEX_PROJECT
+  value: {{ . | quote }}
+{{- end }}
+{{- with (default "" .Values.common.env.LLM__OPEN_SOURCE__API_BASE) }}
+- name: LLM__OPEN_SOURCE__API_BASE
+  value: {{ . | quote }}
+{{- end }}
 {{- end }}
 
 {{/*
@@ -200,5 +216,16 @@ All secret-based environment variables
     secretKeyRef:
       name: echo-backend-secrets
       key: ASSEMBLYAI_WEBHOOK_SECRET
+      optional: true
+- name: LLM__OPEN_SOURCE__GCP_SA_JSON
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: GCP_SA_JSON
+- name: LLM__OPEN_SOURCE__API_KEY
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: LLM__OPEN_SOURCE__API_KEY
       optional: true
 {{- end }}

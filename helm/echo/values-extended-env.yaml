@@ -30,3 +30,9 @@ common:
 
     EMBEDDING_MODEL: "vertex_ai/text-embedding-004"
     EMBEDDING_BASE_URL: "https://europe-west4-aiplatform.googleapis.com"
+
+    # Open Source model configurations for preference A/B testing
+    LLM__OPEN_SOURCE__MODEL: "vertex_ai/mistral-large"
+    LLM__OPEN_SOURCE__VERTEX_LOCATION: "europe-west4"
+    LLM__OPEN_SOURCE__VERTEX_PROJECT: ""
+    LLM__OPEN_SOURCE__API_BASE: ""
