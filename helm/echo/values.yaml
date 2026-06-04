@@ -17,6 +17,12 @@ common:
     DISABLE_SENTRY: "0"
     SERVE_API_DOCS: "1"
 
+    # Email
+    # SendGrid data residency region. "eu" routes app sends (email.py) through
+    # api.eu.sendgrid.com so recipient PII/content stay in the EU. Requires
+    # SENDGRID_API_KEY (sealed secret) to belong to an EU regional subuser.
+    SENDGRID_REGION: "eu"
+
     # Feature flags
     TRANSCRIPTION_PROVIDER: "Dembrane-25-09"
     FEATURE_FLAGS__ENABLE_CHAT_AUTO_SELECT: "0"
