@@ -1,0 +1,32 @@
+# echo-next ONLY overrides.
+#
+# Appended AFTER values-extended-env.yaml in echo-dev's valueFiles so these win
+# for echo-next without touching prod/testing (which do not reference this file).
+#
+# Swaps all three LLM groups (multimodal pro, multimodal fast, text fast) to
+# Gemini 3.5 Flash on Vertex in the EU multi-region. 3.5 Flash is verified on
+# "eu" (see spashii config, 2026-05-20); it is not in the specific europe-west
+# zones the shared config used, so the _2/_3 regional failovers are disabled
+# (empty model => the env helper skips them => not registered as deployments).
+common:
+  env:
+    LLM__MULTI_MODAL_PRO__MODEL: "vertex_ai/gemini-3.5-flash"
+    LLM__MULTI_MODAL_PRO__VERTEX_LOCATION: "eu"
+    LLM__MULTI_MODAL_PRO_2__MODEL: ""
+    LLM__MULTI_MODAL_PRO_2__VERTEX_LOCATION: ""
+    LLM__MULTI_MODAL_PRO_3__MODEL: ""
+    LLM__MULTI_MODAL_PRO_3__VERTEX_LOCATION: ""
+
+    LLM__MULTI_MODAL_FAST__MODEL: "vertex_ai/gemini-3.5-flash"
+    LLM__MULTI_MODAL_FAST__VERTEX_LOCATION: "eu"
+    LLM__MULTI_MODAL_FAST_2__MODEL: ""
+    LLM__MULTI_MODAL_FAST_2__VERTEX_LOCATION: ""
+    LLM__MULTI_MODAL_FAST_3__MODEL: ""
+    LLM__MULTI_MODAL_FAST_3__VERTEX_LOCATION: ""
+
+    LLM__TEXT_FAST__MODEL: "vertex_ai/gemini-3.5-flash"
+    LLM__TEXT_FAST__VERTEX_LOCATION: "eu"
+    LLM__TEXT_FAST_2__MODEL: ""
+    LLM__TEXT_FAST_2__VERTEX_LOCATION: ""
+    LLM__TEXT_FAST_3__MODEL: ""
+    LLM__TEXT_FAST_3__VERTEX_LOCATION: ""
