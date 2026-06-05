@@ -56,6 +56,10 @@ Common environment variables (including feature flags and non-sensitive config)
 - name: LLM__MULTI_MODAL_PRO__VERTEX_LOCATION
   value: {{ . | quote }}
 {{- end }}
+{{- with (default "" .Values.common.env.LLM__MULTI_MODAL_PRO__API_BASE) }}
+- name: LLM__MULTI_MODAL_PRO__API_BASE
+  value: {{ . | quote }}
+{{- end }}
 {{- with (default "" .Values.common.env.LLM__MULTI_MODAL_FAST__MODEL) }}
 - name: LLM__MULTI_MODAL_FAST__MODEL
   value: {{ . | quote }}
@@ -64,12 +68,20 @@ Common environment variables (including feature flags and non-sensitive config)
 - name: LLM__MULTI_MODAL_FAST__VERTEX_LOCATION
   value: {{ . | quote }}
 {{- end }}
+{{- with (default "" .Values.common.env.LLM__MULTI_MODAL_FAST__API_BASE) }}
+- name: LLM__MULTI_MODAL_FAST__API_BASE
+  value: {{ . | quote }}
+{{- end }}
 {{- with (default "" .Values.common.env.LLM__TEXT_FAST__MODEL) }}
 - name: LLM__TEXT_FAST__MODEL
   value: {{ . | quote }}
 {{- end }}
 {{- with (default "" .Values.common.env.LLM__TEXT_FAST__VERTEX_LOCATION) }}
 - name: LLM__TEXT_FAST__VERTEX_LOCATION
+  value: {{ . | quote }}
+{{- end }}
+{{- with (default "" .Values.common.env.LLM__TEXT_FAST__API_BASE) }}
+- name: LLM__TEXT_FAST__API_BASE
   value: {{ . | quote }}
 {{- end }}
 {{- with (default "" .Values.common.env.LLM__TEXT_FAST_2__MODEL) }}
