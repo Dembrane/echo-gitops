@@ -101,6 +101,9 @@ Common environment variables (including feature flags and non-sensitive config)
 - name: ASSEMBLYAI_WEBHOOK_URL
   value: {{ . | quote }}
 {{- end }}
+# SendGrid data residency region for app sends (email.py). Defaults to eu.
+- name: SENDGRID_REGION
+  value: {{ default "eu" .Values.common.env.SENDGRID_REGION | quote }}
 {{- end }}
 
 {{/*
@@ -200,5 +203,14 @@ All secret-based environment variables
     secretKeyRef:
       name: echo-backend-secrets
       key: ASSEMBLYAI_WEBHOOK_SECRET
+      optional: true
+# SendGrid API key for app transactional email (email.py). Optional so pods
+# start when unset; email.py skips sends when empty. Must be an EU regional
+# subuser key to satisfy SENDGRID_REGION=eu data residency.
+- name: SENDGRID_API_KEY
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: SENDGRID_API_KEY
       optional: true
 {{- end }}
