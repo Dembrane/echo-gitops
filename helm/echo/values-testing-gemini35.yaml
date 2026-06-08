@@ -20,6 +20,13 @@ global:
 
 common:
   env:
+    # Emulate prod-today: prod does NOT set ASSEMBLYAI_WEBHOOK_URL, so prod boots
+    # fine. echo-testing sets it but lacks ASSEMBLYAI_WEBHOOK_SECRET, so the app's
+    # settings.ensure_valid() rejects the combo and the pod crash-loops at boot
+    # (pre-existing testing breakage, independent of this LLM change). Unset it
+    # here so testing matches prod and the prod-release image can actually boot.
+    ASSEMBLYAI_WEBHOOK_URL: ""
+
     # Swap all three LLM groups (multimodal pro, multimodal fast, text fast) to
     # Gemini 3.5 Flash on Vertex, EU-resident. Gemini 3.x is only served on the
     # GLOBAL Vertex host (aiplatform.googleapis.com); the regional
