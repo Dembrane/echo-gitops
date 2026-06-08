@@ -22,6 +22,12 @@ common:
     FEATURE_FLAGS__ENABLE_CHAT_SELECT_ALL: "1"
     FEATURE_FLAGS__ENABLE_WEBHOOKS: "1"
 
+    # AssemblyAI webhook-driven transcription. Requires ASSEMBLYAI_WEBHOOK_SECRET
+    # in echo-backend-secrets (sealed) or the app crash-loops at boot
+    # (settings.ensure_valid). Validated end-to-end on the prod release image in
+    # echo-testing on 2026-06-08.
+    ASSEMBLYAI_WEBHOOK_URL: "https://api.dembrane.com/api/webhooks/assemblyai"
+
     # Storage config
     STORAGE_S3_REGION: "us-east-1"
     STORAGE_S3_ENDPOINT: "https://ams3.digitaloceanspaces.com"
