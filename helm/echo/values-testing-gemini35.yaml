@@ -1,0 +1,46 @@
+# echo-testing DE-RISK overlay (temporary).
+#
+# Purpose: validate that Gemini 3.5 Flash (the echo-next change) is backwards
+# compatible with the CURRENT PRODUCTION RELEASE before flipping prod. We do
+# this by running prod's live image tag in echo-testing with the 3.5 config and
+# observing real behaviour.
+#
+# This file is appended LAST in echo-testing's Argo valueFiles (after
+# values-testing.yaml and values-extended-env.yaml) so it wins. It is referenced
+# ONLY by echo-testing — prod and dev never load it, so prod stays on Gemini 2.5
+# even if this branch is merged. Mirrors helm/echo/values-echo-next.yaml.
+#
+# Revert: repoint the echo-testing Application targetRevision back to `main` and
+# drop this file from its valueFiles; Argo self-heals testing back to ebb40c3 + 2.5.
+
+global:
+  # Pinned to the live PRODUCTION release tag so testing emulates prod-today.
+  # (prod runs this exact tag as of 2026-06-08; testing normally runs a newer CI tag.)
+  imageTag: "a4b23c5d99b17d68b5da30c0c79d01db38156dd2"
+
+common:
+  env:
+    # Swap all three LLM groups (multimodal pro, multimodal fast, text fast) to
+    # Gemini 3.5 Flash on Vertex, EU-resident. Gemini 3.x is only served on the
+    # GLOBAL Vertex host (aiplatform.googleapis.com); the regional
+    # eu-aiplatform.googleapis.com host that litellm builds for vertex_location=eu
+    # 404s. Pinning API_BASE to the global host while keeping locations/eu in the
+    # path serves Gemini 3 yet keeps processing in the EU multi-region. The
+    # api_base hardcodes project dembrane-echo (verified: prod/testing/dev Vertex
+    # SAs all use project dembrane-echo). The _2/_3 failovers are disabled since
+    # 3.5 Flash is global-host only.
+    LLM__MULTI_MODAL_PRO__MODEL: "vertex_ai/gemini-3.5-flash"
+    LLM__MULTI_MODAL_PRO__VERTEX_LOCATION: "eu"
+    LLM__MULTI_MODAL_PRO__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.5-flash"
+
+    LLM__MULTI_MODAL_FAST__MODEL: "vertex_ai/gemini-3.5-flash"
+    LLM__MULTI_MODAL_FAST__VERTEX_LOCATION: "eu"
+    LLM__MULTI_MODAL_FAST__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.5-flash"
+
+    LLM__TEXT_FAST__MODEL: "vertex_ai/gemini-3.5-flash"
+    LLM__TEXT_FAST__VERTEX_LOCATION: "eu"
+    LLM__TEXT_FAST__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.5-flash"
+    LLM__TEXT_FAST_2__MODEL: ""
+    LLM__TEXT_FAST_2__VERTEX_LOCATION: ""
+    LLM__TEXT_FAST_3__MODEL: ""
+    LLM__TEXT_FAST_3__VERTEX_LOCATION: ""
