@@ -1,5 +1,5 @@
 global:
-  imageTag: "95b4aef6c5d50969b24409e6ee02e1f2df378c3e"
+  imageTag: "90a6798dd11cbd4f095aa33bb97c67c2b6c8021b"
   registry: "registry.digitalocean.com/dbr-cr"
 
 # Common configuration shared across services
