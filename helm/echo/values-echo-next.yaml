@@ -41,3 +41,15 @@ common:
     LLM__TEXT_FAST_2__VERTEX_LOCATION: ""
     LLM__TEXT_FAST_3__MODEL: ""
     LLM__TEXT_FAST_3__VERTEX_LOCATION: ""
+
+    # AssemblyAI webhook mode (mirrors prod/testing). Switches dev transcription
+    # from polling to webhook callbacks. Pairs with ASSEMBLYAI_WEBHOOK_SECRET in
+    # the sealed secret — that secret MUST hold a real dev value before this is
+    # applied, or signed callbacks are rejected.
+    ASSEMBLYAI_WEBHOOK_URL: "https://api.echo-next.dembrane.com/api/webhooks/assemblyai"
+
+    # Self-serve billing (Mollie). Public URL Mollie POSTs payment status to;
+    # path is the FastAPI route /api/v2/billing/mollie/webhook. The MOLLIE_API_KEY
+    # itself is a sealed secret (echo-backend-secrets), not set here. Pair this
+    # with a test_ key in dev so Mollie runs in test mode.
+    MOLLIE_WEBHOOK_URL: "https://api.echo-next.dembrane.com/api/v2/billing/mollie/webhook"

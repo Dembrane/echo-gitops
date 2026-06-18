@@ -113,6 +113,12 @@ Common environment variables (including feature flags and non-sensitive config)
 - name: ASSEMBLYAI_WEBHOOK_URL
   value: {{ . | quote }}
 {{- end }}
+# Mollie billing webhook (optional — only set when a public URL exists; Mollie
+# rejects non-public URLs, so omit it in environments without one).
+{{- with (default "" .Values.common.env.MOLLIE_WEBHOOK_URL) }}
+- name: MOLLIE_WEBHOOK_URL
+  value: {{ . | quote }}
+{{- end }}
 # SendGrid data residency region for app sends (email.py). Defaults to eu.
 - name: SENDGRID_REGION
   value: {{ default "eu" .Values.common.env.SENDGRID_REGION | quote }}
@@ -224,5 +230,14 @@ All secret-based environment variables
     secretKeyRef:
       name: echo-backend-secrets
       key: SENDGRID_API_KEY
+      optional: true
+# Mollie API key for self-serve billing. Optional so pods start when unset;
+# billing is disabled (mollie_enabled=False) when empty. Test vs live mode is
+# auto-detected from the key prefix (test_ / live_).
+- name: MOLLIE_API_KEY
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: MOLLIE_API_KEY
       optional: true
 {{- end }}
