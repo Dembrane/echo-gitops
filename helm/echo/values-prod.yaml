@@ -28,6 +28,12 @@ common:
     # echo-testing on 2026-06-08.
     ASSEMBLYAI_WEBHOOK_URL: "https://api.dembrane.com/api/webhooks/assemblyai"
 
+    # Self-serve billing (Mollie). Public URL Mollie POSTs payment status to;
+    # path is the FastAPI route /api/v2/billing/mollie/webhook. The MOLLIE_API_KEY
+    # itself is a sealed secret (echo-backend-secrets), set via secret-manager.sh.
+    # Prod uses a live_ Mollie key (echo-next uses a test_ key).
+    MOLLIE_WEBHOOK_URL: "https://api.dembrane.com/api/v2/billing/mollie/webhook"
+
     # Storage config
     STORAGE_S3_REGION: "us-east-1"
     STORAGE_S3_ENDPOINT: "https://ams3.digitaloceanspaces.com"
