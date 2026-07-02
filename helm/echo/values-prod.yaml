@@ -12,13 +12,11 @@ common:
     PARTICIPANT_BASE_URL: "https://portal.dembrane.com"
     API_BASE_URL: "https://api.dembrane.com/api"
     DISABLE_CORS: "0"
-    DISABLE_REDACTION: "1"
     DISABLE_SENTRY: "0"
     SERVE_API_DOCS: "0"
 
     # Feature flags
     TRANSCRIPTION_PROVIDER: "Dembrane-25-09"
-    FEATURE_FLAGS__ENABLE_CHAT_AUTO_SELECT: "0"
     FEATURE_FLAGS__ENABLE_CHAT_SELECT_ALL: "1"
     FEATURE_FLAGS__ENABLE_WEBHOOKS: "1"
 
