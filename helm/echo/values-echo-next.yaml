@@ -16,6 +16,13 @@
 # The api_base hardcodes project + model because litellm appends ":generateContent"
 # to it verbatim. This file is echo-next-only, so the dembrane-echo project is correct.
 # The _2/_3 regional failovers stay disabled (3.5 Flash is global-host only).
+# Published docs site for this env (GitHub Pages from dembrane/echo main,
+# .github/workflows/dev-deploy-docs.yml). The agent uses it to cite docs as
+# links. Prod stays unset until docs.dembrane.com serves the same corpus.
+agent:
+  env:
+    DOCS_BASE_URL: "https://docs.echo-next.dembrane.com"
+
 common:
   env:
     LLM__MULTI_MODAL_PRO__MODEL: "vertex_ai/gemini-3.5-flash"
