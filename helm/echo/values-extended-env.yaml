@@ -13,17 +13,17 @@
 # 2026-06-08 (model swap + AssemblyAI webhook round-trip).
 common:
   env:
-    LLM__MULTI_MODAL_PRO__MODEL: "vertex_ai/gemini-3.5-flash"
+    LLM__MULTI_MODAL_PRO__MODEL: "vertex_ai/gemini-3.6-flash"
     LLM__MULTI_MODAL_PRO__VERTEX_LOCATION: "eu"
-    LLM__MULTI_MODAL_PRO__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.5-flash"
+    LLM__MULTI_MODAL_PRO__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.6-flash"
 
-    LLM__MULTI_MODAL_FAST__MODEL: "vertex_ai/gemini-3.5-flash"
+    LLM__MULTI_MODAL_FAST__MODEL: "vertex_ai/gemini-3.6-flash"
     LLM__MULTI_MODAL_FAST__VERTEX_LOCATION: "eu"
-    LLM__MULTI_MODAL_FAST__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.5-flash"
+    LLM__MULTI_MODAL_FAST__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.6-flash"
 
-    LLM__TEXT_FAST__MODEL: "vertex_ai/gemini-3.5-flash"
+    LLM__TEXT_FAST__MODEL: "vertex_ai/gemini-3.6-flash"
     LLM__TEXT_FAST__VERTEX_LOCATION: "eu"
-    LLM__TEXT_FAST__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.5-flash"
+    LLM__TEXT_FAST__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.6-flash"
 
     EMBEDDING_MODEL: "vertex_ai/text-embedding-004"
     EMBEDDING_BASE_URL: "https://europe-west4-aiplatform.googleapis.com"
