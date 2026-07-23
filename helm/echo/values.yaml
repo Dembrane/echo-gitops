@@ -91,7 +91,7 @@ agent:
       memory: "1Gi"
   env:
     ECHO_API_URL: "http://echo-api:8000/api"
-    LLM_MODEL: "gemini-3.5-flash"
+    LLM_MODEL: "gemini-3.6-flash"
     VERTEX_LOCATION: "eu"
     # Gemini 3.x is global-host only; locations/eu stays in the request path.
     VERTEX_API_ENDPOINT: "aiplatform.googleapis.com"
