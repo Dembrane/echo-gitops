@@ -119,6 +119,13 @@ Common environment variables (including feature flags and non-sensitive config)
 - name: MOLLIE_WEBHOOK_URL
   value: {{ . | quote }}
 {{- end }}
+# Support-request forwarding to sam (ISSUE-034; outbound, sam's public edge
+# function). Optional — the forwarder task no-ops when unset. Pairs with the
+# ECHO_SUPPORT_WEBHOOK_TOKEN sealed secret below.
+{{- with (default "" .Values.common.env.SUPPORT_WEBHOOK_URL) }}
+- name: SUPPORT_WEBHOOK_URL
+  value: {{ . | quote }}
+{{- end }}
 # SendGrid data residency region for app sends (email.py). Defaults to eu.
 - name: SENDGRID_REGION
   value: {{ default "eu" .Values.common.env.SENDGRID_REGION | quote }}
@@ -239,5 +246,15 @@ All secret-based environment variables
     secretKeyRef:
       name: echo-backend-secrets
       key: MOLLIE_API_KEY
+      optional: true
+# Shared static token for support-request forwarding to sam (ISSUE-034),
+# sent in the X-Echo-Support-Token header. Optional so pods start when
+# unset; the forwarder no-ops without it. Same value lives in sam's GCP
+# Secret Manager (ECHO_SUPPORT_WEBHOOK_TOKEN) — rotate both together.
+- name: ECHO_SUPPORT_WEBHOOK_TOKEN
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: ECHO_SUPPORT_WEBHOOK_TOKEN
       optional: true
 {{- end }}

@@ -53,3 +53,11 @@ common:
     # itself is a sealed secret (echo-backend-secrets), not set here. Pair this
     # with a test_ key in dev so Mollie runs in test mode.
     MOLLIE_WEBHOOK_URL: "https://api.echo-next.dembrane.com/api/v2/billing/mollie/webhook"
+
+    # Support-request forwarding to sam (ISSUE-034): sam's public edge
+    # function, which fronts sam's private /echo/support-webhook receiver.
+    # OUTBOUND (the server's forwarder POSTs to it) — nothing about this env
+    # receives traffic here. The ECHO_SUPPORT_WEBHOOK_TOKEN it pairs with is
+    # a sealed secret (echo-backend-secrets), not set here. Same URL in prod;
+    # the payload's environment field distinguishes the sender.
+    SUPPORT_WEBHOOK_URL: "https://europe-west1-dembrane-sameer-cli.cloudfunctions.net/echo-support-webhook-proxy"
