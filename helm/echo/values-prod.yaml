@@ -1,5 +1,5 @@
 global:
-  imageTag: "1e0362e1cd17c4e3647189c8ee414e86db3f3a62"
+  imageTag: "25fdb6f72045f2414a8bec6e6211f32be79110cf"
   registry: "registry.digitalocean.com/dbr-cr"
 
 # Common configuration shared across services - Production overrides
