@@ -34,6 +34,10 @@ common:
     # Prod uses a live_ Mollie key (echo-next uses a test_ key).
     MOLLIE_WEBHOOK_URL: "https://api.dembrane.com/api/v2/billing/mollie/webhook"
 
+    # Support-request forwarding to sam (ISSUE-034; outbound, sam's public edge
+    # function). Pairs with the ECHO_SUPPORT_WEBHOOK_TOKEN sealed secret.
+    SUPPORT_WEBHOOK_URL: "https://europe-west1-dembrane-sameer-cli.cloudfunctions.net/echo-support-webhook-proxy"
+
     # Storage config
     STORAGE_S3_REGION: "us-east-1"
     STORAGE_S3_ENDPOINT: "https://ams3.digitaloceanspaces.com"
