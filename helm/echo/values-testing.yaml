@@ -134,24 +134,6 @@ workerScheduler:
       cpu: "600m"
       memory: "1Gi"
 
-neo4j:
-  image:
-    repository: "neo4j"
-    tag: "5.18.0-community"
-  password: "admin@dembrane"
-  storage:
-    size: "5Gi"  # Smaller than dev
-  config:
-    pagecacheSize: "256M"
-    heapSize: "256M"
-  resources:
-    requests:
-      cpu: "300m"
-      memory: "512Mi"
-    limits:
-      cpu: "800m"
-      memory: "2Gi"
-
 ingress:
   enabled: true
   className: "nginx"
