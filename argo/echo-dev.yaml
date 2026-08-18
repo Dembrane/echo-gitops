@@ -13,6 +13,7 @@ spec:
       valueFiles:
         - values.yaml
         - values-extended-env.yaml
+        - values-echo-next.yaml
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: echo-dev

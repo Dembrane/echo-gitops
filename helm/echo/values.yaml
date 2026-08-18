@@ -1,5 +1,5 @@
 global:
-  imageTag: "a288780e0616a8be333fbb106ffa7c2f9a9cfb78"
+  imageTag: "c36a80186dbb65e099825174050e6a7ebc988e00"
   registry: "registry.digitalocean.com/dbr-cr"
 
 # Common configuration shared across services
@@ -17,8 +17,14 @@ common:
     DISABLE_SENTRY: "0"
     SERVE_API_DOCS: "1"
 
+    # Email
+    # SendGrid data residency region. "eu" routes app sends (email.py) through
+    # api.eu.sendgrid.com so recipient PII/content stay in the EU. Requires
+    # SENDGRID_API_KEY (sealed secret) to belong to an EU regional subuser.
+    SENDGRID_REGION: "eu"
+
     # Feature flags
-    TRANSCRIPTION_PROVIDER: "Dembrane-25-09"
+    TRANSCRIPTION_PROVIDER: "Dembrane-26-07"
     FEATURE_FLAGS__ENABLE_CHAT_AUTO_SELECT: "0"
     FEATURE_FLAGS__ENABLE_CHAT_SELECT_ALL: "1"
     FEATURE_FLAGS__ENABLE_WEBHOOKS: "1"
@@ -85,8 +91,10 @@ agent:
       memory: "1Gi"
   env:
     ECHO_API_URL: "http://echo-api:8000/api"
-    LLM_MODEL: "claude-opus-4-6"
-    VERTEX_LOCATION: "europe-west1"
+    LLM_MODEL: "gemini-3.5-flash"
+    VERTEX_LOCATION: "eu"
+    # Gemini 3.x is global-host only; locations/eu stays in the request path.
+    VERTEX_API_ENDPOINT: "aiplatform.googleapis.com"
     AGENT_GRAPH_RECURSION_LIMIT: "80"
     AGENT_CORS_ORIGINS: "https://dashboard.echo-next.dembrane.com,https://portal.echo-next.dembrane.com,http://localhost:5173,http://localhost:5174"
 

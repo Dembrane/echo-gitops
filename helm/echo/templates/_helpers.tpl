@@ -56,6 +56,10 @@ Common environment variables (including feature flags and non-sensitive config)
 - name: LLM__MULTI_MODAL_PRO__VERTEX_LOCATION
   value: {{ . | quote }}
 {{- end }}
+{{- with (default "" .Values.common.env.LLM__MULTI_MODAL_PRO__API_BASE) }}
+- name: LLM__MULTI_MODAL_PRO__API_BASE
+  value: {{ . | quote }}
+{{- end }}
 {{- with (default "" .Values.common.env.LLM__MULTI_MODAL_FAST__MODEL) }}
 - name: LLM__MULTI_MODAL_FAST__MODEL
   value: {{ . | quote }}
@@ -64,12 +68,20 @@ Common environment variables (including feature flags and non-sensitive config)
 - name: LLM__MULTI_MODAL_FAST__VERTEX_LOCATION
   value: {{ . | quote }}
 {{- end }}
+{{- with (default "" .Values.common.env.LLM__MULTI_MODAL_FAST__API_BASE) }}
+- name: LLM__MULTI_MODAL_FAST__API_BASE
+  value: {{ . | quote }}
+{{- end }}
 {{- with (default "" .Values.common.env.LLM__TEXT_FAST__MODEL) }}
 - name: LLM__TEXT_FAST__MODEL
   value: {{ . | quote }}
 {{- end }}
 {{- with (default "" .Values.common.env.LLM__TEXT_FAST__VERTEX_LOCATION) }}
 - name: LLM__TEXT_FAST__VERTEX_LOCATION
+  value: {{ . | quote }}
+{{- end }}
+{{- with (default "" .Values.common.env.LLM__TEXT_FAST__API_BASE) }}
+- name: LLM__TEXT_FAST__API_BASE
   value: {{ . | quote }}
 {{- end }}
 {{- with (default "" .Values.common.env.LLM__TEXT_FAST_2__MODEL) }}
@@ -117,6 +129,22 @@ Common environment variables (including feature flags and non-sensitive config)
 - name: LLM__OPEN_SOURCE__API_BASE
   value: {{ . | quote }}
 {{- end }}
+# Mollie billing webhook (optional — only set when a public URL exists; Mollie
+# rejects non-public URLs, so omit it in environments without one).
+{{- with (default "" .Values.common.env.MOLLIE_WEBHOOK_URL) }}
+- name: MOLLIE_WEBHOOK_URL
+  value: {{ . | quote }}
+{{- end }}
+# Support-request forwarding to sam (ISSUE-034; outbound, sam's public edge
+# function). Optional — the forwarder task no-ops when unset. Pairs with the
+# ECHO_SUPPORT_WEBHOOK_TOKEN sealed secret below.
+{{- with (default "" .Values.common.env.SUPPORT_WEBHOOK_URL) }}
+- name: SUPPORT_WEBHOOK_URL
+  value: {{ . | quote }}
+{{- end }}
+# SendGrid data residency region for app sends (email.py). Defaults to eu.
+- name: SENDGRID_REGION
+  value: {{ default "eu" .Values.common.env.SENDGRID_REGION | quote }}
 {{- end }}
 
 {{/*
@@ -222,10 +250,39 @@ All secret-based environment variables
     secretKeyRef:
       name: echo-backend-secrets
       key: GCP_SA_JSON
+      optional: true
 - name: LLM__OPEN_SOURCE__API_KEY
   valueFrom:
     secretKeyRef:
       name: echo-backend-secrets
       key: LLM__OPEN_SOURCE__API_KEY
+      optional: true
+# SendGrid API key for app transactional email (email.py). Optional so pods
+# start when unset; email.py skips sends when empty. Must be an EU regional
+# subuser key to satisfy SENDGRID_REGION=eu data residency.
+- name: SENDGRID_API_KEY
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: SENDGRID_API_KEY
+      optional: true
+# Mollie API key for self-serve billing. Optional so pods start when unset;
+# billing is disabled (mollie_enabled=False) when empty. Test vs live mode is
+# auto-detected from the key prefix (test_ / live_).
+- name: MOLLIE_API_KEY
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: MOLLIE_API_KEY
+      optional: true
+# Shared static token for support-request forwarding to sam (ISSUE-034),
+# sent in the X-Echo-Support-Token header. Optional so pods start when
+# unset; the forwarder no-ops without it. Same value lives in sam's GCP
+# Secret Manager (ECHO_SUPPORT_WEBHOOK_TOKEN) — rotate both together.
+- name: ECHO_SUPPORT_WEBHOOK_TOKEN
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: ECHO_SUPPORT_WEBHOOK_TOKEN
       optional: true
 {{- end }}

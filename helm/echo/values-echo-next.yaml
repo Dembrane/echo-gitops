@@ -1,0 +1,63 @@
+# echo-next ONLY overrides.
+#
+# Appended AFTER values-extended-env.yaml in echo-dev's valueFiles so these win
+# for echo-next without touching prod/testing (which do not reference this file).
+#
+# Swaps all three LLM groups (multimodal pro, multimodal fast, text fast) to
+# Gemini 3.5 Flash on Vertex, EU-resident.
+#
+# Gemini 3.x is only served on the GLOBAL Vertex hostname
+# (aiplatform.googleapis.com), not the regional eu-aiplatform.googleapis.com
+# host that litellm builds for vertex_location=eu (that 404s). So we pin
+# API_BASE to the global host while keeping locations/eu in the path: the
+# request is served by Gemini 3 yet processed in the EU multi-region. Verified
+# locally against the dembrane-echo project (2026-06-05).
+#
+# The api_base hardcodes project + model because litellm appends ":generateContent"
+# to it verbatim. This file is echo-next-only, so the dembrane-echo project is correct.
+# The _2/_3 regional failovers stay disabled (3.5 Flash is global-host only).
+common:
+  env:
+    LLM__MULTI_MODAL_PRO__MODEL: "vertex_ai/gemini-3.5-flash"
+    LLM__MULTI_MODAL_PRO__VERTEX_LOCATION: "eu"
+    LLM__MULTI_MODAL_PRO__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.5-flash"
+    LLM__MULTI_MODAL_PRO_2__MODEL: ""
+    LLM__MULTI_MODAL_PRO_2__VERTEX_LOCATION: ""
+    LLM__MULTI_MODAL_PRO_3__MODEL: ""
+    LLM__MULTI_MODAL_PRO_3__VERTEX_LOCATION: ""
+
+    LLM__MULTI_MODAL_FAST__MODEL: "vertex_ai/gemini-3.5-flash"
+    LLM__MULTI_MODAL_FAST__VERTEX_LOCATION: "eu"
+    LLM__MULTI_MODAL_FAST__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.5-flash"
+    LLM__MULTI_MODAL_FAST_2__MODEL: ""
+    LLM__MULTI_MODAL_FAST_2__VERTEX_LOCATION: ""
+    LLM__MULTI_MODAL_FAST_3__MODEL: ""
+    LLM__MULTI_MODAL_FAST_3__VERTEX_LOCATION: ""
+
+    LLM__TEXT_FAST__MODEL: "vertex_ai/gemini-3.5-flash"
+    LLM__TEXT_FAST__VERTEX_LOCATION: "eu"
+    LLM__TEXT_FAST__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.5-flash"
+    LLM__TEXT_FAST_2__MODEL: ""
+    LLM__TEXT_FAST_2__VERTEX_LOCATION: ""
+    LLM__TEXT_FAST_3__MODEL: ""
+    LLM__TEXT_FAST_3__VERTEX_LOCATION: ""
+
+    # AssemblyAI webhook mode (mirrors prod/testing). Switches dev transcription
+    # from polling to webhook callbacks. Pairs with ASSEMBLYAI_WEBHOOK_SECRET in
+    # the sealed secret — that secret MUST hold a real dev value before this is
+    # applied, or signed callbacks are rejected.
+    ASSEMBLYAI_WEBHOOK_URL: "https://api.echo-next.dembrane.com/api/webhooks/assemblyai"
+
+    # Self-serve billing (Mollie). Public URL Mollie POSTs payment status to;
+    # path is the FastAPI route /api/v2/billing/mollie/webhook. The MOLLIE_API_KEY
+    # itself is a sealed secret (echo-backend-secrets), not set here. Pair this
+    # with a test_ key in dev so Mollie runs in test mode.
+    MOLLIE_WEBHOOK_URL: "https://api.echo-next.dembrane.com/api/v2/billing/mollie/webhook"
+
+    # Support-request forwarding to sam (ISSUE-034): sam's public edge
+    # function, which fronts sam's private /echo/support-webhook receiver.
+    # OUTBOUND (the server's forwarder POSTs to it) — nothing about this env
+    # receives traffic here. The ECHO_SUPPORT_WEBHOOK_TOKEN it pairs with is
+    # a sealed secret (echo-backend-secrets), not set here. Same URL in prod;
+    # the payload's environment field distinguishes the sender.
+    SUPPORT_WEBHOOK_URL: "https://europe-west1-dembrane-sameer-cli.cloudfunctions.net/echo-support-webhook-proxy"

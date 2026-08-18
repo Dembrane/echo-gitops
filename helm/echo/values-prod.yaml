@@ -1,5 +1,5 @@
 global:
-  imageTag: "a4b23c5d99b17d68b5da30c0c79d01db38156dd2"
+  imageTag: "aed8bfe751bec9ef89ed6c08ce25e266589f3ee5"
   registry: "registry.digitalocean.com/dbr-cr"
 
 # Common configuration shared across services - Production overrides
@@ -17,10 +17,26 @@ common:
     SERVE_API_DOCS: "0"
 
     # Feature flags
-    TRANSCRIPTION_PROVIDER: "Dembrane-25-09"
+    TRANSCRIPTION_PROVIDER: "Dembrane-26-07"
     FEATURE_FLAGS__ENABLE_CHAT_AUTO_SELECT: "0"
     FEATURE_FLAGS__ENABLE_CHAT_SELECT_ALL: "1"
     FEATURE_FLAGS__ENABLE_WEBHOOKS: "1"
+
+    # AssemblyAI webhook-driven transcription. Requires ASSEMBLYAI_WEBHOOK_SECRET
+    # in echo-backend-secrets (sealed) or the app crash-loops at boot
+    # (settings.ensure_valid). Validated end-to-end on the prod release image in
+    # echo-testing on 2026-06-08.
+    ASSEMBLYAI_WEBHOOK_URL: "https://api.dembrane.com/api/webhooks/assemblyai"
+
+    # Self-serve billing (Mollie). Public URL Mollie POSTs payment status to;
+    # path is the FastAPI route /api/v2/billing/mollie/webhook. The MOLLIE_API_KEY
+    # itself is a sealed secret (echo-backend-secrets), set via secret-manager.sh.
+    # Prod uses a live_ Mollie key (echo-next uses a test_ key).
+    MOLLIE_WEBHOOK_URL: "https://api.dembrane.com/api/v2/billing/mollie/webhook"
+
+    # Support-request forwarding to sam (ISSUE-034; outbound, sam's public edge
+    # function). Pairs with the ECHO_SUPPORT_WEBHOOK_TOKEN sealed secret.
+    SUPPORT_WEBHOOK_URL: "https://europe-west1-dembrane-sameer-cli.cloudfunctions.net/echo-support-webhook-proxy"
 
     # Storage config
     STORAGE_S3_REGION: "us-east-1"
