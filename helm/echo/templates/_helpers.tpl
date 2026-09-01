@@ -113,6 +113,22 @@ Common environment variables (including feature flags and non-sensitive config)
 - name: ASSEMBLYAI_WEBHOOK_URL
   value: {{ . | quote }}
 {{- end }}
+{{- with (default "" .Values.common.env.LLM__OPEN_SOURCE__MODEL) }}
+- name: LLM__OPEN_SOURCE__MODEL
+  value: {{ . | quote }}
+{{- end }}
+{{- with (default "" .Values.common.env.LLM__OPEN_SOURCE__VERTEX_LOCATION) }}
+- name: LLM__OPEN_SOURCE__VERTEX_LOCATION
+  value: {{ . | quote }}
+{{- end }}
+{{- with (default "" .Values.common.env.LLM__OPEN_SOURCE__VERTEX_PROJECT) }}
+- name: LLM__OPEN_SOURCE__VERTEX_PROJECT
+  value: {{ . | quote }}
+{{- end }}
+{{- with (default "" .Values.common.env.LLM__OPEN_SOURCE__API_BASE) }}
+- name: LLM__OPEN_SOURCE__API_BASE
+  value: {{ . | quote }}
+{{- end }}
 # Mollie billing webhook (optional — only set when a public URL exists; Mollie
 # rejects non-public URLs, so omit it in environments without one).
 {{- with (default "" .Values.common.env.MOLLIE_WEBHOOK_URL) }}
@@ -228,6 +244,18 @@ All secret-based environment variables
     secretKeyRef:
       name: echo-backend-secrets
       key: ASSEMBLYAI_WEBHOOK_SECRET
+      optional: true
+- name: LLM__OPEN_SOURCE__GCP_SA_JSON
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: GCP_SA_JSON
+      optional: true
+- name: LLM__OPEN_SOURCE__API_KEY
+  valueFrom:
+    secretKeyRef:
+      name: echo-backend-secrets
+      key: LLM__OPEN_SOURCE__API_KEY
       optional: true
 # SendGrid API key for app transactional email (email.py). Optional so pods
 # start when unset; email.py skips sends when empty. Must be an EU regional
