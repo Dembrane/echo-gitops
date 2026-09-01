@@ -38,5 +38,8 @@ data:
           headers:
             Content-Type: application/json
             Origin: https://www.dembrane.com
+            # Cloudflare's bot rules answer 403 to some default client agents,
+            # which would read here as a broken origin allowlist. Say who this is.
+            User-Agent: dembrane-monitoring/blackbox needs-form probe
           body: '{"config_session_id":"blackbox-probe","status":"probe-not-a-status"}'
 
