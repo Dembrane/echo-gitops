@@ -3,7 +3,7 @@
 ## Core Systems
 - Terraform in `infra/` provisions the DigitalOcean VPC, Kubernetes cluster, managed Postgres, Redis, Spaces, and optional registry before seeding namespaces and registry credentials (infra/main.tf:80-195).
 - Argo CD Applications (`echo-*`, `echo-monitoring-*`) track this repository’s `main` branch with automated prune/self-heal and namespace creation (argo/echo-dev.yaml:1-23, argo/echo-monitoring-prod.yaml:1-23).
-- The `helm/echo` chart deploys the API server, worker tiers (worker, workerCpu, workerScheduler), Directus, and Neo4j along with shared env configuration and ingress/rollout settings (helm/echo/values.yaml:1-166).
+- The `helm/echo` chart deploys the API server, worker tiers (worker, workerCpu, workerScheduler) and Directus along with shared env configuration and ingress/rollout settings (helm/echo/values.yaml:1-166).
 - `helm/monitoring` delivers Prometheus, Grafana, Loki, promtail, node-exporter, blackbox checks, and alertmanager with storage and ingress defaults (helm/monitoring/values.yaml:1-112).
 - Sealed secrets house sensitive config for each namespace, edited locally via `secret-manager.sh` before sealing (secret-manager.sh:104-189, secrets/sealed-backend-secrets-dev.yaml:1-18).
 - `ai-infra` bootstraps a GCS-backed Terraform state bucket and Vertex AI endpoint plus service-account IAM for Gemini usage (ai-infra/state/main.tf:1-31, ai-infra/vertex/main.tf:1-20, ai-infra/README.md:5-30).
