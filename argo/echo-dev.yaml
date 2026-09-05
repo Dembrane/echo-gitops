@@ -23,3 +23,23 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - RespectIgnoreDifferences=true
+  # The chart writes replicas on these three, and their HPAs rewrite it. Without
+  # this, self-heal reverts every scale-up within a minute and kills workers
+  # mid-task (2026-09-05: a popcorn tick died with its pod 41s after scale-up).
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      name: echo-worker
+      jsonPointers:
+        - /spec/replicas
+    - group: apps
+      kind: Deployment
+      name: echo-worker-cpu
+      jsonPointers:
+        - /spec/replicas
+    - group: apps
+      kind: Deployment
+      name: echo-api
+      jsonPointers:
+        - /spec/replicas
