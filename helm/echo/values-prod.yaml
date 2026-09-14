@@ -116,9 +116,7 @@ workerCpu:
 workerTicks:
   # Popcorn and canvas ticks, on standard dramatiq threads (no gevent).
   # See echo/server/prod-worker-ticks.sh and TICK_QUEUE in dembrane/tasks.py.
-  # Production code advances on a release tag; flip to true once a tag that
-  # ships prod-worker-ticks.sh is live, or the pod starts on an image without it.
-  enabled: false
+  enabled: true
   replicaCount: 1
   image:
     repository: "dbr-echo-server"
