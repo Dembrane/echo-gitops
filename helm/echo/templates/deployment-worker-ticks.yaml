@@ -1,0 +1,52 @@
+{{- if .Values.workerTicks.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo-worker-ticks
+  labels:
+    app: echo
+    component: worker-ticks
+spec:
+  replicas: {{ .Values.workerTicks.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: {{ .Values.rollout.maxUnavailable | quote }}
+      maxSurge: {{ .Values.rollout.maxSurge | quote }}
+  selector:
+    matchLabels:
+      app: echo
+      component: worker-ticks
+  template:
+    metadata:
+      labels:
+        app: echo
+        component: worker-ticks
+    spec:
+      priorityClassName: echo-low
+      terminationGracePeriodSeconds: 120
+      imagePullSecrets:
+        - name: do-registry-secret
+      containers:
+        - name: worker-ticks
+          image: {{ printf "%s/%s:%s" .Values.global.registry .Values.workerTicks.image.repository .Values.global.imageTag | quote }}
+          imagePullPolicy: Always
+          command:
+            - "/bin/sh"
+            - "/code/server/prod-worker-ticks.sh"
+          env:
+{{- include "echo.commonEnvVars" . | nindent 12 }}
+{{- include "echo.secretEnvVars" . | nindent 12 }}
+{{- range $key, $value := .Values.workerTicks.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+{{- end }}
+
+          resources:
+            requests:
+              cpu: {{ .Values.workerTicks.resources.requests.cpu | quote }}
+              memory: {{ .Values.workerTicks.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.workerTicks.resources.limits.cpu | quote }}
+              memory: {{ .Values.workerTicks.resources.limits.memory | quote }}
+{{- end }}
