@@ -51,6 +51,7 @@ directus:
   env:
     PUBLIC_URL: "https://directus.echo-next.dembrane.com"
     CORS_ORIGIN: "https://dashboard.echo-next.dembrane.com,https://portal.echo-next.dembrane.com,http://localhost:5173,http://localhost:5174"
+    MAX_PAYLOAD_SIZE: "25mb"
     SESSION_COOKIE_NAME: "dembrane_session_token_dev"
     SESSION_COOKIE_DOMAIN: "echo-next.dembrane.com"
     USER_REGISTER_URL_ALLOW_LIST: "https://dashboard.echo-next.dembrane.com/verify-email,http://localhost:5173/verify-email"
