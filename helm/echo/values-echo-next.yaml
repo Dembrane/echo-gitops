@@ -18,25 +18,25 @@
 # The _2/_3 regional failovers stay disabled (3.7 Flash is global-host only).
 common:
   env:
-    LLM__MULTI_MODAL_PRO__MODEL: "vertex_ai/gemini-3.7-flash"
+    LLM__MULTI_MODAL_PRO__MODEL: "vertex_ai/gemini-3.8-flash"
     LLM__MULTI_MODAL_PRO__VERTEX_LOCATION: "eu"
-    LLM__MULTI_MODAL_PRO__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.7-flash"
+    LLM__MULTI_MODAL_PRO__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.8-flash"
     LLM__MULTI_MODAL_PRO_2__MODEL: ""
     LLM__MULTI_MODAL_PRO_2__VERTEX_LOCATION: ""
     LLM__MULTI_MODAL_PRO_3__MODEL: ""
     LLM__MULTI_MODAL_PRO_3__VERTEX_LOCATION: ""
 
-    LLM__MULTI_MODAL_FAST__MODEL: "vertex_ai/gemini-3.7-flash"
+    LLM__MULTI_MODAL_FAST__MODEL: "vertex_ai/gemini-3.8-flash"
     LLM__MULTI_MODAL_FAST__VERTEX_LOCATION: "eu"
-    LLM__MULTI_MODAL_FAST__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.7-flash"
+    LLM__MULTI_MODAL_FAST__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.8-flash"
     LLM__MULTI_MODAL_FAST_2__MODEL: ""
     LLM__MULTI_MODAL_FAST_2__VERTEX_LOCATION: ""
     LLM__MULTI_MODAL_FAST_3__MODEL: ""
     LLM__MULTI_MODAL_FAST_3__VERTEX_LOCATION: ""
 
-    LLM__TEXT_FAST__MODEL: "vertex_ai/gemini-3.7-flash"
+    LLM__TEXT_FAST__MODEL: "vertex_ai/gemini-3.8-flash"
     LLM__TEXT_FAST__VERTEX_LOCATION: "eu"
-    LLM__TEXT_FAST__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.7-flash"
+    LLM__TEXT_FAST__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.8-flash"
     LLM__TEXT_FAST_2__MODEL: ""
     LLM__TEXT_FAST_2__VERTEX_LOCATION: ""
     LLM__TEXT_FAST_3__MODEL: ""
@@ -64,4 +64,4 @@ common:
 
 agent:
   env:
-    LLM_MODEL: "gemini-3.7-flash"
+    LLM_MODEL: "gemini-3.8-flash"
