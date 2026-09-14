@@ -106,6 +106,10 @@ spec:
             
             - name: CORS_MAX_AGE
               value: "18000"
+            # A popcorn session's state is one JSON field that passes 1 MB at
+            # about 200 conversations; Directus's default limit is 1mb.
+            - name: MAX_PAYLOAD_SIZE
+              value: {{ .Values.directus.env.MAX_PAYLOAD_SIZE | default "1mb" | quote }}
 
             - name: SESSION_COOKIE_NAME
               value: {{ .Values.directus.env.SESSION_COOKIE_NAME | quote }}

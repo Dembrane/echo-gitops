@@ -48,6 +48,7 @@ directus:
   env:
     PUBLIC_URL: "https://directus.echo-testing.dembrane.com"
     CORS_ORIGIN: "https://dashboard.echo-testing.dembrane.com,https://portal.echo-testing.dembrane.com,http://localhost:5173,http://localhost:5174"
+    MAX_PAYLOAD_SIZE: "25mb"
     SESSION_COOKIE_NAME: "dembrane_session_token_testing"
     SESSION_COOKIE_DOMAIN: "echo-testing.dembrane.com"
     USER_REGISTER_URL_ALLOW_LIST: "https://dashboard.echo-testing.dembrane.com/verify-email,http://localhost:5173/verify-email"
