@@ -65,3 +65,14 @@ common:
 agent:
   env:
     LLM_MODEL: "gemini-3.8-flash"
+
+# The dev nodes run near their memory limit; the ticks worker asks for little so
+# it can still be scheduled next to a CPU-worker scale-up.
+workerTicks:
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "1"
+      memory: "1536Mi"
