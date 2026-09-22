@@ -66,6 +66,11 @@ agent:
   env:
     LLM_MODEL: "gemini-3.8-flash"
 
+# Four CPU workers at 1.5Gi each fill the dev nodes, so no deployment has room
+# to surge and rollouts stall. One keeps the queue moving on echo-next.
+workerCpu:
+  maxReplicaCount: 1
+
 # The dev nodes run near their memory limit; the ticks worker asks for little so
 # it can still be scheduled next to a CPU-worker scale-up.
 workerTicks:
