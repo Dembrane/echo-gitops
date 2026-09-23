@@ -18,3 +18,28 @@ data:
           tls_config:
             insecure_skip_verify: true
 
+      # The website's needs form does not write through a health endpoint: the
+      # browser posts to a Cloudflare Pages Function, which adds the shared
+      # site token and forwards to echo. A GET proves nothing about that chain,
+      # so this posts a body the API is guaranteed to reject on validation and
+      # asks for 422 back. 422 means the origin passed, the Function had a
+      # token, and echo accepted it; 401 means the two copies of the token have
+      # drifted; 503 means one side has none. Nothing is written: the API
+      # validates the body after the token, and this body never validates.
+      site_form_post:
+        prober: http
+        timeout: 10s
+        http:
+          method: POST
+          valid_status_codes: [422]
+          valid_http_versions: ["HTTP/1.1", "HTTP/2", "HTTP/2.0"]
+          enable_http2: false
+          preferred_ip_protocol: "ip4"
+          headers:
+            Content-Type: application/json
+            Origin: https://www.dembrane.com
+            # Cloudflare's bot rules answer 403 to some default client agents,
+            # which would read here as a broken origin allowlist. Say who this is.
+            User-Agent: dembrane-monitoring/blackbox needs-form probe
+          body: '{"config_session_id":"blackbox-probe","status":"probe-not-a-status"}'
+

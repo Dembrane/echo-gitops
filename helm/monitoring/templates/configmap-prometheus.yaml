@@ -225,6 +225,32 @@ data:
             target_label: svc
             replacement: $1
 
+{{- if .Values.formChecks.targets }}
+      # POST checks. Separate job because these carry their own module and
+      # their own interval, and because the blackbox_http relabelling would
+      # read a /api/ path segment as the api service and collide with it.
+      - job_name: 'blackbox_form'
+        metrics_path: /probe
+        scrape_interval: {{ .Values.formChecks.interval | default "5m" | quote }}
+        scrape_timeout: {{ .Values.formChecks.timeout | default "10s" | quote }}
+        params:
+          module: [site_form_post]
+        static_configs:
+{{- range .Values.formChecks.targets }}
+          - targets:
+              - {{ .url | quote }}
+            labels:
+              svc: {{ .name | quote }}
+{{- end }}
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: blackbox-exporter.monitoring.svc:9115
+{{- end }}
+
   node-alerts.yml: |
     groups:
     - name: node
@@ -357,6 +383,22 @@ data:
         annotations:
           summary: "Unavailable replicas for {{ "{{" }} $labels.deployment {{ "}}" }}"
           description: "Available replicas < desired for 10m. Check rollout status, image pulls, probes, and node capacity."
+
+      # The needs form on the website writes through a Cloudflare Pages
+      # Function that holds a copy of the API's site token. Two copies of one
+      # secret drift, and Pages only picks a new value up on its next deploy,
+      # so the drift starts at a deploy rather than at an edit. When it
+      # happens every write 401s, the browser swallows the ones between steps
+      # and a person only sees it at submit, so nothing reaches us until
+      # someone reads the funnel. This is what makes it arrive instead.
+      - alert: SiteNeedsFormBroken
+        expr: probe_success{job="blackbox_form"} == 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Needs form write path is broken ({{ "{{" }} $labels.svc {{ "}}" }})"
+          description: "The probe expects 422 from {{ "{{" }} $labels.instance {{ "}}" }} and got something else for 10m. 401 means the site token and the API's no longer match, 503 means one side has none, 403 means the origin rule changed. Visitors cannot submit."
 
     - name: pipeline
       rules:
