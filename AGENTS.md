@@ -1,5 +1,15 @@
 # AGENTS.md
 
+> **This file is a generated snapshot and it goes stale.** It has been wrong
+> before: it described Neo4j as a deployed workload after it stopped being used,
+> and it says "no CI workflows tracked in repo" while `dembrane/echo`'s GitHub
+> Actions commit image tags into this repo several times a day.
+>
+> **For deployments, the comment block at the top of `infra/main.tf` is the
+> source of truth.** That is the runbook actually in use (workspace selection,
+> which tfvars, the `doctl` kubeconfig lines). Prefer code and config over any
+> prose in this file, and fix this file when you find it wrong.
+
 ## 1) Snapshot
 - Project: Dembrane ECHO GitOps • Repo type: mono (Terraform + Helm + Argo CD GitOps) (README.md:40, infra/main.tf:80)
 - Entrypoints: Terraform stacks (`infra/`, `ai-infra/`), Argo CD apps (`echo-*`, `echo-monitoring-*`), Helm charts (`helm/echo`, `helm/monitoring`) (infra/main.tf:80-195, ai-infra/README.md:16-24, argo/echo-dev.yaml:1-23, helm/monitoring/Chart.yaml:1-6)
@@ -11,12 +21,12 @@
 
 ## 2) Tech & Tooling
 - Runtimes & package managers: Terraform ≥1.0, kubectl, Helm 3, kubeseal, doctl per prerequisites; Python 3 + `requests` for Loki tooling (README.md:84-103, scripts/LOKI_LOG_QUERY.md:5-17).
-- Core libraries by role: DigitalOcean Terraform resources provision VPC/K8s/DB/cache/object storage (infra/main.tf:80-145); Argo CD Applications drive GitOps sync (argo/echo-dev.yaml:1-23); `helm/echo` manages API, Directus, worker tiers, and Neo4j (helm/echo/values.yaml:42-166); `helm/monitoring` delivers Prometheus/Grafana/Loki stack (helm/monitoring/values.yaml:1-61); `ai-infra` provisions Vertex AI endpoints and IAM (ai-infra/vertex/main.tf:1-20).
+- Core libraries by role: DigitalOcean Terraform resources provision VPC/K8s/DB/cache/object storage (infra/main.tf:80-145); Argo CD Applications drive GitOps sync (argo/echo-dev.yaml:1-23); `helm/echo` manages API, Directus and worker tiers (helm/echo/values.yaml:42-166); `helm/monitoring` delivers Prometheus/Grafana/Loki stack (helm/monitoring/values.yaml:1-61); `ai-infra` provisions Vertex AI endpoints and IAM (ai-infra/vertex/main.tf:1-20).
 - Scripts you’ll actually use: `secret-manager.sh` for base64 edits, batch updates, and compares (secret-manager.sh:4-193); `scripts/query_logs.py` wraps Loki queries with chunking/pagination (scripts/LOKI_LOG_QUERY.md:29-132); `scripts/k6/sendChunks.js` replays participant uploads via k6 (scripts/k6/README.md:11-35).
 - Code style (lint/format/type): Terraform providers are version-locked by `.terraform.lock.hcl`; run CLI formatters (`terraform fmt`, `helm lint`) locally as needed (infra/.terraform.lock.hcl:1-33).
 
 ## 3) Architecture (mental model)
-- Modules/services & responsibilities: Terraform builds DigitalOcean infra then seeds namespaces/secrets; Helm deploys application workloads (API, workers, Directus, Neo4j) and monitoring stack (infra/main.tf:80-195, helm/echo/values.yaml:42-166, helm/monitoring/values.yaml:1-112).
+- Modules/services & responsibilities: Terraform builds DigitalOcean infra then seeds namespaces/secrets; Helm deploys application workloads (API, workers, Directus) and monitoring stack (infra/main.tf:80-195, helm/echo/values.yaml:42-166, helm/monitoring/values.yaml:1-112).
 - Data & external surfaces: Postgres, Redis, and Spaces are managed services; ingress exposes `directus`/`api` hostnames with TLS and monitoring endpoints with optional auth (infra/main.tf:101-145, helm/echo/values.yaml:143-159, helm/monitoring/values.yaml:1-60).
 - Notable patterns: Argo CD auto-prune/self-heal enforces drift control; HPAs and priority classes tune scaling for core workloads (argo/echo-dev.yaml:18-23, helm/echo/templates/hpa-api-server.yaml:1-32, helm/echo/templates/priorityclass-echo-critical.yaml:1-11).
 - Diagram → see `.agents/architecture.md`.

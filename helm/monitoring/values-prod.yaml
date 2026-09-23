@@ -29,8 +29,7 @@ prometheus:
 
 # Grafana settings
 grafana:
-  # This will be overridden by the SealedSecret in production
-  adminPassword: "admin"
+  # Admin password comes from secrets/sealed-monitoring-secrets-prod.yaml
   resources:
     requests:
       cpu: "200m"

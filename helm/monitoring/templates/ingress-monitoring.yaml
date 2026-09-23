@@ -5,16 +5,25 @@ metadata:
   name: monitoring-ingress
   namespace: monitoring
   annotations:
-    kubernetes.io/ingress.class: {{ .Values.ingress.className }}
-    cert-manager.io/cluster-issuer: {{ .Values.clusterIssuerName }}
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    {{- /*
+      Built as one dict so a key can never be emitted twice. Before this, the
+      hardcoded defaults below and the `ingress.annotations` range both wrote
+      cert-manager.io/cluster-issuer and nginx.ingress.kubernetes.io/ssl-redirect,
+      producing a duplicate-key Ingress. Values win over the defaults here.
+    */}}
+    {{- $ann := dict
+          "kubernetes.io/ingress.class" .Values.ingress.className
+          "cert-manager.io/cluster-issuer" .Values.clusterIssuerName
+          "nginx.ingress.kubernetes.io/ssl-redirect" "true" }}
     {{- if .Values.ingress.basicAuth.enabled }}
-    # Basic auth protection
-    nginx.ingress.kubernetes.io/auth-type: basic
-    nginx.ingress.kubernetes.io/auth-secret: monitoring-basic-auth
-    nginx.ingress.kubernetes.io/auth-realm: "Authentication Required"
+    {{- $_ := set $ann "nginx.ingress.kubernetes.io/auth-type" "basic" }}
+    {{- $_ := set $ann "nginx.ingress.kubernetes.io/auth-secret" "monitoring-basic-auth" }}
+    {{- $_ := set $ann "nginx.ingress.kubernetes.io/auth-realm" "Authentication Required" }}
     {{- end }}
     {{- range $key, $value := .Values.ingress.annotations }}
+    {{- $_ := set $ann $key $value }}
+    {{- end }}
+    {{- range $key, $value := $ann }}
     {{ $key }}: {{ $value | quote }}
     {{- end }}
 spec:

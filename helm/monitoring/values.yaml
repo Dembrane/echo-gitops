@@ -28,7 +28,8 @@ prometheus:
 
 # Grafana settings
 grafana:
-  adminPassword: "admin"  # Override this with values-prod.yaml or --set
+  # Admin password comes from the monitoring-secrets SealedSecret
+  # (GF_SECURITY_ADMIN_PASSWORD in deployment-grafana.yaml). Never set it here.
   resources:
     requests:
       cpu: "100m"

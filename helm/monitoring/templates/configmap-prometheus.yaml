@@ -348,8 +348,8 @@ data:
       - alert: DeploymentAvailabilityShortfall
         expr: |
           (
-            sum by (deployment) (kube_deployment_spec_replicas{namespace="echo-prod", deployment=~"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*"})
-          - sum by (deployment) (kube_deployment_status_replicas_available{namespace="echo-prod", deployment=~"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*"})
+            sum by (deployment) (kube_deployment_spec_replicas{namespace="echo-prod", deployment=~"echo-(api|directus|worker|worker-cpu|worker-scheduler).*"})
+          - sum by (deployment) (kube_deployment_status_replicas_available{namespace="echo-prod", deployment=~"echo-(api|directus|worker|worker-cpu|worker-scheduler).*"})
           ) > 0
         for: 10m
         labels:
