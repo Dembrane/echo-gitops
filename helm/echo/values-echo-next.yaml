@@ -4,23 +4,21 @@
 # for echo-next without touching prod/testing (which do not reference this file).
 #
 # Swaps all three LLM groups (multimodal pro, multimodal fast, text fast) and agent to
-# Gemini 3.7 Flash on Vertex, EU-resident.
+# Gemini 3.8 Flash on Vertex, EU-resident.
 #
-# Gemini 3.x is only served on the GLOBAL Vertex hostname
-# (aiplatform.googleapis.com), not the regional eu-aiplatform.googleapis.com
-# host that litellm builds for vertex_location=eu (that 404s). So we pin
-# API_BASE to the global host while keeping locations/eu in the path: the
-# request is served by Gemini 3 yet processed in the EU multi-region. Verified
-# locally against the dembrane-echo project (2026-06-05).
+# Gemini 3.x is served in the EU multi-region on aiplatform.eu.rep.googleapis.com
+# (v1beta1). The global host (aiplatform.googleapis.com) does not keep
+# processing in the EU even with locations/eu in the path; Vertex reports that
+# traffic as location=global.
 #
 # The api_base hardcodes project + model because litellm appends ":generateContent"
 # to it verbatim. This file is echo-next-only, so the dembrane-echo project is correct.
-# The _2/_3 regional failovers stay disabled (3.7 Flash is global-host only).
+# The _2/_3 regional failovers stay disabled.
 common:
   env:
     LLM__MULTI_MODAL_PRO__MODEL: "vertex_ai/gemini-3.8-flash"
     LLM__MULTI_MODAL_PRO__VERTEX_LOCATION: "eu"
-    LLM__MULTI_MODAL_PRO__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.8-flash"
+    LLM__MULTI_MODAL_PRO__API_BASE: "https://aiplatform.eu.rep.googleapis.com/v1beta1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.8-flash"
     LLM__MULTI_MODAL_PRO_2__MODEL: ""
     LLM__MULTI_MODAL_PRO_2__VERTEX_LOCATION: ""
     LLM__MULTI_MODAL_PRO_3__MODEL: ""
@@ -28,7 +26,7 @@ common:
 
     LLM__MULTI_MODAL_FAST__MODEL: "vertex_ai/gemini-3.8-flash"
     LLM__MULTI_MODAL_FAST__VERTEX_LOCATION: "eu"
-    LLM__MULTI_MODAL_FAST__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.8-flash"
+    LLM__MULTI_MODAL_FAST__API_BASE: "https://aiplatform.eu.rep.googleapis.com/v1beta1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.8-flash"
     LLM__MULTI_MODAL_FAST_2__MODEL: ""
     LLM__MULTI_MODAL_FAST_2__VERTEX_LOCATION: ""
     LLM__MULTI_MODAL_FAST_3__MODEL: ""
@@ -36,7 +34,7 @@ common:
 
     LLM__TEXT_FAST__MODEL: "vertex_ai/gemini-3.8-flash"
     LLM__TEXT_FAST__VERTEX_LOCATION: "eu"
-    LLM__TEXT_FAST__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.8-flash"
+    LLM__TEXT_FAST__API_BASE: "https://aiplatform.eu.rep.googleapis.com/v1beta1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.8-flash"
     LLM__TEXT_FAST_2__MODEL: ""
     LLM__TEXT_FAST_2__VERTEX_LOCATION: ""
     LLM__TEXT_FAST_3__MODEL: ""
@@ -65,6 +63,7 @@ common:
 agent:
   env:
     LLM_MODEL: "gemini-3.8-flash"
+    VERTEX_API_ENDPOINT: "aiplatform.eu.rep.googleapis.com"
 
 # Four CPU workers at 1.5Gi each fill the dev nodes, so no deployment has room
 # to surge and rollouts stall. One keeps the queue moving on echo-next.
