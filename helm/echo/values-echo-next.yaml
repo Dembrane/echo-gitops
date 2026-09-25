@@ -63,7 +63,6 @@ common:
 agent:
   env:
     LLM_MODEL: "gemini-3.8-flash"
-    VERTEX_API_ENDPOINT: "aiplatform.eu.rep.googleapis.com"
 
 # Four CPU workers at 1.5Gi each fill the dev nodes, so no deployment has room
 # to surge and rollouts stall. One keeps the queue moving on echo-next.
