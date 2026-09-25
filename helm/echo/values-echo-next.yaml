@@ -77,6 +77,9 @@ agent:
   env:
     LLM_MODEL: "gemini-3.8-flash"
     LLM_FALLBACK_MODELS: "gemini-3.7-flash,gemini-3.5-flash"
+    # Graph steps, two per tool round. The agent stops repeated calls itself,
+    # so this only ends a runaway turn (echo #1100).
+    AGENT_GRAPH_RECURSION_LIMIT: "320"
     VERTEX_API_ENDPOINT: "aiplatform.eu.rep.googleapis.com"
 
 # Four CPU workers at 1.5Gi each fill the dev nodes, so no deployment has room
