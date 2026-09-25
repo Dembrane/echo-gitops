@@ -13,30 +13,43 @@
 #
 # The api_base hardcodes project + model because litellm appends ":generateContent"
 # to it verbatim. This file is echo-next-only, so the dembrane-echo project is correct.
-# The _2/_3 regional failovers stay disabled.
+# Each group falls back to 3.7 Flash (_1) and then 3.5 Flash (_2), in that order,
+# only when the deployment before it errors or is cooling down after 429s.
 common:
   env:
     LLM__MULTI_MODAL_PRO__MODEL: "vertex_ai/gemini-3.8-flash"
     LLM__MULTI_MODAL_PRO__VERTEX_LOCATION: "eu"
     LLM__MULTI_MODAL_PRO__API_BASE: "https://aiplatform.eu.rep.googleapis.com/v1beta1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.8-flash"
-    LLM__MULTI_MODAL_PRO_2__MODEL: ""
-    LLM__MULTI_MODAL_PRO_2__VERTEX_LOCATION: ""
+    LLM__MULTI_MODAL_PRO_1__MODEL: "vertex_ai/gemini-3.7-flash"
+    LLM__MULTI_MODAL_PRO_1__VERTEX_LOCATION: "eu"
+    LLM__MULTI_MODAL_PRO_1__API_BASE: "https://aiplatform.eu.rep.googleapis.com/v1beta1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.7-flash"
+    LLM__MULTI_MODAL_PRO_2__MODEL: "vertex_ai/gemini-3.5-flash"
+    LLM__MULTI_MODAL_PRO_2__VERTEX_LOCATION: "eu"
+    LLM__MULTI_MODAL_PRO_2__API_BASE: "https://aiplatform.eu.rep.googleapis.com/v1beta1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.5-flash"
     LLM__MULTI_MODAL_PRO_3__MODEL: ""
     LLM__MULTI_MODAL_PRO_3__VERTEX_LOCATION: ""
 
     LLM__MULTI_MODAL_FAST__MODEL: "vertex_ai/gemini-3.8-flash"
     LLM__MULTI_MODAL_FAST__VERTEX_LOCATION: "eu"
     LLM__MULTI_MODAL_FAST__API_BASE: "https://aiplatform.eu.rep.googleapis.com/v1beta1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.8-flash"
-    LLM__MULTI_MODAL_FAST_2__MODEL: ""
-    LLM__MULTI_MODAL_FAST_2__VERTEX_LOCATION: ""
+    LLM__MULTI_MODAL_FAST_1__MODEL: "vertex_ai/gemini-3.7-flash"
+    LLM__MULTI_MODAL_FAST_1__VERTEX_LOCATION: "eu"
+    LLM__MULTI_MODAL_FAST_1__API_BASE: "https://aiplatform.eu.rep.googleapis.com/v1beta1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.7-flash"
+    LLM__MULTI_MODAL_FAST_2__MODEL: "vertex_ai/gemini-3.5-flash"
+    LLM__MULTI_MODAL_FAST_2__VERTEX_LOCATION: "eu"
+    LLM__MULTI_MODAL_FAST_2__API_BASE: "https://aiplatform.eu.rep.googleapis.com/v1beta1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.5-flash"
     LLM__MULTI_MODAL_FAST_3__MODEL: ""
     LLM__MULTI_MODAL_FAST_3__VERTEX_LOCATION: ""
 
     LLM__TEXT_FAST__MODEL: "vertex_ai/gemini-3.8-flash"
     LLM__TEXT_FAST__VERTEX_LOCATION: "eu"
     LLM__TEXT_FAST__API_BASE: "https://aiplatform.eu.rep.googleapis.com/v1beta1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.8-flash"
-    LLM__TEXT_FAST_2__MODEL: ""
-    LLM__TEXT_FAST_2__VERTEX_LOCATION: ""
+    LLM__TEXT_FAST_1__MODEL: "vertex_ai/gemini-3.7-flash"
+    LLM__TEXT_FAST_1__VERTEX_LOCATION: "eu"
+    LLM__TEXT_FAST_1__API_BASE: "https://aiplatform.eu.rep.googleapis.com/v1beta1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.7-flash"
+    LLM__TEXT_FAST_2__MODEL: "vertex_ai/gemini-3.5-flash"
+    LLM__TEXT_FAST_2__VERTEX_LOCATION: "eu"
+    LLM__TEXT_FAST_2__API_BASE: "https://aiplatform.eu.rep.googleapis.com/v1beta1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.5-flash"
     LLM__TEXT_FAST_3__MODEL: ""
     LLM__TEXT_FAST_3__VERTEX_LOCATION: ""
 
@@ -63,6 +76,8 @@ common:
 agent:
   env:
     LLM_MODEL: "gemini-3.8-flash"
+    LLM_FALLBACK_MODELS: "gemini-3.7-flash,gemini-3.5-flash"
+    VERTEX_API_ENDPOINT: "aiplatform.eu.rep.googleapis.com"
 
 # Four CPU workers at 1.5Gi each fill the dev nodes, so no deployment has room
 # to surge and rollouts stall. One keeps the queue moving on echo-next.
