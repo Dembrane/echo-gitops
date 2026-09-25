@@ -87,6 +87,12 @@ agent:
 workerCpu:
   maxReplicaCount: 1
 
+# Five network workers at 1.5Gi hold the room a rollout needs to surge: the new
+# replica set waits on pods that cannot schedule, the old one never drains, and
+# the CPU worker gets no node at all. Three keep echo-next's queue moving.
+worker:
+  maxReplicaCount: 3
+
 # The dev nodes run near their memory limit; the ticks worker asks for little so
 # it can still be scheduled next to a CPU-worker scale-up.
 workerTicks:
