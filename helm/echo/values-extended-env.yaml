@@ -1,13 +1,11 @@
 # Shared LLM + embedding config (loaded by prod, testing, and dev).
 #
-# Default chat/inference model for all envs is Gemini 3.5 Flash on Vertex,
-# EU-resident. Gemini 3.x is only served on the GLOBAL Vertex host
-# (aiplatform.googleapis.com); the regional eu-aiplatform.googleapis.com host
-# that litellm builds for vertex_location=eu 404s. Pinning API_BASE to the
-# global host while keeping locations/eu in the path serves Gemini 3 yet keeps
-# processing in the EU multi-region. The api_base hardcodes project
-# dembrane-echo (prod/testing/dev Vertex SAs all use that project). 3.5 Flash is
-# global-host only, so the _2/_3 regional failovers are removed.
+# Every LLM group runs Gemini 3.8 Flash on Vertex in the EU multi-region,
+# through aiplatform.eu.rep.googleapis.com (v1beta1). The global host
+# (aiplatform.googleapis.com) does not keep processing in the EU even with
+# locations/eu in the path. The api_base hardcodes project dembrane-echo
+# (prod/testing/dev Vertex SAs all use that project) because litellm appends
+# ":generateContent" to it verbatim.
 #
 # Validated on the production release image a4b23c5 in echo-testing on
 # 2026-06-08 (model swap + AssemblyAI webhook round-trip).
@@ -15,15 +13,15 @@ common:
   env:
     LLM__MULTI_MODAL_PRO__MODEL: "vertex_ai/gemini-3.8-flash"
     LLM__MULTI_MODAL_PRO__VERTEX_LOCATION: "eu"
-    LLM__MULTI_MODAL_PRO__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.8-flash"
+    LLM__MULTI_MODAL_PRO__API_BASE: "https://aiplatform.eu.rep.googleapis.com/v1beta1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.8-flash"
 
     LLM__MULTI_MODAL_FAST__MODEL: "vertex_ai/gemini-3.8-flash"
     LLM__MULTI_MODAL_FAST__VERTEX_LOCATION: "eu"
-    LLM__MULTI_MODAL_FAST__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.8-flash"
+    LLM__MULTI_MODAL_FAST__API_BASE: "https://aiplatform.eu.rep.googleapis.com/v1beta1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.8-flash"
 
     LLM__TEXT_FAST__MODEL: "vertex_ai/gemini-3.8-flash"
     LLM__TEXT_FAST__VERTEX_LOCATION: "eu"
-    LLM__TEXT_FAST__API_BASE: "https://aiplatform.googleapis.com/v1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.8-flash"
+    LLM__TEXT_FAST__API_BASE: "https://aiplatform.eu.rep.googleapis.com/v1beta1/projects/dembrane-echo/locations/eu/publishers/google/models/gemini-3.8-flash"
 
     EMBEDDING_MODEL: "vertex_ai/text-embedding-004"
     EMBEDDING_BASE_URL: "https://europe-west4-aiplatform.googleapis.com"
