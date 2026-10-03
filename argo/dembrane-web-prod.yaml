@@ -1,0 +1,30 @@
+# dembrane v3 in production. Registered by hand like every Application here
+# (kubectl apply -f argo/dembrane-web-prod.yaml), so this file does nothing until then.
+#
+# Automated sync is OFF until the cutover (CUTOVER.md): the old stack (argo/echo-prod.yaml)
+# serves customers from the same database, bucket and hostnames, and a sync runs the migrate
+# hook against that database. Every sync is started by a person until CUTOVER.md step 9 turns
+# automated sync on and moves targetRevision to main.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dembrane-web-prod
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/dembrane/echo-gitops.git'
+    # prod-v3 until this branch merges at the cutover; Dembrane/echo's release job bumps the
+    # image tag on the same branch (repository variable GITOPS_PROD_BRANCH).
+    targetRevision: prod-v3
+    path: helm/dembrane-web
+    helm:
+      valueFiles:
+        - values-prod.yaml
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: dembrane-web-prod
+  syncPolicy:
+    # automated: { prune: true, selfHeal: true }   # at the cutover, not before
+    syncOptions:
+      - CreateNamespace=true

@@ -1,0 +1,48 @@
+{{- if .Values.migrate.enabled }}
+# The migrate step (apps/migrate) as an Argo CD PreSync hook: schema migrations with the owner
+# login, the DBOS queue schema, the identity copy from Directus, seeds, and data rights for the
+# runtime login. Argo CD applies nothing else in the sync until this Job succeeds, so a failed
+# migration leaves the running pods on the previous release.
+#
+# MIGRATE_HOLD_CONTRACT=1 leaves out contract migrations (they drop tables the old stack still
+# reads). Releasing it is not a values flip alone: CUTOVER.md, "Release the contract".
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dembrane-web-migrate
+  labels:
+    {{- include "dw.labels" (dict "root" . "component" "migrate") | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    # Kept until the next sync so its logs can be read; replaced then.
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: {{ .Values.migrate.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "dw.labels" (dict "root" . "component" "migrate") | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- include "dw.podSecurity" . | nindent 6 }}
+      containers:
+        - name: migrate
+          image: {{ include "dw.image" (dict "root" . "app" "migrate") | quote }}
+          imagePullPolicy: IfNotPresent
+          {{- include "dw.containerSecurity" . | nindent 10 }}
+          env:
+            {{- include "dw.baseEnv" . | nindent 12 }}
+            {{- include "dw.caEnv" . | nindent 12 }}
+            - name: APP_DB_ROLE
+              value: {{ .Values.migrate.appDbRole | quote }}
+            - name: MIGRATE_HOLD_CONTRACT
+              value: {{ ternary "1" "0" .Values.migrate.holdContract | quote }}
+            {{- include "dw.secretEnv" (dict "root" . "name" "MIGRATION_DATABASE_URL" "key" "MIGRATION_DATABASE_URL") | nindent 12 }}
+          volumeMounts:
+            {{- include "dw.secretFilesMount" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.migrate.resources | nindent 12 }}
+      volumes:
+        {{- include "dw.secretFilesVolume" (dict "root" . "gcp" false) | nindent 8 }}
+{{- end }}
