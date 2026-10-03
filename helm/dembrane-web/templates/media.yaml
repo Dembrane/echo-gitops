@@ -1,0 +1,80 @@
+{{- $c := dict "root" . "component" "media" -}}
+# The ffmpeg service (apps/media): no database, no bucket keys, no secrets. Callers hand it
+# presigned URLs. Reachable only inside the cluster, from the API and the worker.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dembrane-web-media
+  labels:
+    {{- include "dw.labels" $c | nindent 4 }}
+spec:
+  {{- if not .Values.media.hpa.enabled }}
+  replicas: {{ .Values.media.replicas }}
+  {{- end }}
+  {{- include "dw.strategy" . | nindent 2 }}
+  selector:
+    matchLabels:
+      {{- include "dw.selector" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "dw.labels" $c | nindent 8 }}
+    spec:
+      {{- include "dw.podSecurity" . | nindent 6 }}
+      terminationGracePeriodSeconds: {{ .Values.media.terminationGracePeriodSeconds }}
+      containers:
+        - name: media
+          image: {{ include "dw.image" (dict "root" . "app" "media") | quote }}
+          imagePullPolicy: IfNotPresent
+          {{- include "dw.containerSecurity" . | nindent 10 }}
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            {{- include "dw.baseEnv" . | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            {{- toYaml .Values.media.resources | nindent 12 }}
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 6
+      volumes:
+        - name: tmp
+          emptyDir: {}
+{{ include "dw.service" (dict "root" . "component" "media" "name" "dembrane-web-media") }}
+{{ include "dw.hpa" (dict "root" . "component" "media" "name" "dembrane-web-media" "hpa" .Values.media.hpa) }}
+{{- if .Values.media.networkPolicy.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: dembrane-web-media
+  labels:
+    {{- include "dw.labels" $c | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "dw.selector" $c | nindent 6 }}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values: [dembrane-web]
+              - key: app.kubernetes.io/component
+                operator: In
+                values: [api, worker, smoke]
+      ports:
+        - port: 8080
+          protocol: TCP
+{{- end }}

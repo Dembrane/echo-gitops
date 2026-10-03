@@ -3,8 +3,9 @@
 # Function to display usage information
 usage() {
     echo "Usage: $0 [environment] [operation] [key or input_file] [options]"
-    echo "Environment: dev, testing, prod (default: dev)"
-    echo "Operation: list, get, update, batch, compare (default: list)"
+    echo "Environment: prod (old stack, echo-backend-secrets in echo-prod)"
+    echo "             web-prod (dembrane v3, dembrane-web-prod-secrets in dembrane-web-prod)"
+    echo "Operation: list, get, update, batch, seal, compare (default: list)"
     echo "Key: For 'get' operation, the key to retrieve"
     echo "Input_file: For 'batch' operation, path to file with key=value pairs"
     echo "Options:"
@@ -13,30 +14,33 @@ usage() {
     echo "  --live           Fetch current values from the Kubernetes Secret instead of local file (list/get only)"
     echo ""
     echo "Example:"
-    echo "  $0 dev list                      - List all keys in backend-secrets-dev.yaml"
-    echo "  $0 dev list --show-values        - List all keys with their plaintext values"
-    echo "  $0 dev get DATABASE_URL          - Show the plaintext value of DATABASE_URL"
-    echo "  $0 dev update                    - Interactive: Update or add a key in backend-secrets-dev.yaml"
-    echo "  $0 dev batch secrets.txt         - Batch: Update multiple keys from a file"
-    echo "  $0 dev batch secrets.txt --dry-run - Batch: Preview changes without applying them"
-    echo "  $0 dev batch                     - Batch: Read key=value pairs from stdin"
-    echo "  $0 compare                       - Compare secrets between dev and prod environments"
+    echo "  $0 web-prod list                 - List all keys in secrets/dembrane-web-prod-secrets.yaml"
+    echo "  $0 prod list --show-values       - List all keys with their plaintext values"
+    echo "  $0 prod get DIRECTUS_SECRET      - Show the plaintext value of one key"
+    echo "  $0 web-prod update               - Interactive: Update or add a key"
+    echo "  $0 web-prod batch secrets.txt    - Batch: Update multiple keys from a file"
+    echo "  $0 web-prod batch secrets.txt --dry-run - Batch: Preview changes without applying them"
+    echo "  $0 web-prod seal                 - Seal the plaintext file with the prod cluster's key"
+    echo "  $0 compare                       - Compare key names between prod and web-prod"
+    echo ""
+    echo "Keys of dembrane-web-prod-secrets and where each value comes from:"
+    echo "  secrets/dembrane-web-prod-secrets.keys.md"
     exit 1
 }
 
 # Parse arguments
 # Handle special case where first argument is 'compare'
 if [[ "$1" == "compare" ]]; then
-    ENVIRONMENT="dev"  # Default, but not used for compare
+    ENVIRONMENT="prod"  # Default, but not used for compare
     OPERATION="compare"
     KEY_OR_FILE=$2
 else
-    ENVIRONMENT=${1:-dev}
+    ENVIRONMENT=${1:-prod}
     OPERATION=${2:-list}
     KEY_OR_FILE=$3
 fi
 
-SUPPORTED_ENVIRONMENTS=(dev testing prod)
+SUPPORTED_ENVIRONMENTS=(prod web-prod)
 
 TEMP_SECRETS_FILE=""
 
@@ -80,22 +84,39 @@ ensure_valid_environment() {
 }
 
 namespace_for_env() {
-    local env=$1
-    case "$env" in
-        dev) echo "echo-dev" ;;
-        testing) echo "echo-testing" ;;
+    case "$1" in
         prod) echo "echo-prod" ;;
-        *) echo "echo-$env" ;;
+        web-prod) echo "dembrane-web-prod" ;;
     esac
 }
 
+# Both live on the prod cluster.
 context_for_env() {
-    local env=$1
-    case "$env" in
-        dev) echo "do-ams3-dbr-echo-dev-k8s-cluster" ;;
-        testing) echo "do-ams3-dbr-echo-testing-k8s-cluster" ;;
-        prod) echo "do-ams3-dbr-echo-prod-k8s-cluster" ;;
+    case "$1" in
+        prod | web-prod) echo "do-ams3-dbr-echo-prod-k8s-cluster" ;;
         *) echo "" ;;
+    esac
+}
+
+secret_name_for_env() {
+    case "$1" in
+        prod) echo "echo-backend-secrets" ;;
+        web-prod) echo "dembrane-web-prod-secrets" ;;
+    esac
+}
+
+# Plaintext (git-ignored) and sealed (committed) files.
+plain_file_for_env() {
+    case "$1" in
+        prod) echo "secrets/backend-secrets-prod.yaml" ;;
+        web-prod) echo "secrets/dembrane-web-prod-secrets.yaml" ;;
+    esac
+}
+
+sealed_file_for_env() {
+    case "$1" in
+        prod) echo "secrets/sealed-backend-secrets-prod.yaml" ;;
+        web-prod) echo "secrets/sealed-dembrane-web-prod-secrets.yaml" ;;
     esac
 }
 
@@ -105,12 +126,13 @@ ensure_secrets_file() {
     fi
 
     local namespace=$(namespace_for_env "$ENVIRONMENT")
+    local name=$(secret_name_for_env "$ENVIRONMENT")
 
     cat <<EOF > "$SECRETS_FILE"
 apiVersion: v1
 kind: Secret
 metadata:
-  name: echo-backend-secrets
+  name: $name
   namespace: $namespace
 type: Opaque
 data:
@@ -144,13 +166,18 @@ if [[ "$OPERATION" != "compare" ]]; then
             exit 1
         fi
         TEMP_SECRETS_FILE=$(mktemp)
-        if ! kubectl --context="$ctx_value" get secret echo-backend-secrets -n "$namespace" -o yaml > "$TEMP_SECRETS_FILE"; then
-            echo "Error: failed to fetch kubernetes secret 'echo-backend-secrets' in namespace '$namespace' using context '$ctx_value'"
+        secret_name=$(secret_name_for_env "$ENVIRONMENT")
+        if ! kubectl --context="$ctx_value" get secret "$secret_name" -n "$namespace" -o yaml > "$TEMP_SECRETS_FILE"; then
+            echo "Error: failed to fetch kubernetes secret '$secret_name' in namespace '$namespace' using context '$ctx_value'"
             exit 1
         fi
         SECRETS_FILE="$TEMP_SECRETS_FILE"
     else
-        SECRETS_FILE="secrets/backend-secrets-$ENVIRONMENT.yaml"
+        SECRETS_FILE=$(plain_file_for_env "$ENVIRONMENT")
+        if [[ "$OPERATION" == "seal" && ! -f "$SECRETS_FILE" ]]; then
+            echo "Error: $SECRETS_FILE does not exist; nothing to seal"
+            exit 1
+        fi
         ensure_secrets_file
     fi
 fi
@@ -284,10 +311,27 @@ process_batch() {
     fi
 }
 
-# Function to compare secrets between dev and prod
+# Seals the plaintext file with the cluster's public key (kubeseal fetches it from the
+# sealed-secrets controller). Only the sealed file is committed; apply it by hand.
+seal_secrets() {
+    local ctx=$(context_for_env "$ENVIRONMENT")
+    local sealed=$(sealed_file_for_env "$ENVIRONMENT")
+    if ! command -v kubeseal >/dev/null 2>&1; then
+        echo "Error: kubeseal is required to seal"
+        exit 1
+    fi
+    kubeseal --context="$ctx" \
+        --controller-namespace=kube-system \
+        --controller-name=sealed-secrets \
+        < "$SECRETS_FILE" > "$sealed"
+    echo "Sealed $SECRETS_FILE into $sealed"
+    echo "Apply: kubectl --context=$ctx apply -f $sealed"
+}
+
+# Compares key names between the old stack's secret and v3's.
 compare_secrets() {
-    local dev_file="secrets/backend-secrets-dev.yaml"
-    local prod_file="secrets/backend-secrets-prod.yaml"
+    local dev_file=$(plain_file_for_env prod)
+    local prod_file=$(plain_file_for_env web-prod)
     
     # Check if both files exist
     if [ ! -f "$dev_file" ]; then
@@ -315,7 +359,7 @@ compare_secrets() {
     local all_keys=$(cat "$temp_dev" "$temp_prod" | sort -u)
     
     # Print table header
-    printf "%-40s | %-6s | %-6s\n" "SECRET KEY" "DEV" "PROD"
+    printf "%-40s | %-6s | %-6s\n" "SECRET KEY" "PROD" "WEBPROD"
     printf "%-40s-+--------+-------\n" "----------------------------------------"
     
     # Check each key's presence in both environments
@@ -344,11 +388,11 @@ compare_secrets() {
     
     echo ""
     echo "Summary:"
-    echo "  Total secrets in DEV:  $total_dev"
-    echo "  Total secrets in PROD: $total_prod"
-    echo "  Common secrets:        $common"
-    echo "  DEV only:              $dev_only"
-    echo "  PROD only:             $prod_only"
+    echo "  Total secrets in prod:     $total_dev"
+    echo "  Total secrets in web-prod: $total_prod"
+    echo "  Common secrets:            $common"
+    echo "  prod only:                 $dev_only"
+    echo "  web-prod only:             $prod_only"
     
     # Clean up temporary files
     rm "$temp_dev" "$temp_prod"
@@ -415,6 +459,8 @@ elif [ "$OPERATION" = "batch" ]; then
         process_batch "$TEMP_FILE"
         rm "$TEMP_FILE"
     fi
+elif [ "$OPERATION" = "seal" ]; then
+    seal_secrets
 elif [ "$OPERATION" = "compare" ]; then
     compare_secrets
 else

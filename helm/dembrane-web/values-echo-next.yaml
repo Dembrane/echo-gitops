@@ -1,0 +1,79 @@
+# The dummy prod: dembrane v3 on the dev cluster (dbr-echo-dev-k8s-cluster), namespace
+# dembrane-web-dummy, on echo-next's Postgres and Spaces, serving the echo-next hostnames.
+# It rehearses CUTOVER.md against an old stack that shares the database, the way prod will.
+# Layered on values-prod.yaml, so everything not set here is exactly what prod gets.
+
+global:
+  # Staging's images (built from main), pulled with a read-only key; the DigitalOcean
+  # registry prod uses stays untouched. Bumped by hand while this is a rehearsal.
+  registry: europe-west4-docker.pkg.dev/dembrane-web-staging/echo-staging
+  imagePrefix: ""
+  imageTag: "b0a950ec4249f5a230c4a5a7551cd75f3fcd8814"
+  imagePullSecrets:
+    - gcp-staging-pull
+
+secretName: dembrane-web-dummy-secrets
+
+env:
+  FILES_S3_BUCKET: dbr-echo-dev-uploads
+  STORAGE_S3_BUCKET: dbr-echo-dev-uploads
+  # echo-next's Postgres is the smallest size: about 22 connections, 6 of them held by the old
+  # stack's pool. Per API pod 2 + 4 fixed = 6; worker 2 + 2 + 4 = 8; migrate 3.
+  DATABASE_POOL_MAX: "2"
+  DATABASE_QUEUE_POOL_MAX: "2"
+  LLM_VERTEX_PROJECT: dembrane-web-staging
+  API_PUBLIC_URL: https://api.echo-next.dembrane.com
+  DASHBOARD_URL: https://dashboard.echo-next.dembrane.com
+  PORTAL_URL: https://portal.echo-next.dembrane.com
+  AUTH_COOKIE_DOMAIN: echo-next.dembrane.com
+  MOLLIE_WEBHOOK_URL: https://api.echo-next.dembrane.com/api/v2/billing/mollie/webhook
+
+api:
+  hpa:
+    enabled: false
+  replicas: 1
+  resources:
+    requests: { cpu: 250m, memory: 384Mi }
+    limits: { cpu: "1", memory: 1Gi }
+
+worker:
+  # CUTOVER.md step 6, rehearsed: the old echo-next is scaled to 0.
+  replicas: 1
+  resources:
+    requests: { cpu: 250m, memory: 384Mi }
+    limits: { cpu: "1", memory: 1Gi }
+
+media:
+  hpa:
+    enabled: false
+  replicas: 1
+  resources:
+    requests: { cpu: 250m, memory: 512Mi }
+    limits: { cpu: "2", memory: 2Gi }
+
+web:
+  roles:
+    dashboard:
+      hpa: { enabled: false }
+      replicas: 1
+      resources:
+        requests: { cpu: 50m, memory: 128Mi }
+        limits: { cpu: "1", memory: 512Mi }
+    portal:
+      hpa: { enabled: false }
+      replicas: 1
+      resources:
+        requests: { cpu: 50m, memory: 128Mi }
+        limits: { cpu: "1", memory: 512Mi }
+
+ingress:
+  # CUTOVER.md step 7, rehearsed: the old echo-ingress is gone.
+  enabled: true
+  hosts:
+    api: api.echo-next.dembrane.com
+    dashboard: dashboard.echo-next.dembrane.com
+    portal: portal.echo-next.dembrane.com
+  legacyDirectus:
+    enabled: true
+    host: directus.echo-next.dembrane.com
+    redirectTo: https://dashboard.echo-next.dembrane.com/login
