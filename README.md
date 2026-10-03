@@ -1,158 +1,82 @@
-<div align="center">
-  <!-- REMOVE THIS IF YOU DON'T HAVE A LOGO -->
-   
+# echo-gitops
 
-<h3 align="center">Dembrane ECHO GitOps</h3>
+What runs on dembrane's production Kubernetes cluster on DigitalOcean
+(`dbr-echo-prod-k8s-cluster`, ams3), as Helm charts that Argo CD syncs from this repository.
+Images are built by [Dembrane/echo](https://github.com/Dembrane/echo) and pushed to
+`registry.digitalocean.com/dbr-cr`. Staging and PR previews of dembrane v3 run on GCP Cloud Run
+and are deployed from Dembrane/echo, not from here.
 
-  <p align="center">
-    GitOps repository for deploying and managing the Dembrane ECHO platform on Kubernetes.
-    <br />
-     <a href="https://github.com/dembrane/echo-gitops">github.com/dembrane/echo-gitops</a>
-  </p>
-</div>
+Production is moving from the old stack to dembrane v3. Until [CUTOVER.md](CUTOVER.md) is done,
+both are in this repository and the old one serves customers.
 
-## Table of Contents
+## Layout
 
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#key-features">Key Features</a></li>
-        <li><a href="#license">License</a></li>
-      </ul>
-    </li>
-    <li><a href="#architecture">Architecture</a></li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#infrastructure-setup">Infrastructure Setup</a></li>
-        <li><a href="#deployment">Deployment</a></li>
-        <li><a href="#accessing-the-monitoring-stack">Accessing the Monitoring Stack</a></li>
-      </ul>
-    </li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
-  </ol>
-</details>
+- `helm/dembrane-web/`: dembrane v3 (`dembrane/platform` in Dembrane/echo). API, worker, media
+  (ffmpeg), dashboard and portal, the migrate job as an Argo CD PreSync hook, a PostSync smoke
+  check, and the ingress for `api`, `dashboard` and `portal.dembrane.com`. Values:
+  `values-prod.yaml`.
+- `helm/echo/`: **legacy**, the old stack (Python API, Dramatiq workers, Directus, Neo4j), still
+  live in namespace `echo-prod` until the cutover, and its rollback after. Values:
+  `values-prod.yaml` and `values-extended-env.yaml`. It also owns the cluster-scoped ClusterIssuer
+  `letsencrypt-prod` and the `echo-*` PriorityClasses (CUTOVER.md, "Release the contract").
+- `helm/monitoring/`: Prometheus, Grafana, Loki, Promtail and blackbox probes in namespace
+  `monitoring`. Values: `values-prod.yaml` over `values.yaml`.
+- `argo/`: the Argo CD Applications: `dembrane-web-prod` (v3, manual sync until the cutover),
+  `echo-prod` (legacy, automated), `echo-monitoring-prod`.
+- `secrets/`: SealedSecrets, applied by hand. `dembrane-web-prod-secrets.keys.md` lists v3's keys
+  and where each value comes from.
+- `secret-manager.sh`: edit, compare and seal the plaintext secret files (`prod` is the old
+  stack's `echo-backend-secrets`, `web-prod` is v3's `dembrane-web-prod-secrets`).
+- `infra/`: Terraform for the DigitalOcean resources under the cluster: VPC, the DOKS cluster,
+  managed Postgres, Valkey, the Spaces bucket, the registry, and the cluster add-ons
+  (ingress-nginx, cert-manager, sealed-secrets, Argo CD, metrics-server, the DO CSI driver).
+  Workspace `prod` describes the live production resources.
+- `ai-infra/`: Terraform for a GCP state bucket, a Vertex AI endpoint and a service account with
+  `roles/aiplatform.user`. Kept until it is confirmed whether that account is the one behind the
+  old stack's `GCP_SA_JSON`.
+- `scripts/`: Loki log queries (`query_logs.py`), rebuilding the old stack's plaintext secret
+  file from the cluster (`reconstruct-secrets.py`), and a k6 load test of the portal's upload
+  flow.
 
-## About The Project
+## How a release reaches production
 
-This repository contains the Infrastructure as Code (IaC) and configuration for deploying and managing the Dembrane ECHO platform using GitOps principles. It leverages tools like Terraform, Kubernetes, Helm, and Argo CD to automate infrastructure provisioning, application deployment, and monitoring. This supplements the GitHub Actions setup <a href="https://github.com/Dembrane/echo">dembrane/echo.</a>
+Dembrane/echo's `platform` workflow, job `70-deploy-prod`, runs on a `vX.Y.Z` tag after the
+`prod` environment's approval. It pushes the five images as
+`registry.digitalocean.com/dbr-cr/dembrane-web-{api,worker,media,web,migrate}:<commit sha>` and
+commits that sha to `global.imageTag` in `helm/dembrane-web/values-prod.yaml` on the branch the
+app tracks (`prod-v3` until the cutover, `main` after). Argo CD then syncs: the migrate hook,
+then the rollout, then the smoke hook. A failed migration or smoke check fails the sync and
+leaves the previous release running.
 
-### Key Features
+Before the cutover the app syncs only when someone runs `argocd app sync dembrane-web-prod`.
 
-- **GitOps-Driven Deployments:** Uses Argo CD to synchronize application deployments with the state defined in the repository.
-- **Automated Infrastructure Provisioning:** Employs Terraform to provision and manage cloud infrastructure resources on DigitalOcean.
-- **Helm Chart Management:** Utilizes Helm charts for packaging and deploying applications to Kubernetes.
-- **Comprehensive Monitoring:** Includes a monitoring stack based on Prometheus, Grafana, and Loki for collecting metrics and logs.
-- **Secrets Management:** Integrates with Sealed Secrets for securely managing sensitive information.
-- **Development and Production Environments:** Supports separate configurations for development and production environments.
+## Argo CD Applications are registered by hand
 
-### License
+Argo CD reads the charts from this repository, but the Application objects themselves are not
+reconciled from `argo/`: each one is created with `kubectl apply -f argo/<file>` and a later
+edit to the file changes nothing until it is applied again. Compare with
+`kubectl -n argocd get application <name> -o yaml` before trusting the file.
 
-This project is licensed under the Business Source License 1.1 - see the [LICENSE](LICENSE) file for details.  A limited production use grant is available for organizations with Total Finances not exceeding EUR 1,000,000.  After three years from release date, the license will change to GNU General Public License (GPL) v3.
+## Secrets
 
-## Architecture
+Plaintext secret files never enter git (`secrets/.gitignore`). To change one:
 
-![Architecture Diagram](https://github.com/user-attachments/assets/9d5f4ab4-4fdd-40ef-83fe-43ce9c9384be)
+```sh
+./secret-manager.sh web-prod update        # or: batch <file>, list, get <KEY>
+./secret-manager.sh web-prod seal          # kubeseal with the prod cluster's key
+kubectl apply -f secrets/sealed-dembrane-web-prod-secrets.yaml
+```
 
-The architecture consists of the following components:
+Pods read a changed secret only when they restart: run a sync, or
+`kubectl -n dembrane-web-prod rollout restart deployment`.
 
-- **DigitalOcean Kubernetes Service (DOKS):**  The Kubernetes cluster where the ECHO platform is deployed.
-- **DigitalOcean Managed Databases:**  Managed PostgreSQL and Redis instances for application data and caching.
-- **DigitalOcean Spaces:** Object storage for file uploads.
-- **Argo CD:**  A GitOps tool that automates the deployment of applications to Kubernetes by synchronizing the cluster state with the configurations defined in this repository.
-- **Helm:**  A package manager for Kubernetes, used to define, install, and upgrade applications.
-- **Prometheus, Grafana, Loki:** A comprehensive monitoring stack for collecting metrics, visualizing data, and aggregating logs.
-- **Sealed Secrets:**  A Kubernetes controller that allows encrypting secrets so they can be safely stored in Git.
-- **Vercel:** Used for hosting the frontend dashboard and portal (dev environment only).
+## Validate a chart change
 
-The repository is structured as follows:
+```sh
+helm lint helm/dembrane-web -f helm/dembrane-web/values-prod.yaml
+helm template dembrane-web-prod helm/dembrane-web -f helm/dembrane-web/values-prod.yaml -n dembrane-web-prod
+```
 
-- **`argo/`:** Contains Argo CD application definitions for deploying applications to different environments.
-- **`helm/`:**  Includes Helm charts for the ECHO platform and its monitoring stack.
-- **`infra/`:**  Contains Terraform configuration files for provisioning infrastructure on DigitalOcean.
-- **`scripts/`:**  Scripts for querying logs from Loki.
-- **`secrets/`:**  Sealed Secrets manifests for storing encrypted secrets.
+## License
 
-## Getting Started
-
-### Prerequisites
-
-- **Terraform:**  Install Terraform CLI (version >= 1.0).
-  ```sh
-  # Example installation using Homebrew
-  brew install terraform
-  ```
-- **Kubectl:** Install Kubectl CLI.
-  ```sh
-  # Example installation using Homebrew
-  brew install kubectl
-  ```
-- **Helm:** Install Helm CLI (version >= 3.0).
-  ```sh
-  # Example installation using Homebrew
-  brew install helm
-  ```
-- **DigitalOcean Account:**  A DigitalOcean account with API access.
-- **Vercel Account:** A Vercel account with API access (if deploying the dev environment).
-- **Sealed Secrets Controller:** Install a Sealed Secrets controller in your Kubernetes cluster.
-- **kubeseal:** Install the kubeseal CLI tool.
-- **doctl:** Install the DigitalOcean CLI tool.
-
-### Infrastructure Setup
-
-1.  **Configure Terraform Variables:**
-
-    Fill in the required variables in `infra/terraform.tfvars` (for dev) or create a `terraform-prod.tfvars` (for prod):
-
-    ```terraform
-    do_token = ""
-    spaces_access_key = ""
-    spaces_secret_key = ""
-    vercel_api_token = ""
-    ```
-
-    -   `do_token` - DigitalOcean token ([https://cloud.digitalocean.com/account/api/tokens](https://cloud.digitalocean.com/account/api/tokens))
-    -   `spaces_access_key` - Spaces access key ([https://cloud.digitalocean.com/spaces/access_keys?i=deb664](https://cloud.digitalocean.com/spaces/access_keys?i=deb664))
-    -   `spaces_secret_key` - Spaces secret key (Same as above)
-    -   `vercel_api_token` - Vercel API token ([https://vercel.com/account/settings/tokens](https://vercel.com/account/settings/tokens))
-
-2.  **Set Environment Variables:**
-
-    Set the environment variables for the Terraform state backend:
-
-    ```bash
-    export AWS_ACCESS_KEY_ID=""
-    export AWS_SECRET_ACCESS_KEY=""
-    ```
-
-    -   These should match the `spaces_access_key` and `spaces_secret_key` used above.
-
-3.  **Apply the Infrastructure:**
-
-    Check the comments in `main.tf`
-    
-4.  **Apply Argo CD Applications:**
-
-    Deploy the Argo CD applications to synchronize the cluster state with the repository:
-
-    ```bash
-    # Example for dev
-    kubectl apply -f argo/echo-dev.yaml
-    kubectl apply -f argo/echo-monitoring-dev.yaml
-
-    # Example for prod
-    kubectl apply -f argo/echo-prod.yaml
-    kubectl apply -f argo/echo-monitoring-prod.yaml
-    ```
-
-5.  **Configure DNS Records:**
-
-    To get the load balancer IP, run:
-
-    ```bash
-    kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
-    ```
+Business Source License 1.1, see [LICENSE](LICENSE).
