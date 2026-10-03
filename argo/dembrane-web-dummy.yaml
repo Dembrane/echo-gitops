@@ -1,0 +1,21 @@
+# The dummy prod on the DEV cluster (dbr-echo-dev-k8s-cluster), on echo-next's database and
+# hostnames. Apply only with the dev cluster's kubeconfig. Sync stays manual: each step of
+# CUTOVER.md is rehearsed by hand here before it is done on prod.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dembrane-web-dummy
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/dembrane/echo-gitops.git'
+    targetRevision: prod-v3
+    path: helm/dembrane-web
+    helm:
+      valueFiles:
+        - values-prod.yaml
+        - values-echo-next.yaml
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: dembrane-web-dummy

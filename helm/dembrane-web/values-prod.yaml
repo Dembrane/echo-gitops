@@ -46,6 +46,9 @@ env:
   LLM_VERTEX_PROJECT: dembrane-web-prod
   MOLLIE_WEBHOOK_URL: https://api.dembrane.com/api/v2/billing/mollie/webhook
   SUPPORT_WEBHOOK_URL: https://europe-west1-dembrane-sameer-cli.cloudfunctions.net/echo-support-webhook-proxy
+  # Off Cloud Run there is no metadata server to mint identity tokens; media is reachable only
+  # inside the cluster (NetworkPolicy), so calls go without one.
+  MEDIA_AUTH: none
 
 api:
   hpa:
