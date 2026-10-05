@@ -19,6 +19,10 @@ spec:
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9090"
+        # The config and both rule files are subPath mounts, which kubelet
+        # never refreshes, so a rules or scrape change reaches prometheus only
+        # on a restart. The TSDB is on a PVC, so a restart keeps history.
+        checksum/config: {{ include (print $.Template.BasePath "/configmap-prometheus.yaml") . | sha256sum }}
     spec:
       serviceAccountName: prometheus
       securityContext:

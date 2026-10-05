@@ -79,6 +79,17 @@ httpChecks:
     - name: directus
       url: https://directus.dembrane.com/server/health
 
+# POST checks that exercise a whole path rather than a health endpoint. Each
+# one hits the site_form_post blackbox module and expects 422. Kept well under
+# the API's per-visitor ceiling of 120 writes an hour: every probe from the
+# cluster arrives as the same visitor.
+formChecks:
+  interval: 5m
+  timeout: 10s
+  targets:
+    - name: needs-form
+      url: https://www.dembrane.com/api/pricing-configurations
+
 # Dashboards (env-specific variables injected into configmap-grafana-dashboards)
 dashboards:
   namespace: "echo-prod"
