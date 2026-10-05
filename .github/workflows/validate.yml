@@ -1,0 +1,148 @@
+name: validate
+
+# Why this exists: Argo CD syncs `main` straight to the clusters with
+# prune + selfHeal. Anything that merges here is deployed. A chart that does not
+# render, or a manifest the API server rejects, becomes a production problem with
+# no gate in between.
+#
+# Precedent: a Helm/Python `{{ }}` brace collision in cronjob-warning-digest.yaml
+# silently blocked the whole monitoring chart from rendering for weeks. A plain
+# `helm template` would have caught it on the pull request.
+#
+# The render matrix below MUST mirror the valueFiles in argo/*.yaml. If you add
+# an Argo Application or change its valueFiles, add it here in the same commit.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  helm:
+    name: helm render (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # mirrors argo/echo-prod.yaml
+          - name: echo-prod
+            chart: helm/echo
+            values: "-f helm/echo/values-prod.yaml -f helm/echo/values-extended-env.yaml"
+          # mirrors argo/echo-dev.yaml
+          - name: echo-dev
+            chart: helm/echo
+            values: "-f helm/echo/values.yaml -f helm/echo/values-extended-env.yaml -f helm/echo/values-echo-next.yaml"
+          # mirrors argo/echo-testing.yaml
+          - name: echo-testing
+            chart: helm/echo
+            values: "-f helm/echo/values-testing.yaml -f helm/echo/values-extended-env.yaml"
+          # mirrors argo/echo-monitoring-prod.yaml
+          - name: echo-monitoring-prod
+            chart: helm/monitoring
+            values: "-f helm/monitoring/values-prod.yaml"
+          # mirrors argo/echo-monitoring-dev.yaml
+          - name: echo-monitoring-dev
+            chart: helm/monitoring
+            values: "-f helm/monitoring/values.yaml"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.16.3
+
+      - name: helm lint
+        run: helm lint ${{ matrix.chart }} ${{ matrix.values }}
+
+      - name: helm template
+        run: |
+          mkdir -p rendered
+          helm template ${{ matrix.name }} ${{ matrix.chart }} ${{ matrix.values }} \
+            > rendered/${{ matrix.name }}.yaml
+          # An empty or near-empty render means the chart silently produced nothing.
+          lines=$(wc -l < rendered/${{ matrix.name }}.yaml)
+          echo "rendered $lines lines"
+          test "$lines" -gt 50
+
+      - name: install kubeconform
+        run: |
+          curl -sSL -o /tmp/kubeconform.tar.gz \
+            https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz
+          tar -xzf /tmp/kubeconform.tar.gz -C /tmp kubeconform
+          sudo mv /tmp/kubeconform /usr/local/bin/
+
+      - name: kubeconform
+        # Kubernetes version is pinned to the DOKS version in infra/main.tf.
+        # Bump both together.
+        run: |
+          kubeconform \
+            -kubernetes-version 1.32.5 \
+            -strict \
+            -ignore-missing-schemas \
+            -summary \
+            rendered/${{ matrix.name }}.yaml
+
+  argo-manifests:
+    name: argo application manifests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install pyyaml
+        run: python3 -m pip install --quiet pyyaml
+
+      - name: parse every Argo Application
+        run: |
+          python3 - <<'PY'
+          import glob, sys, yaml
+          bad = 0
+          for path in sorted(glob.glob("argo/*.yaml")):
+              try:
+                  docs = [d for d in yaml.safe_load_all(open(path)) if d]
+              except yaml.YAMLError as e:
+                  print(f"FAIL {path}: {e}"); bad = 1; continue
+              for d in docs:
+                  if d.get("kind") != "Application":
+                      continue
+                  spec = d.get("spec", {})
+                  src = spec.get("source", {})
+                  rev = src.get("targetRevision")
+                  # A feature branch pinned here is exactly the drift that left
+                  # echo-monitoring-prod eight months behind main.
+                  if rev != "main":
+                      print(f"FAIL {path}: targetRevision is {rev!r}, expected 'main'")
+                      bad = 1
+                  if not spec.get("destination", {}).get("namespace"):
+                      print(f"FAIL {path}: no destination.namespace")
+                      bad = 1
+                  print(f"ok   {path} -> {src.get('path')} @ {rev}")
+          sys.exit(bad)
+          PY
+
+  terraform:
+    name: terraform ${{ matrix.dir }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: [infra, ai-infra/state, ai-infra/vertex]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+          terraform_wrapper: false
+
+      - name: terraform fmt
+        run: terraform -chdir=${{ matrix.dir }} fmt -check -recursive
+
+      - name: terraform init (no backend)
+        run: terraform -chdir=${{ matrix.dir }} init -backend=false -input=false
+
+      - name: terraform validate
+        run: terraform -chdir=${{ matrix.dir }} validate

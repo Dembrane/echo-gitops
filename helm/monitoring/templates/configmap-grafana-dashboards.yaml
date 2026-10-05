@@ -483,7 +483,7 @@ data:
             ]}
         },
         {"type": "timeseries", "title": "Pod restarts by service (1h)", "id": 8, "gridPos": {"h": 8, "w": 8, "x": 8, "y": 9},
-          "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum by (svc) ( label_replace( increase(kube_pod_container_status_restarts_total{namespace=\"$namespace\"}[1h]), \"svc\", \"$1\", \"pod\", \"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*\" ) )", "legendFormat": "{{ "{{" }}svc{{ "}}" }}"}],
+          "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum by (svc) ( label_replace( increase(kube_pod_container_status_restarts_total{namespace=\"$namespace\"}[1h]), \"svc\", \"$1\", \"pod\", \"echo-(api|directus|worker|worker-cpu|worker-scheduler).*\" ) )", "legendFormat": "{{ "{{" }}svc{{ "}}" }}"}],
           "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []}
         },
         {"type": "row", "title": "Capacity", "id": 9, "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 17}},
@@ -504,11 +504,11 @@ data:
         {"type": "row", "title": "Resource hotspots", "id": 12, "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 26}},
         {"type": "timeseries", "title": "CPU usage by service (cores)", "id": 13, "gridPos": {"h": 8, "w": 12, "x": 0, "y": 27},
           "fieldConfig": {"defaults": {"unit": "cores"}},
-          "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum by (svc) ( label_replace( sum by (pod) ( rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", image!=\"\", container!=\"POD\", container!=\"\"}[5m]) ), \"svc\", \"$1\", \"pod\", \"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*\" ) )"}] 
+          "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum by (svc) ( label_replace( sum by (pod) ( rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", image!=\"\", container!=\"POD\", container!=\"\"}[5m]) ), \"svc\", \"$1\", \"pod\", \"echo-(api|directus|worker|worker-cpu|worker-scheduler).*\" ) )"}] 
         },
         {"type": "timeseries", "title": "Memory usage by service (bytes)", "id": 14, "gridPos": {"h": 8, "w": 12, "x": 12, "y": 27},
           "fieldConfig": {"defaults": {"unit": "bytes"}},
-          "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum by (svc) ( label_replace( sum by (pod) ( container_memory_working_set_bytes{namespace=\"$namespace\", image!=\"\", container!=\"POD\", container!=\"\"} ), \"svc\", \"$1\", \"pod\", \"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*\" ) )"}] 
+          "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"}, "expr": "sum by (svc) ( label_replace( sum by (pod) ( container_memory_working_set_bytes{namespace=\"$namespace\", image!=\"\", container!=\"POD\", container!=\"\"} ), \"svc\", \"$1\", \"pod\", \"echo-(api|directus|worker|worker-cpu|worker-scheduler).*\" ) )"}] 
         }
         ,
         {"type": "row", "title": "Error Logs", "id": 200, "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 35}},
