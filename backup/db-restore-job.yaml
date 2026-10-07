@@ -1,0 +1,70 @@
+# Restore test at production size: fetch the dump from the Space, check its hash, restore it
+# into the temporary database, and compare every table's row count with the counts taken in
+# the dump's own snapshot. Production is not contacted.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-restore
+  namespace: db-backup
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: dump
+          emptyDir: {}
+        - name: ca
+          secret:
+            secretName: backup
+            items: [{ key: restore-ca.crt, path: ca.crt }]
+      initContainers:
+        - name: download
+          image: amazon/aws-cli:2.17.50
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom: { secretKeyRef: { name: backup, key: AWS_ACCESS_KEY_ID } }
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom: { secretKeyRef: { name: backup, key: AWS_SECRET_ACCESS_KEY } }
+            - { name: AWS_DEFAULT_REGION, value: us-east-1 }
+            # The folder the backup job printed.
+            - { name: SRC, value: "s3://dbr-echo-prod-backups/postgres/STAMP" }
+          command: ["bash", "-ceu"]
+          args:
+            - |
+              start=$(date +%s)
+              aws --endpoint-url https://ams3.digitaloceanspaces.com s3 cp "$SRC/" /dump/ --recursive --no-progress
+              cd /dump && echo "$(cat db.sha256)  db.dump" | sha256sum -c -
+              echo "download and hash check took $(( $(date +%s) - start ))s"
+          volumeMounts:
+            - { name: dump, mountPath: /dump }
+      containers:
+        - name: restore
+          image: postgres:16
+          env:
+            - name: RESTORE_URL
+              valueFrom: { secretKeyRef: { name: backup, key: RESTORE_DATABASE_URL } }
+            - { name: PGSSLROOTCERT, value: /ca/ca.crt }
+          command: ["bash", "-ceu"]
+          args:
+            - |
+              start=$(date +%s)
+              pg_restore -d "$RESTORE_URL" --no-owner --no-acl -j 4 /dump/db.dump 2> /dump/restore.err || true
+              echo "pg_restore took $(( $(date +%s) - start ))s; error lines: $(grep -ci 'error' /dump/restore.err || true)"
+              grep -i 'error' /dump/restore.err | cut -c1-220 | sort | uniq -c | sort -rn | head -10 || true
+              bad=0; n=0
+              while read -r t want; do
+                got=$(psql "$RESTORE_URL" -Atc "select count(*) from public.\"$t\"" 2>/dev/null || echo missing)
+                n=$((n+1))
+                if [ "$want" != "$got" ]; then bad=$((bad+1)); echo "DIFF $t dump-snapshot=$want restored=$got"; fi
+              done < /dump/db.rowcounts
+              echo "compared $n tables, $bad differ"
+              for t in processing_status directus_revisions lightrag_vdb_transcript; do
+                echo "left out on purpose: $t has $(psql "$RESTORE_URL" -Atc "select count(*) from public.\"$t\"" 2>/dev/null || echo missing) rows"
+              done
+              echo "restored database size: $(psql "$RESTORE_URL" -Atc "select pg_size_pretty(pg_database_size(current_database()))")"
+              echo "biggest: $(psql "$RESTORE_URL" -Atc "select string_agg(t, ', ') from (select relname || ' ' || n_live_tup as t from pg_stat_user_tables order by n_live_tup desc limit 4) x")"
+              echo "total $(( $(date +%s) - start ))s"
+          volumeMounts:
+            - { name: dump, mountPath: /dump }
+            - { name: ca, mountPath: /ca, readOnly: true }

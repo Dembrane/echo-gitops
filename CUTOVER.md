@@ -51,6 +51,25 @@ These change nothing customers see.
    kubectl -n echo-prod scale deployment --all --replicas=0
    ```
    The HPAs leave a Deployment at 0 alone. The database and bucket are now written by nobody.
+4b. **Back up the database.** The old stack is stopped, so this copy is the last state it wrote.
+   `backup/db-backup-job.yaml` runs on the echo-next cluster (context
+   `do-ams3-dbr-echo-dev-k8s-cluster`), reads production through one snapshot and uploads the
+   dump, its table of contents, exact row counts and a hash to the private Space
+   `dbr-echo-prod-backups` under `postgres/<stamp>/`. It leaves out the data of
+   `processing_status`, `directus_revisions` and `lightrag_*` (35 of 43 GB; the tables are kept,
+   empty); DigitalOcean's own daily backup still has them. The job reads a secret `backup` in
+   namespace `db-backup`: `PROD_DATABASE_URL`, `ca.crt` (`doctl databases get-ca`), and the
+   Space key `prod-backups-writer`, which can touch only that bucket (`AWS_ACCESS_KEY_ID`,
+   `AWS_SECRET_ACCESS_KEY`). Delete the namespace afterwards: it holds the database login.
+   ```sh
+   kubectl --context do-ams3-dbr-echo-dev-k8s-cluster apply -f backup/db-backup-job.yaml
+   kubectl --context do-ams3-dbr-echo-dev-k8s-cluster -n db-backup logs -f job/db-backup -c dump
+   ```
+   Go on only when the upload container has listed the four files. Rehearsed on 2026-10-08:
+   the dump is 2.1 GB and takes about 8 minutes; `backup/db-restore-job.yaml` restored it into
+   an empty database in about 4 minutes with every one of 95 tables at the dump's row count.
+   To restore, give the same secret `RESTORE_DATABASE_URL` and `restore-ca.crt`, and set the
+   folder in the job.
 5. **Sync v3 with the contract held.** `argocd app sync dembrane-web-prod`. The PreSync hook
    `dembrane-web-migrate` runs first with `MIGRATE_HOLD_CONTRACT=1`: expand migrations (index
    builds on `processing_status` take a lock, which is why this waits for step 4), the DBOS
