@@ -1,5 +1,6 @@
 # The dummy prod: dembrane v3 on the dev cluster (dbr-echo-dev-k8s-cluster), namespace
-# dembrane-web-dummy, on echo-next's Postgres and Spaces, serving the echo-next hostnames.
+# dembrane-web-dummy, on echo-next's Postgres and Spaces. The dashboard and portal have their
+# own hostnames (-v3): dashboard.echo-next and portal.echo-next redirect to staging.
 # It rehearses CUTOVER.md against an old stack that shares the database, the way prod will.
 # Layered on values-prod.yaml, so everything not set here is exactly what prod gets.
 
@@ -8,7 +9,7 @@ global:
   # registry prod uses stays untouched. Bumped by hand while this is a rehearsal.
   registry: europe-west4-docker.pkg.dev/dembrane-web-staging/echo-staging
   imagePrefix: ""
-  imageTag: "b0a950ec4249f5a230c4a5a7551cd75f3fcd8814"
+  imageTag: "f54a4adcb344fb8df98087e6c6b1d687b562d4cf"
   imagePullSecrets:
     - gcp-staging-pull
 
@@ -23,8 +24,8 @@ env:
   DATABASE_QUEUE_POOL_MAX: "2"
   LLM_VERTEX_PROJECT: dembrane-web-staging
   API_PUBLIC_URL: https://api.echo-next.dembrane.com
-  DASHBOARD_URL: https://dashboard.echo-next.dembrane.com
-  PORTAL_URL: https://portal.echo-next.dembrane.com
+  DASHBOARD_URL: https://dashboard-v3.echo-next.dembrane.com
+  PORTAL_URL: https://portal-v3.echo-next.dembrane.com
   AUTH_COOKIE_DOMAIN: echo-next.dembrane.com
   MOLLIE_WEBHOOK_URL: https://api.echo-next.dembrane.com/api/v2/billing/mollie/webhook
 
@@ -52,6 +53,11 @@ media:
     limits: { cpu: "2", memory: 2Gi }
 
 web:
+  # The web servers read these for runtime-config.js; without them they take prod's hostnames.
+  env:
+    API_PUBLIC_URL: https://api.echo-next.dembrane.com
+    DASHBOARD_URL: https://dashboard-v3.echo-next.dembrane.com
+    PORTAL_URL: https://portal-v3.echo-next.dembrane.com
   roles:
     dashboard:
       hpa: { enabled: false }
@@ -71,9 +77,9 @@ ingress:
   enabled: true
   hosts:
     api: api.echo-next.dembrane.com
-    dashboard: dashboard.echo-next.dembrane.com
-    portal: portal.echo-next.dembrane.com
+    dashboard: dashboard-v3.echo-next.dembrane.com
+    portal: portal-v3.echo-next.dembrane.com
   legacyDirectus:
     enabled: true
     host: directus.echo-next.dembrane.com
-    redirectTo: https://dashboard.echo-next.dembrane.com/login
+    redirectTo: https://dashboard-v3.echo-next.dembrane.com/login
