@@ -10,6 +10,15 @@ DNS answered by v3).
 Commands assume the prod context (`do-ams3-dbr-echo-prod-k8s-cluster`) and `argocd` logged in to
 the prod Argo CD. Values changes are commits to `prod-v3`; Argo CD reads them on the next sync.
 
+## Check every sync
+
+A sync can report `Succeeded` within seconds and change nothing: seen twice in the rehearsal, each
+time on the first sync after a change Argo CD had not compared yet (a new commit, a resource
+deleted by hand). So before a sync, wait until the app shows `OutOfSync`
+(`argocd app get <app> --hard-refresh`), and after it, read the cluster, not the sync result:
+the release in `/health`, the ingresses, the worker's replica count. If they are not what the
+step expects, sync again.
+
 ## Before the window
 
 These change nothing customers see.
