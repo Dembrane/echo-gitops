@@ -8,7 +8,7 @@
 global:
   # Written by Dembrane/echo's 65-deploy-echo-next on every push to main. echo-next has its own
   # tag here so that its rollouts never move prod's (values-prod.yaml, written by a release).
-  imageTag: "1acf06baa6e61c1e1b521e3c1a93e01a46700aa5"
+  imageTag: "d7bc19e6832ef9522e092233638d0cc1601ac34b"
 
 secretName: dembrane-web-dummy-secrets
 
