@@ -36,7 +36,7 @@ api:
 
 worker:
   # CUTOVER.md step 6, rehearsed: the old echo-next is scaled to 0.
-  replicas: 1
+  replicas: 0
   resources:
     requests: { cpu: 250m, memory: 384Mi }
     limits: { cpu: "1", memory: 1Gi }
@@ -71,12 +71,12 @@ web:
 
 ingress:
   # CUTOVER.md step 7, rehearsed: the old echo-ingress is gone.
-  enabled: true
+  enabled: false
   hosts:
     api: api.echo-next.dembrane.com
     dashboard: dashboard-v3.echo-next.dembrane.com
     portal: portal-v3.echo-next.dembrane.com
   legacyDirectus:
-    enabled: true
+    enabled: false
     host: directus.echo-next.dembrane.com
     redirectTo: https://dashboard-v3.echo-next.dembrane.com/login
