@@ -52,15 +52,18 @@ and seal it the same way, as `secrets/sealed-do-registry-secret-web-prod.yaml`.
 
 ## Sealing
 
-Nothing here is sealed yet. On a machine with kubeseal and the prod cluster context:
+Sealed and applied on 2026-10-11. To build it again, on a machine with kubeseal and the prod
+cluster context:
 
 ```sh
 # 1. The plaintext file, ignored by git (secrets/.gitignore). One-line values from a KEY=value
 #    file; the two file values (GCP_SA_JSON, DATABASE_CA_CERT) from disk.
+#    kubectl refuses --from-env-file together with --from-file, so the files are merged in.
 kubectl create secret generic dembrane-web-prod-secrets -n dembrane-web-prod \
-  --from-env-file=secrets-web-prod.txt \
-  --from-file=GCP_SA_JSON=gcp-sa.json --from-file=DATABASE_CA_CERT=ca-certificate.crt \
-  --dry-run=client -o yaml > secrets/dembrane-web-prod-secrets.yaml
+  --from-env-file=secrets-web-prod.txt --dry-run=client -o yaml \
+  | kubectl patch --local -f - --type merge --dry-run=client -o yaml \
+      -p "{\"data\":{\"GCP_SA_JSON\":\"$(base64 -w0 gcp-sa.json)\",\"DATABASE_CA_CERT\":\"$(base64 -w0 ca-certificate.crt)\"}}" \
+  > secrets/dembrane-web-prod-secrets.yaml
 
 # 2. Check the key list against this file, then seal and commit only the sealed file.
 ./secret-manager.sh web-prod list

@@ -64,7 +64,7 @@ These change nothing customers see.
    `PROD_DEPLOY_ON_TAG` is unset on purpose), so start the job by hand and approve it in the
    `prod` environment:
    ```sh
-   git tag v3.0.0 <full 40-character sha on main> && git push origin v3.0.0
+   git tag v3.0.0 fa8503af31b46c8e80f0251c6269dd2a3a028378 && git push origin v3.0.0
    gh workflow run platform.yml -R Dembrane/echo --ref main -f target=prod -f tag=v3.0.0
    ```
    `70-deploy-prod` pushes `registry.digitalocean.com/dbr-cr/dembrane-web-*:<sha>` and commits
@@ -109,7 +109,7 @@ These change nothing customers see.
    reaches the private Valkey): a rollback replays these against rows v3 may have changed, so
    the copy is what lets them be replayed by hand instead.
    ```sh
-   kubectl -n echo-prod exec deploy/echo-worker -- python -c 'import os, json, redis; r = redis.from_url(os.environ["REDIS_URL"]); print(json.dumps({q: {k.decode(): v.decode() for k, v in r.hgetall(f"dramatiq:{q}.msgs").items()} for q in ["network", "cpu", "network.DQ", "cpu.DQ"]}))' > dramatiq-leftover.json
+   kubectl -n echo-prod exec deploy/echo-worker -- /code/server/.venv/bin/python -c 'import os, json, redis; r = redis.from_url(os.environ["REDIS_URL"]); print(json.dumps({q: {k.decode(): v.decode() for k, v in r.hgetall(f"dramatiq:{q}.msgs").items()} for q in ["network", "cpu", "network.DQ", "cpu.DQ"]}))' > dramatiq-leftover.json
    ```
 4b. **Back up the database.** The old stack is stopped, so this copy is the last state it wrote.
    `backup/db-backup-job.yaml` runs on the echo-next cluster (context

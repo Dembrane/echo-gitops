@@ -42,8 +42,10 @@ env:
   # pool + 4 fixed = 13; migrate 3. At api max 4 and worker 2: 36 + 26 + 3 = 65.
   DATABASE_POOL_MAX: "5"
   DATABASE_QUEUE_POOL_MAX: "4"
-  # The GCP project the Vertex service account key (GCP_SA_JSON) belongs to; prod.ts says the same.
-  LLM_VERTEX_PROJECT: dembrane-web-prod
+  # The GCP project the Vertex service account key (GCP_SA_JSON) belongs to: the old stack's
+  # project and key, whose quota production already runs on. prod.ts names dembrane-web-prod,
+  # where no key exists yet; move there with a key of its own.
+  LLM_VERTEX_PROJECT: dembrane-echo
   MOLLIE_WEBHOOK_URL: https://api.dembrane.com/api/v2/billing/mollie/webhook
   SUPPORT_WEBHOOK_URL: https://europe-west1-dembrane-sameer-cli.cloudfunctions.net/echo-support-webhook-proxy
   # Off Cloud Run there is no metadata server to mint identity tokens; media is reachable only
