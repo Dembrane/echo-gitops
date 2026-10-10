@@ -94,6 +94,9 @@ web:
 migrate:
   holdContract: true
   appDbRole: echo_app
+  # The cutover applies every pending migration in one transaction; past the deadline the
+  # job is killed and all of it rolls back.
+  activeDeadlineSeconds: 3600
   resources:
     requests: { cpu: 100m, memory: 256Mi }
     limits: { cpu: "1", memory: 1Gi }
