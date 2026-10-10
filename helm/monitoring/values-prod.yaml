@@ -22,10 +22,10 @@ prometheus:
   resources:
     requests:
       cpu: "500m"
-      memory: "1Gi"
+      memory: "3Gi"
     limits:
       cpu: "1000m"
-      memory: "4Gi"
+      memory: "8Gi"
 
 # Grafana settings
 grafana:
