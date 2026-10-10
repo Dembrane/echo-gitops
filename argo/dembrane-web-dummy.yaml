@@ -1,6 +1,8 @@
 # The dummy prod on the DEV cluster (dbr-echo-dev-k8s-cluster), on echo-next's database and
-# hostnames. Apply only with the dev cluster's kubeconfig. Sync stays manual: each step of
-# CUTOVER.md is rehearsed by hand here before it is done on prod.
+# hostnames. Apply only with the dev cluster's kubeconfig. Automated sync is on: Dembrane/echo
+# bumps values-echo-next.yaml on every push to main and this app rolls it out, the way prod will
+# take a release after the cutover. To rehearse a CUTOVER.md step by hand, turn it off first
+# (argocd app set dembrane-web-dummy --sync-policy none).
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -19,3 +21,5 @@ spec:
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: dembrane-web-dummy
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }

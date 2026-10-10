@@ -2,16 +2,13 @@
 # dembrane-web-dummy, on echo-next's Postgres and Spaces. The dashboard and portal have their
 # own hostnames (-v3): dashboard.echo-next and portal.echo-next redirect to staging.
 # It rehearses CUTOVER.md against an old stack that shares the database, the way prod will.
-# Layered on values-prod.yaml, so everything not set here is exactly what prod gets.
+# Layered on values-prod.yaml, so everything not set here is exactly what prod gets: the
+# registry, the image names and the pull secret's name are prod's.
 
 global:
-  # Staging's images (built from main), pulled with a read-only key; the DigitalOcean
-  # registry prod uses stays untouched. Bumped by hand while this is a rehearsal.
-  registry: europe-west4-docker.pkg.dev/dembrane-web-staging/echo-staging
-  imagePrefix: ""
+  # Written by Dembrane/echo's 65-deploy-echo-next on every push to main. echo-next has its own
+  # tag here so that its rollouts never move prod's (values-prod.yaml, written by a release).
   imageTag: "f54a4adcb344fb8df98087e6c6b1d687b562d4cf"
-  imagePullSecrets:
-    - gcp-staging-pull
 
 secretName: dembrane-web-dummy-secrets
 

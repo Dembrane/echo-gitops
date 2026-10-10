@@ -122,6 +122,9 @@ ingress. That is the rollback.
     In Dembrane/echo set the repository variables `GITOPS_PROD_BRANCH=main` and
     `PROD_WAIT_FOR_ROLLOUT=true`, so each release bumps main and waits for the new release on
     `api.dembrane.com` before it announces.
+    `GITOPS_PROD_BRANCH` also names the branch echo-next's tag is written to, so on the dev
+    cluster point `dembrane-web-dummy` at main in the same step
+    (`argocd app set dembrane-web-dummy --revision main`).
 12. **Monitoring.** In `helm/monitoring/values-prod.yaml` replace the `directus` probe (it now
     redirects; probe `https://api.dembrane.com/ready` instead) and set `dashboards.namespace` to
     `dembrane-web-prod`.
