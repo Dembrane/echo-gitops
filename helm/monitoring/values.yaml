@@ -73,9 +73,13 @@ httpChecks:
   timeout: 5s
   targets:
     - name: api
-      url: https://api.echo-next.dembrane.com/api/health
-    - name: directus
-      url: https://directus.echo-next.dembrane.com/server/health
+      url: https://api.echo-next.dembrane.com/health
+    - name: ready
+      url: https://api.echo-next.dembrane.com/ready
+    - name: dashboard
+      url: https://dashboard.echo-next.dembrane.com/
+    - name: portal
+      url: https://portal.echo-next.dembrane.com/
 
 # Alerting settings
 alerting:
@@ -85,4 +89,4 @@ alerting:
 
 # Dashboards (env-specific variables injected into configmap-grafana-dashboards)
 dashboards:
-  namespace: "echo-dev"
+  namespace: "dembrane-web-dummy"
