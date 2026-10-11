@@ -64,6 +64,8 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  # Prometheus is read through Grafana and from inside the cluster; true adds its own host.
+  prometheusHost: false
   basicAuth:
     enabled: false
 

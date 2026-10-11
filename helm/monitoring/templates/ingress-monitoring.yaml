@@ -21,7 +21,9 @@ spec:
   tls:
     - hosts:
         - grafana.{{ .Values.domain }}
+        {{- if .Values.ingress.prometheusHost }}
         - prometheus.{{ .Values.domain }}
+        {{- end }}
       secretName: monitoring-tls
   rules:
     - host: grafana.{{ .Values.domain }}
@@ -34,6 +36,7 @@ spec:
                 name: grafana
                 port:
                   number: 3000
+    {{- if .Values.ingress.prometheusHost }}
     - host: prometheus.{{ .Values.domain }}
       http:
         paths:
@@ -44,4 +47,5 @@ spec:
                 name: prometheus
                 port:
                   number: 9090
+    {{- end }}
 {{- end }}
