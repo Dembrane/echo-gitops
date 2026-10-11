@@ -22,6 +22,8 @@ ai-infra/k8s/gcp-sa-secret.yaml
 *.key
 *.p12
 *.json
+# Grafana dashboards are configuration, not credentials.
+!helm/monitoring/dashboards/*.json
 
 # OS junk
 .DS_Store
