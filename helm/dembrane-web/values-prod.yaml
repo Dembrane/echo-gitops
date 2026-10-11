@@ -105,8 +105,9 @@ migrate:
     limits: { cpu: "1", memory: 1Gi }
 
 ingress:
-  # CUTOVER.md step 7 turns these on, after the old ingress (echo-prod/echo-ingress) is gone.
-  enabled: false
+  # On only while the old ingress (echo-prod/echo-ingress) is gone: both claim the same hosts
+  # (CUTOVER.md step 7).
+  enabled: true
   className: nginx
   clusterIssuer: letsencrypt-prod
   hosts:
@@ -114,6 +115,6 @@ ingress:
     dashboard: dashboard.dembrane.com
     portal: portal.dembrane.com
   legacyDirectus:
-    enabled: false
+    enabled: true
     host: directus.dembrane.com
     redirectTo: https://dashboard.dembrane.com/login
