@@ -12,6 +12,10 @@ The dashboards that follow the v3 stack live as JSON files in `dashboards/`:
 
 - **dembrane v3: overview**: is it up, where does it hurt, is it scaling (ingress, pods, nodes, and API latency by route group from the API's own request log, live streams left out).
 - **dembrane v3: worker and jobs**: the worker's queues and jobs, from its log lines.
+- **dembrane v3: product**: who is recording now; conversations, hours, chunks, reports, chats, assistant runs and pipeline steps per Amsterdam day, today against yesterday.
+- **dembrane v3: AI**: model calls, latency, context size, errors, refusals, retries and an estimated cost, per operation and per day.
+
+The product and AI dashboards read each environment's Postgres through the `obs` views (counts, durations and sizes only) as a read-only role (`sql/grafana-obs-role.sql`). Their "Environment" dropdown switches between the data sources named `dembrane <env>`, so production and staging share one dashboard; each data source's address and login come from the secret `grafana-obs-db`.
 
 ### 2. Kubernetes Cluster Monitoring
 
