@@ -27,16 +27,19 @@ Values changes are commits to `prod-v3`; Argo CD reads them on the next sync.
 
 ## What has been run
 
-On the test cluster (old stack `echo-dev`, v3 `dembrane-web-dummy`, one shared database), with
-the commands as written here, on 2026-10-11: steps 4 to 8 (not 4b) and rollback steps 1 and 3. After the
-rollback the old stack signed a user in, read organisations and projects and wrote a
-conversation on the database v3 had migrated and used; after steps 4 to 8, v3 did the same.
-The migrate job of the release also ran against a copy of production's schema (no data): twelve
-migrations applied, the baseline adopted, a second run a no-op.
+Production was cut over on Sunday 2026-10-11 with the steps below: old stack stopped at 02:20
+Amsterdam time, backup taken (8 minutes), v3 synced (the migrate job took 16 seconds: twelve
+migrations, 759 users copied), worker and ingress on by 02:36, DNS moved at 02:39, dashboard and
+portal served by v3 with valid certificates at 02:40. Twenty minutes of downtime. The walk with
+the QA account passed up to the free plan's limits (chat and report), which a paid account
+has to prove.
 
-Not run anywhere: step 9 (DNS and the certificates that follow it), step 10, and the migrate
-job on production's data, where the index on `processing_status` (3.3 million rows) is the only
-slow statement. Step 4b last ran on 2026-10-08.
+Before that night, steps 4 to 8 (not 4b) and rollback steps 1 and 3 ran on the test cluster
+(old stack `echo-dev`, v3 `dembrane-web-dummy`, one shared database): after the rollback the old
+stack signed a user in, read organisations and projects and wrote a conversation on the
+database v3 had migrated and used.
+
+Not run anywhere: the rollback in production, and step 10.
 
 The test cluster differs in one way that matters for a rehearsal: its old stack's Argo app
 ignores the replica counts of `echo-api`, `echo-worker` and `echo-worker-cpu`, so after a
@@ -242,16 +245,18 @@ These change nothing customers see.
    `cname.vercel-dns.com` with A records to 206.189.240.151, DNS only (not proxied). Their
    certificates issue by HTTP-01 once DNS answers; until then browsers see the ingress default
    certificate, so watch `kubectl -n dembrane-web-prod get certificate` and retest step 8
-   without `--resolve`. cert-manager's self-check has been failing since step 7 and backs off to
-   about 16 minutes between tries. To retry at once, delete the pending challenges (the order
-   makes new ones), or the order itself if it has failed. Neither has been run:
+   without `--resolve`. On 2026-10-11 both certificates were issued about a minute after the
+   records changed, with no help. cert-manager's self-check backs off to about 16 minutes
+   between tries; if it has gone that far, delete the pending challenges (the order makes new
+   ones), or the order itself if it has failed. Neither has been run:
    ```sh
    kubectl -n dembrane-web-prod delete challenges.acme.cert-manager.io --all
    kubectl -n dembrane-web-prod get order,certificate
    ```
-10. **Vercel.** Once both hosts serve v3 with valid certificates, remove `dashboard.dembrane.com`
-    and `portal.dembrane.com` from the Vercel projects so Vercel stops serving and renewing them.
-    Keep the projects and their last deployments for rollback.
+10. **Vercel.** Once rollback is no longer wanted, remove `dashboard.dembrane.com` and
+    `portal.dembrane.com` from the Vercel projects so Vercel stops renewing them. While they
+    stay, a rollback needs only the two DNS records back. Keep the projects and their last
+    deployments.
 
 The old stack stays as it is now: Argo app registered, self-heal off, every Deployment at 0, no
 ingress. That is the rollback.
@@ -307,7 +312,8 @@ Possible until the contract is released: the old stack's tables are all still th
    ```
    The sync recreates `echo-ingress` and sets every replica count from
    `helm/echo/values-prod.yaml` (API 6, Directus 2, workers 2 each); the HPAs take over from
-   there. The API pods need a few minutes to start.
+   there. The API pods need a few minutes to start, and first the node pool has to grow back:
+   with the old stack at 0 it shrinks to two nodes, and the old stack needs about 18 GiB.
 
 What v3 wrote in between stays in the shared tables and the old stack reads it. v3 also writes
 new users and password hashes to `directus_users`, so sign-ups and password changes survive;
