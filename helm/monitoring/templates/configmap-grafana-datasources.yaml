@@ -18,4 +18,31 @@ data:
         access: proxy
         url: http://loki:3100
         isDefault: false
-        uid: loki 
+        uid: loki
+{{- /*
+  The product dashboards (v3 product, v3 AI) read the obs views of each environment's
+  Postgres through a read-only role that sees nothing else (sql/grafana-obs-role.sql).
+  One dashboard serves every environment: its "Environment" dropdown lists the data
+  sources named "dembrane <env>". Passwords come from the secret grafana-obs-db
+  (deployment-grafana.yaml); an environment with no password set is left out.
+*/}}
+{{- range .Values.obs.environments }}
+      - name: {{ printf "dembrane %s" .name | quote }}
+        type: postgres
+        access: proxy
+        uid: {{ printf "obs-%s" .name | quote }}
+        url: {{ printf "%s:%d" .host (int .port) | quote }}
+        user: {{ .user | default "grafana_obs" | quote }}
+        isDefault: false
+        jsonData:
+          database: {{ .database | quote }}
+          sslmode: {{ .sslmode | default "require" | quote }}
+          postgresVersion: 1600
+          maxOpenConns: 2
+          maxIdleConns: 1
+          connMaxLifetime: 600
+          timescaledb: false
+        secureJsonData:
+          password: {{ printf "$__env{OBS_%s_DB_PASSWORD}" (upper .name) | quote }}
+        editable: false
+{{- end }}

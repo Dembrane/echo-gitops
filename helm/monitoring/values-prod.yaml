@@ -86,3 +86,25 @@ httpChecks:
 # Dashboards (env-specific variables injected into configmap-grafana-dashboards)
 dashboards:
   namespace: "dembrane-web-prod"
+# Product dashboards: prod reads its own database directly; staging (Google Cloud SQL) is
+# reached through the Cloud SQL Auth proxy sidecar on localhost. Both use the read-only role
+# grafana_obs on the obs views only (sql/grafana-obs-role.sql). Passwords: secret
+# grafana-obs-db, keys OBS_PROD_DB_PASSWORD and OBS_STAGING_DB_PASSWORD.
+obs:
+  environments:
+    - name: prod
+      host: dbr-echo-prod-postgres-do-user-15870604-0.e.db.ondigitalocean.com
+      port: 25060
+      database: defaultdb
+    - name: staging
+      host: 127.0.0.1
+      port: 5433
+      database: echo
+      sslmode: disable
+  cloudSqlProxy:
+    enabled: true
+    instance: dembrane-web-staging:europe-west4:echo-staging
+    port: 5433
+    # A service account key with roles/cloudsql.client on dembrane-web-staging, as key
+    # credentials.json of the secret grafana-cloud-sql-sa.
+    secretName: grafana-cloud-sql-sa

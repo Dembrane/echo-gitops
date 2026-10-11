@@ -73,9 +73,13 @@ httpChecks:
   timeout: 5s
   targets:
     - name: api
-      url: https://api.echo-next.dembrane.com/api/health
-    - name: directus
-      url: https://directus.echo-next.dembrane.com/server/health
+      url: https://api.echo-next.dembrane.com/health
+    - name: ready
+      url: https://api.echo-next.dembrane.com/ready
+    - name: dashboard
+      url: https://dashboard.echo-next.dembrane.com/
+    - name: portal
+      url: https://portal.echo-next.dembrane.com/
 
 # Alerting settings
 alerting:
@@ -85,4 +89,15 @@ alerting:
 
 # Dashboards (env-specific variables injected into configmap-grafana-dashboards)
 dashboards:
-  namespace: "echo-dev"
+  namespace: "dembrane-web-dummy"
+# Product dashboards: one Postgres data source per environment, on that database's obs
+# views, as the read-only role grafana_obs. The password is key OBS_<NAME>_DB_PASSWORD of
+# the secret grafana-obs-db in the monitoring namespace (names are upper-cased). The test
+# cluster provisions none: its drafts were added through the Grafana API and it is being
+# retired; production holds the prod and staging sources (values-prod.yaml).
+obs:
+  environments: []
+  # Cloud SQL (staging) is reached through the Cloud SQL Auth proxy as a sidecar of Grafana;
+  # off here, on in production where the staging data source lives.
+  cloudSqlProxy:
+    enabled: false

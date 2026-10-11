@@ -6,17 +6,16 @@ This document describes the pre-configured Grafana dashboards available in your 
 
 After deploying the monitoring stack using Helm, the following dashboards will be automatically available in Grafana:
 
-### 1. Echo Application Dashboard
+### 1. dembrane v3 dashboards
 
-This dashboard is specifically designed for monitoring your Echo application with API, Directus, and Worker components. It includes:
+Four dashboards follow the v3 stack (`dashboards/*.json`):
 
-- CPU and memory usage for API Server, Directus, and Worker components
-- HTTP request rates and response times for API and Directus services
-- Worker activity monitoring for background task processing
-- Error logs from the Echo application
-- Worker-specific logs
+- **dembrane v3: overview**: is it up, where does it hurt, is it scaling (ingress, pods, nodes, API latency by route from the request log).
+- **dembrane v3: worker and jobs**: the worker's queues and jobs, from its log lines.
+- **dembrane v3: product**: who is recording now; conversations, hours, chunks, reports, chats, assistant runs and pipeline steps per Amsterdam day, today against yesterday.
+- **dembrane v3: AI**: model calls, latency, context size, errors, refusals, retries and an estimated cost, per operation and per day.
 
-This dashboard automatically filters for pods and services in the `echo-dev` and `echo-prod` namespaces and allows switching between them.
+The product and AI dashboards read each environment's Postgres through the `obs` views (counts, durations and sizes only) as the read-only role `grafana_obs` (`sql/grafana-obs-role.sql`). Their "Environment" dropdown switches between the data sources named `dembrane <env>`, so production and staging share one dashboard.
 
 ### 2. Kubernetes Cluster Monitoring
 

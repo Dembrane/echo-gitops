@@ -62,6 +62,14 @@ spec:
               value: "30s"
             - name: GF_METRICS_ENABLED
               value: "true"
+{{- range .Values.obs.environments }}
+            - name: {{ printf "OBS_%s_DB_PASSWORD" (upper .name) }}
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-obs-db
+                  key: {{ printf "OBS_%s_DB_PASSWORD" (upper .name) }}
+                  optional: true
+{{- end }}
           volumeMounts:
             - name: grafana-storage
               mountPath: /var/lib/grafana
@@ -78,7 +86,36 @@ spec:
             limits:
               cpu: {{ .Values.grafana.resources.limits.cpu | quote }}
               memory: {{ .Values.grafana.resources.limits.memory | quote }}
+{{- if .Values.obs.cloudSqlProxy.enabled }}
+        # Staging's database has no path from this cluster but the Cloud SQL Auth proxy:
+        # Grafana reaches it on localhost, the proxy holds the Google identity.
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.2
+          args:
+            - --structured-logs
+            - --credentials-file=/secrets/credentials.json
+            - {{ printf "--port=%d" (int .Values.obs.cloudSqlProxy.port) | quote }}
+            - {{ .Values.obs.cloudSqlProxy.instance | quote }}
+          securityContext:
+            runAsNonRoot: true
+          volumeMounts:
+            - name: cloud-sql-sa
+              mountPath: /secrets
+              readOnly: true
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+{{- end }}
       volumes:
+{{- if .Values.obs.cloudSqlProxy.enabled }}
+        - name: cloud-sql-sa
+          secret:
+            secretName: {{ .Values.obs.cloudSqlProxy.secretName }}
+{{- end }}
         - name: grafana-storage
           persistentVolumeClaim:
             claimName: grafana-data
@@ -103,9 +140,11 @@ spec:
                 path: nginx-ingress-dashboard.json
               - key: loki-logs-dashboard.json
                 path: loki-logs-dashboard.json
-              - key: health.json
-                path: health.json
               - key: v3-overview.json
                 path: v3-overview.json
               - key: v3-worker-jobs.json
                 path: v3-worker-jobs.json
+              - key: v3-product.json
+                path: v3-product.json
+              - key: v3-ai.json
+                path: v3-ai.json
