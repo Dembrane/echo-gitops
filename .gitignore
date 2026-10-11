@@ -37,3 +37,5 @@ secrets-echo-next.txt
 TESTING_STAGE_IMPLEMENTATION.md
 REBALANCE_SUMMARY.md
 TESTING_STAGE_IMPLEMENTATION.md
+secrets-web-prod.txt
+*.crt

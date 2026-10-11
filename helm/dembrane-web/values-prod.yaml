@@ -1,0 +1,121 @@
+# dembrane v3 in production on the DigitalOcean cluster (dbr-echo-prod-k8s-cluster), namespace
+# dembrane-web-prod, Argo CD Application argo/dembrane-web-prod.yaml. Shares the managed Postgres
+# and the Spaces bucket with the old stack (helm/echo) until the cutover in CUTOVER.md.
+
+global:
+  # Written by Dembrane/echo's release job; "unreleased" fails to pull, so nothing runs before
+  # the first release bump.
+  imageTag: "fa8503af31b46c8e80f0251c6269dd2a3a028378"
+  registry: registry.digitalocean.com/dbr-cr
+  # registry.digitalocean.com/dbr-cr/dembrane-web-{api,worker,media,web,migrate}
+  imagePrefix: dembrane-web-
+  # Created in this namespace by hand (CUTOVER.md step 2); the old stack's copy lives in echo-prod.
+  imagePullSecrets:
+    - do-registry-secret
+
+appEnv: prod
+
+secretName: dembrane-web-prod-secrets
+
+optionalSecretKeys:
+  - AGENT_CLIENT_SECRET_KEY
+  - AUTH_GOOGLE_CLIENT_ID
+  - AUTH_GOOGLE_CLIENT_SECRET
+  - SENDGRID_API_KEY
+  - MOLLIE_API_KEY
+  - ECHO_SUPPORT_WEBHOOK_TOKEN
+  - SITE_API_TOKEN
+  - ACCOUNTS_SLACK_WEBHOOK_URL
+  - ACCOUNTS_EVENTS_SECRET
+
+# URLs, cookie domain and Vertex project come from packages/config/environments/prod.ts.
+env:
+  # The bucket the old stack and its Directus write to; v3 reads and writes the same keys.
+  FILES_S3_ENDPOINT: https://ams3.digitaloceanspaces.com
+  FILES_S3_BUCKET: dbr-echo-prod-uploads
+  FILES_S3_REGION: us-east-1
+  STORAGE_S3_ENDPOINT: https://ams3.digitaloceanspaces.com
+  STORAGE_S3_BUCKET: dbr-echo-prod-uploads
+  STORAGE_S3_REGION: us-east-1
+  # Postgres connection budget. The DO cluster's direct-connection limit is shared with the old
+  # stack until it is scaled to 0. Per API pod: pool + 4 fixed = 9; per worker: pool + queue
+  # pool + 4 fixed = 13; migrate 3. At api max 8 and worker 4: 72 + 52 + 3 = 127 of the
+  # cluster's 200.
+  DATABASE_POOL_MAX: "5"
+  DATABASE_QUEUE_POOL_MAX: "4"
+  # The GCP project the Vertex service account key (GCP_SA_JSON) belongs to: the old stack's
+  # project and key, whose quota production already runs on. prod.ts names dembrane-web-prod,
+  # where no key exists yet; move there with a key of its own.
+  LLM_VERTEX_PROJECT: dembrane-echo
+  MOLLIE_WEBHOOK_URL: https://api.dembrane.com/api/v2/billing/mollie/webhook
+  SUPPORT_WEBHOOK_URL: https://europe-west1-dembrane-sameer-cli.cloudfunctions.net/echo-support-webhook-proxy
+  # Off Cloud Run there is no metadata server to mint identity tokens; media is reachable only
+  # inside the cluster (NetworkPolicy), so calls go without one.
+  MEDIA_AUTH: none
+
+api:
+  hpa:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 8
+    cpuUtilization: 70
+  resources:
+    requests: { cpu: 500m, memory: 768Mi }
+    limits: { cpu: "1", memory: 1Gi }
+
+worker:
+  # v3 runs the jobs the old stack's Dramatiq workers and scheduler ran (emails, webhooks,
+  # billing timers) against the same database, so it is above 0 only while they are stopped
+  # (CUTOVER.md step 4).
+  replicas: 4
+  resources:
+    requests: { cpu: 500m, memory: 768Mi }
+    limits: { cpu: "1", memory: 1Gi }
+
+media:
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    cpuUtilization: 60
+  resources:
+    requests: { cpu: "1", memory: 2Gi }
+    limits: { cpu: "2", memory: 4Gi }
+
+web:
+  roles:
+    dashboard:
+      hpa: { enabled: true, minReplicas: 2, maxReplicas: 6, cpuUtilization: 70 }
+      resources:
+        requests: { cpu: 100m, memory: 192Mi }
+        limits: { cpu: "1", memory: 512Mi }
+    portal:
+      hpa: { enabled: true, minReplicas: 2, maxReplicas: 6, cpuUtilization: 70 }
+      resources:
+        requests: { cpu: 100m, memory: 192Mi }
+        limits: { cpu: "1", memory: 512Mi }
+
+migrate:
+  holdContract: true
+  appDbRole: echo_app
+  # The cutover applies every pending migration in one transaction; past the deadline the
+  # job is killed and all of it rolls back.
+  activeDeadlineSeconds: 3600
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { cpu: "1", memory: 1Gi }
+
+ingress:
+  # On only while the old ingress (echo-prod/echo-ingress) is gone: both claim the same hosts
+  # (CUTOVER.md step 7).
+  enabled: true
+  className: nginx
+  clusterIssuer: letsencrypt-prod
+  hosts:
+    api: api.dembrane.com
+    dashboard: dashboard.dembrane.com
+    portal: portal.dembrane.com
+  legacyDirectus:
+    enabled: true
+    host: directus.dembrane.com
+    redirectTo: https://dashboard.dembrane.com/login

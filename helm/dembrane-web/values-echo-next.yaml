@@ -1,0 +1,82 @@
+# The dummy prod: dembrane v3 on the dev cluster (dbr-echo-dev-k8s-cluster), namespace
+# dembrane-web-dummy, on echo-next's Postgres and Spaces. The dashboard and portal have their
+# own hostnames (-v3): dashboard.echo-next and portal.echo-next redirect to staging.
+# It rehearses CUTOVER.md against an old stack that shares the database, the way prod will.
+# Layered on values-prod.yaml, so everything not set here is exactly what prod gets: the
+# registry, the image names and the pull secret's name are prod's.
+
+global:
+  # Written by Dembrane/echo's 65-deploy-echo-next on every push to main. echo-next has its own
+  # tag here so that its rollouts never move prod's (values-prod.yaml, written by a release).
+  imageTag: "fa8503af31b46c8e80f0251c6269dd2a3a028378"
+
+secretName: dembrane-web-dummy-secrets
+
+env:
+  FILES_S3_BUCKET: dbr-echo-dev-uploads
+  STORAGE_S3_BUCKET: dbr-echo-dev-uploads
+  # echo-next's Postgres is the smallest size: about 22 connections, 6 of them held by the old
+  # stack's pool. Per API pod 2 + 4 fixed = 6; worker 2 + 2 + 4 = 8; migrate 3.
+  DATABASE_POOL_MAX: "2"
+  DATABASE_QUEUE_POOL_MAX: "2"
+  LLM_VERTEX_PROJECT: dembrane-web-staging
+  API_PUBLIC_URL: https://api.echo-next.dembrane.com
+  DASHBOARD_URL: https://dashboard-v3.echo-next.dembrane.com
+  PORTAL_URL: https://portal-v3.echo-next.dembrane.com
+  AUTH_COOKIE_DOMAIN: echo-next.dembrane.com
+  MOLLIE_WEBHOOK_URL: https://api.echo-next.dembrane.com/api/v2/billing/mollie/webhook
+
+api:
+  hpa:
+    enabled: false
+  replicas: 1
+  resources:
+    requests: { cpu: 250m, memory: 384Mi }
+    limits: { cpu: "1", memory: 1Gi }
+
+worker:
+  # CUTOVER.md step 6, rehearsed: the old echo-next is scaled to 0.
+  replicas: 1
+  resources:
+    requests: { cpu: 250m, memory: 384Mi }
+    limits: { cpu: "1", memory: 1Gi }
+
+media:
+  hpa:
+    enabled: false
+  replicas: 1
+  resources:
+    requests: { cpu: 250m, memory: 512Mi }
+    limits: { cpu: "2", memory: 2Gi }
+
+web:
+  # The web servers read these for runtime-config.js; without them they take prod's hostnames.
+  env:
+    API_PUBLIC_URL: https://api.echo-next.dembrane.com
+    DASHBOARD_URL: https://dashboard-v3.echo-next.dembrane.com
+    PORTAL_URL: https://portal-v3.echo-next.dembrane.com
+  roles:
+    dashboard:
+      hpa: { enabled: false }
+      replicas: 1
+      resources:
+        requests: { cpu: 50m, memory: 128Mi }
+        limits: { cpu: "1", memory: 512Mi }
+    portal:
+      hpa: { enabled: false }
+      replicas: 1
+      resources:
+        requests: { cpu: 50m, memory: 128Mi }
+        limits: { cpu: "1", memory: 512Mi }
+
+ingress:
+  # CUTOVER.md step 7, rehearsed: the old echo-ingress is gone.
+  enabled: true
+  hosts:
+    api: api.echo-next.dembrane.com
+    dashboard: dashboard-v3.echo-next.dembrane.com
+    portal: portal-v3.echo-next.dembrane.com
+  legacyDirectus:
+    enabled: true
+    host: directus.echo-next.dembrane.com
+    redirectTo: https://dashboard-v3.echo-next.dembrane.com/login

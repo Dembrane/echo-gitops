@@ -1,0 +1,132 @@
+# Defaults for every dembrane-web environment. Environment files (values-prod.yaml) set the
+# registry, hosts, bucket and sizes. Every setting the apps read is declared in
+# dembrane/platform/packages/config/src/schema.ts in Dembrane/echo; APP_ENV picks the checked-in
+# environment file (packages/config/environments/<env>.ts) and env vars here override it.
+
+global:
+  # The commit sha of Dembrane/echo the images were built from. CI rewrites this line
+  # (.github/workflows/platform.yml, 70-deploy-prod); it is also APP_RELEASE.
+  imageTag: ""
+  registry: ""
+  # Images are <registry>/<imagePrefix><app>:<imageTag>, app one of api, worker, media, web, migrate.
+  imagePrefix: dembrane-web-
+  imagePullSecrets: []
+
+appEnv: prod
+
+# The Kubernetes Secret (from a SealedSecret) every unit reads. Keys:
+# secrets/dembrane-web-prod-secrets.keys.md.
+secretName: ""
+
+# Keys of that secret that may be absent: each becomes an env var of the same name on the API and
+# the worker, optional, so a key without a value keeps the app's default (off).
+optionalSecretKeys: []
+
+# Non-secret settings for the API and the worker.
+env: {}
+
+# Mounted from the secret as files: the Vertex service account key (GOOGLE_APPLICATION_CREDENTIALS)
+# and the CA that signs the Postgres server certificate (NODE_EXTRA_CA_CERTS).
+secretFiles:
+  mountPath: /var/run/secrets/dembrane
+  gcpServiceAccountKey: GCP_SA_JSON
+  databaseCaKey: DATABASE_CA_CERT
+
+rollout:
+  maxUnavailable: 0
+  maxSurge: 25%
+
+api:
+  replicas: 2
+  hpa:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 4
+    cpuUtilization: 70
+  pdb:
+    minAvailable: 1
+  terminationGracePeriodSeconds: 30
+  resources: {}
+  env: {}
+
+worker:
+  # 0 holds the worker back entirely (no queue consumer, no schedules).
+  replicas: 1
+  pdb:
+    minAvailable: 1
+  terminationGracePeriodSeconds: 120
+  resources: {}
+  env: {}
+
+media:
+  replicas: 1
+  hpa:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 4
+    cpuUtilization: 60
+  # One ffmpeg job runs at a time per pod and a job can take minutes.
+  terminationGracePeriodSeconds: 900
+  resources: {}
+  # Only the API and the worker may reach media: it has no auth of its own.
+  networkPolicy:
+    enabled: true
+
+web:
+  # One Deployment and Service per role, same image, WEB_ROLE picks the app.
+  roles:
+    dashboard:
+      replicas: 2
+      hpa:
+        enabled: false
+        minReplicas: 2
+        maxReplicas: 4
+        cpuUtilization: 70
+      pdb:
+        minAvailable: 1
+      resources: {}
+    portal:
+      replicas: 2
+      hpa:
+        enabled: false
+        minReplicas: 2
+        maxReplicas: 4
+        cpuUtilization: 70
+      pdb:
+        minAvailable: 1
+      resources: {}
+  env: {}
+
+migrate:
+  # Runs before every sync as an Argo CD PreSync hook; the sync stops if it fails.
+  enabled: true
+  # 1 leaves out contract migrations (tag contains _contract_): they drop tables the old stack
+  # still reads. See CUTOVER.md before setting 0.
+  holdContract: true
+  # The runtime login the job grants data rights to.
+  appDbRole: echo_app
+  activeDeadlineSeconds: 900
+  resources: {}
+
+# A PostSync hook that repeats deploy-env.sh's smoke checks against the in-cluster services.
+smoke:
+  enabled: true
+  image: curlimages/curl:8.10.1
+  workerWaitSeconds: 180
+
+ingress:
+  # Off until the cutover: the old stack's ingress still claims api.dembrane.com.
+  enabled: false
+  className: nginx
+  clusterIssuer: letsencrypt-prod
+  annotations: {}
+  hosts:
+    api: ""
+    dashboard: ""
+    portal: ""
+  # The old Directus hostname, kept for asset links already sent: /assets/* is served by the API
+  # at /api/assets/*, anything else redirects to the dashboard's sign-in page.
+  legacyDirectus:
+    enabled: false
+    host: ""
+    redirectTo: ""
