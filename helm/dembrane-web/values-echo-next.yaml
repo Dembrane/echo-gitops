@@ -25,6 +25,11 @@ env:
   PORTAL_URL: https://portal-v3.echo-next.dembrane.com
   AUTH_COOKIE_DOMAIN: echo-next.dembrane.com
   MOLLIE_WEBHOOK_URL: https://api.echo-next.dembrane.com/api/v2/billing/mollie/webhook
+  # Removed for echo-next (null deletes a key of values-prod.yaml): its secret has no
+  # SAM_INBOX_SECRET, and the three are set together or the API does not start. Without them
+  # echo-next never posts to sam as production's sender.
+  SAM_INBOX_URL: null
+  SAM_INBOX_FROM: null
 
 api:
   hpa:
