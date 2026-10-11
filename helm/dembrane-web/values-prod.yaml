@@ -27,6 +27,7 @@ optionalSecretKeys:
   - SITE_API_TOKEN
   - ACCOUNTS_SLACK_WEBHOOK_URL
   - ACCOUNTS_EVENTS_SECRET
+  - SAM_INBOX_SECRET
 
 # URLs, cookie domain and Vertex project come from packages/config/environments/prod.ts.
 env:
@@ -49,6 +50,11 @@ env:
   LLM_VERTEX_PROJECT: dembrane-echo
   MOLLIE_WEBHOOK_URL: https://api.dembrane.com/api/v2/billing/mollie/webhook
   SUPPORT_WEBHOOK_URL: https://europe-west1-dembrane-sameer-cli.cloudfunctions.net/echo-support-webhook-proxy
+  # sam's inbox takes support requests and account events, signed with SAM_INBOX_SECRET. While
+  # it is set, v3 posts there and not to SUPPORT_WEBHOOK_URL. sam routes each code by this
+  # sender name (infra/config.yaml in Dembrane/sam).
+  SAM_INBOX_URL: https://europe-west1-dembrane-sameer-cli.cloudfunctions.net/sam-inbox-proxy/inbox
+  SAM_INBOX_FROM: api.dembrane.com
   # Off Cloud Run there is no metadata server to mint identity tokens; media is reachable only
   # inside the cluster (NetworkPolicy), so calls go without one.
   MEDIA_AUTH: none

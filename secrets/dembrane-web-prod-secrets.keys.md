@@ -38,6 +38,7 @@ feature off, as on staging.
 | `SITE_API_TOKEN` | The token the public website sends for pricing configurations; unset falls back to `ECHO_SUPPORT_WEBHOOK_TOKEN`. |
 | `ACCOUNTS_SLACK_WEBHOOK_URL` | The Slack incoming webhook for signatures and billing details, the value staging's Secret Manager holds for prod. |
 | `ACCOUNTS_EVENTS_SECRET` | Signs account events to sam; set with `ACCOUNTS_EVENTS_URL` in values-prod.yaml or not at all. |
+| `SAM_INBOX_SECRET` | Signs every message to sam's inbox: the value of `SAM_INBOX_ECHO_PROD_SECRET` in Secret Manager of Google project `dembrane-sameer-cli`. Set with `SAM_INBOX_URL` and `SAM_INBOX_FROM` in values-prod.yaml or not at all. |
 
 Old keys v3 does not read: `ASSEMBLYAI_*`, `DIRECTUS_ADMIN_*`, `DIRECTUS_EMAIL_*`, `LLM__*`,
 `REDIS_URL`.
