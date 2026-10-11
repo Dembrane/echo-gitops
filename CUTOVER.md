@@ -76,7 +76,7 @@ These change nothing customers see.
 0. **Checks, read only.** On the production database, in a read-only transaction:
    ```sql
    select tableowner, count(*) from pg_tables where schemaname = 'public' group by 1;
-   select lower(email), count(*) from directus_users group by 1 having count(*) > 1;
+   select lower(email), count(*) from directus_users where email is not null group by 1 having count(*) > 1;
    select pg_size_pretty(pg_total_relation_size('processing_status'));
    show max_connections;
    select to_regclass('drizzle.__drizzle_migrations'), to_regclass('public.auth_user'),
