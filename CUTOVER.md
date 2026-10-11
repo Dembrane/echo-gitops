@@ -283,9 +283,12 @@ ingress. That is the rollback.
     `GITOPS_PROD_BRANCH` also names the branch echo-next's tag is written to, so on the dev
     cluster point `dembrane-web-dummy` at main in the same step
     (`argocd --core app set dembrane-web-dummy --revision main`).
-12. **Monitoring.** In `helm/monitoring/values-prod.yaml` replace the `directus` probe (it now
-    redirects; probe `https://api.dembrane.com/ready` instead) and set `dashboards.namespace` to
-    `dembrane-web-prod`.
+12. **Monitoring.** Done on 2026-10-11 (echo-gitops main): `helm/monitoring/values-prod.yaml`
+    checks `https://api.dembrane.com/ready`, the dashboard and the portal in place of Directus,
+    `dashboards.namespace` is `dembrane-web-prod`, and the alert rules in
+    `templates/configmap-prometheus.yaml` name that namespace and v3's deployments. Prometheus
+    has no reload hook: restart it and Grafana after such a change
+    (`kubectl -n monitoring rollout restart deploy/prometheus deploy/grafana`).
 
 ## Rollback
 
