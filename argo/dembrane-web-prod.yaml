@@ -3,7 +3,7 @@
 #
 # Automated sync is OFF until the cutover (CUTOVER.md): the old stack (argo/echo-prod.yaml)
 # serves customers from the same database, bucket and hostnames, and a sync runs the migrate
-# hook against that database. Every sync is started by a person until CUTOVER.md step 9 turns
+# hook against that database. Every sync is started by a person until CUTOVER.md step 11 turns
 # automated sync on and moves targetRevision to main.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
