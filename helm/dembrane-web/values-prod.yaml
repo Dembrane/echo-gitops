@@ -63,9 +63,10 @@ api:
     limits: { cpu: "1", memory: 1Gi }
 
 worker:
-  # 0 until the cutover: the old stack's Dramatiq workers and scheduler run the same kinds of
-  # jobs (emails, webhooks, billing timers) against the same database. CUTOVER.md step 6 sets 2.
-  replicas: 0
+  # v3 runs the jobs the old stack's Dramatiq workers and scheduler ran (emails, webhooks,
+  # billing timers) against the same database, so it is above 0 only while they are stopped
+  # (CUTOVER.md step 4).
+  replicas: 2
   resources:
     requests: { cpu: 500m, memory: 768Mi }
     limits: { cpu: "1", memory: 1Gi }
