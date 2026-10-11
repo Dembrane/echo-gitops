@@ -261,7 +261,7 @@ data:
     - name: application
       rules:
       - alert: IngressHighErrorRate
-        expr: (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) / (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 0.05
+        expr: (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="dembrane-web-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="dembrane-web-prod"}[5m]), "svc", "$1", "service", "(.*)") )) / (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="dembrane-web-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="dembrane-web-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 0.05
         for: 10m
         labels:
           severity: warning
@@ -270,7 +270,7 @@ data:
           description: "5xx ratio > 5% over 10m: {{ "{{" }} $value {{ "}}" }}"
 
       - alert: IngressCriticalErrorRate
-        expr: (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) / (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 0.20
+        expr: (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="dembrane-web-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="dembrane-web-prod"}[5m]), "svc", "$1", "service", "(.*)") )) / (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="dembrane-web-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="dembrane-web-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 0.20
         for: 5m
         labels:
           severity: critical
@@ -288,7 +288,7 @@ data:
       # p95 and can drag it up. Path-level alerting would need a route
       # label that isn't currently extracted — separate follow-up.
       - alert: IngressHighLatencyP95
-        expr: histogram_quantile(0.95, sum by (svc, le) ( label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 1
+        expr: histogram_quantile(0.95, sum by (svc, le) ( label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="dembrane-web-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="dembrane-web-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 1
         for: 15m
         labels:
           severity: warning
@@ -297,7 +297,7 @@ data:
           description: "> 1s over 15m: {{ "{{" }} $value {{ "}}" }}"
 
       - alert: IngressCriticalLatencyP95
-        expr: histogram_quantile(0.95, sum by (svc, le) ( label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="echo-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="echo-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 3
+        expr: histogram_quantile(0.95, sum by (svc, le) ( label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="dembrane-web-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="dembrane-web-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 3
         for: 10m
         labels:
           severity: critical
@@ -306,7 +306,7 @@ data:
           description: "> 3s over 10m: {{ "{{" }} $value {{ "}}" }}"
 
       - alert: CrashLoopBackOff
-        expr: sum by (namespace, pod, container) (kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff", namespace="echo-prod"}) > 0
+        expr: sum by (namespace, pod, container) (kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff", namespace="dembrane-web-prod"}) > 0
         for: 10m
         labels:
           severity: critical
@@ -314,7 +314,7 @@ data:
           summary: "CrashLoopBackOff: {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }} ({{ "{{" }} $labels.container {{ "}}" }})"
 
       - alert: PodRestartSpike
-        expr: sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total{namespace="echo-prod"}[5m])) > 3
+        expr: sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total{namespace="dembrane-web-prod"}[5m])) > 3
         for: 5m
         labels:
           severity: warning
@@ -322,7 +322,7 @@ data:
           summary: "Restart spike: {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }}"
 
       - alert: OOMKilled
-        expr: sum by (namespace, pod, container) (increase(kube_pod_container_status_terminated_reason{reason="OOMKilled", namespace="echo-prod"}[5m])) > 0
+        expr: sum by (namespace, pod, container) (increase(kube_pod_container_status_terminated_reason{reason="OOMKilled", namespace="dembrane-web-prod"}[5m])) > 0
         for: 1m
         labels:
           severity: critical
@@ -330,7 +330,7 @@ data:
           summary: "OOMKilled: {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }} ({{ "{{" }} $labels.container {{ "}}" }})"
 
       - alert: HighContainerCPUUtilization
-        expr: ( sum by (pod, namespace)(rate(container_cpu_usage_seconds_total{namespace="echo-prod", image!="", container!=""}[5m])) ) / clamp_min(sum by (pod, namespace)(kube_pod_container_resource_requests{namespace="echo-prod", resource="cpu", unit="core", container!=""}), 0.1) > 0.9
+        expr: ( sum by (pod, namespace)(rate(container_cpu_usage_seconds_total{namespace="dembrane-web-prod", image!="", container!=""}[5m])) ) / clamp_min(sum by (pod, namespace)(kube_pod_container_resource_requests{namespace="dembrane-web-prod", resource="cpu", unit="core", container!=""}), 0.1) > 0.9
         for: 10m
         labels:
           severity: warning
@@ -338,7 +338,7 @@ data:
           summary: "High CPU utilization vs requests: {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }}"
 
       - alert: HighContainerMemoryUtilization
-        expr: ( sum by (pod, namespace)(container_memory_working_set_bytes{namespace="echo-prod", image!="", container!=""}) ) / clamp_min(sum by (pod, namespace)(kube_pod_container_resource_limits{namespace="echo-prod", resource="memory", unit="byte", container!=""}), 1) > 0.9
+        expr: ( sum by (pod, namespace)(container_memory_working_set_bytes{namespace="dembrane-web-prod", image!="", container!=""}) ) / clamp_min(sum by (pod, namespace)(kube_pod_container_resource_limits{namespace="dembrane-web-prod", resource="memory", unit="byte", container!=""}), 1) > 0.9
         for: 10m
         labels:
           severity: warning
@@ -348,8 +348,8 @@ data:
       - alert: DeploymentAvailabilityShortfall
         expr: |
           (
-            sum by (deployment) (kube_deployment_spec_replicas{namespace="echo-prod", deployment=~"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*"})
-          - sum by (deployment) (kube_deployment_status_replicas_available{namespace="echo-prod", deployment=~"echo-(api|directus|worker|worker-cpu|worker-scheduler|neo4j).*"})
+            sum by (deployment) (kube_deployment_spec_replicas{namespace="dembrane-web-prod", deployment=~"dembrane-web-(api|worker|media|dashboard|portal)"})
+          - sum by (deployment) (kube_deployment_status_replicas_available{namespace="dembrane-web-prod", deployment=~"dembrane-web-(api|worker|media|dashboard|portal)"})
           ) > 0
         for: 10m
         labels:

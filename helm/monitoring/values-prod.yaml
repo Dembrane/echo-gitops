@@ -76,9 +76,13 @@ httpChecks:
   targets:
     - name: api
       url: https://api.dembrane.com/api/health
-    - name: directus
-      url: https://directus.dembrane.com/server/health
+    - name: ready
+      url: https://api.dembrane.com/ready
+    - name: dashboard
+      url: https://dashboard.dembrane.com/
+    - name: portal
+      url: https://portal.dembrane.com/
 
 # Dashboards (env-specific variables injected into configmap-grafana-dashboards)
 dashboards:
-  namespace: "echo-prod"
+  namespace: "dembrane-web-prod"
