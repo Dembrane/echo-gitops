@@ -98,20 +98,22 @@ These change nothing customers see.
    until its next version. The Directus admin app, its dashboards and its two manual email
    flows go with Directus, and so does every Directus static token.
 
-1. **Images.** A v3 release tag that includes the media auth change (v3 on Cloud Run fetches a
-   Google ID token for media from the metadata server, which DigitalOcean does not have) and
-   the held-contract fix in the migrate job (see "Release the contract"); both are in main since
-   `24a60749` and `b0a950ec`. A tag push alone runs checks only (the repository variable
-   `PROD_DEPLOY_ON_TAG` is unset on purpose), so start the job by hand and approve it in the
-   `prod` environment:
+1. **Images.** The release commit `fa8503af31b46c8e80f0251c6269dd2a3a028378` includes the media
+   auth change (v3 on Cloud Run fetches a Google ID token for media from the metadata server,
+   which DigitalOcean does not have) and the held-contract fix in the migrate job; both are in
+   main since `24a60749` and `b0a950ec`. Its images are in the registry (the echo-next rollout
+   pushes `registry.digitalocean.com/dbr-cr/dembrane-web-*:<sha>` for every commit on main) and
+   `global.imageTag` in `values-prod.yaml` names it, so the cluster needs nothing more.
+   The release itself comes after step 8, once v3 serves production: `70-deploy-prod` posts
+   "is live on prod" in the team channel, comments "Released in" on every pull request since
+   the last release, publishes the GitHub Release and tells sam. A tag push alone runs checks
+   only (the repository variable `PROD_DEPLOY_ON_TAG` is unset on purpose), so start the job by
+   hand and approve it in the `prod` environment. It finds the image tag already set and
+   commits nothing:
    ```sh
    git tag v3.0.0 fa8503af31b46c8e80f0251c6269dd2a3a028378 && git push origin v3.0.0
    gh workflow run platform.yml -R Dembrane/echo --ref main -f target=prod -f tag=v3.0.0
    ```
-   `70-deploy-prod` pushes `registry.digitalocean.com/dbr-cr/dembrane-web-*:<sha>` and commits
-   the sha to `helm/dembrane-web/values-prod.yaml` on `prod-v3`. It holds no cluster access, and
-   with automated sync off the commit only makes the app OutOfSync. It also publishes the
-   GitHub Release and posts in Slack, so the release is announced before the window.
 2. **Database login and secrets.** Done on 2026-10-11: the database user `echo_app`
    (`doctl databases user create <cluster id> echo_app`), the namespace `dembrane-web-prod`, and
    both sealed secrets, committed here and applied. `secrets/dembrane-web-prod-secrets.keys.md`
