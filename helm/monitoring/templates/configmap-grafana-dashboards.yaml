@@ -583,3 +583,9 @@ data:
         }
       ]
     }
+  # The dembrane v3 dashboards are JSON files in dashboards/. __NAMESPACE__ in them becomes the
+  # namespace their Namespace variable prefers and always offers.
+  v3-overview.json: |
+{{ .Files.Get "dashboards/v3-overview.json" | replace "__NAMESPACE__" .Values.dashboards.namespace | trim | indent 4 }}
+  v3-worker-jobs.json: |
+{{ .Files.Get "dashboards/v3-worker-jobs.json" | replace "__NAMESPACE__" .Values.dashboards.namespace | trim | indent 4 }}

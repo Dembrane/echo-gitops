@@ -51,6 +51,34 @@ Centralized logging for your applications:
 - Real-time log viewing with filtering capabilities
 - Error detection
 
+### 6. dembrane v3: overview
+
+One screen for the person on watch: is dembrane v3 up, where does it hurt, is it scaling.
+
+- Top row: the public checks, 5xx share, p95 latency, pods not ready, restarts and OOM kills in the last hour
+- Traffic: requests per second by host and by status class, p95 latency by host
+- Workloads: one row per deployment (ready pods against the autoscaler's minimum and maximum, CPU against request and limit, memory against limit) and ready pods over time
+- Worker jobs: jobs waiting, running and failed, and jobs finished per minute
+- Nodes: ready nodes per pool, CPU and memory use per node
+- API routes (closed by default): requests, 5xx answers and p95 latency per route, from the API's request log
+
+### 7. dembrane v3: worker and jobs
+
+The worker's queues and jobs (DBOS) and the log lines that need attention.
+
+- Queues: jobs waiting, running, failed and deferred, now and per queue over time, the age of the oldest waiting job and the scheduler heartbeat
+- Jobs: jobs finished per minute by area, failed attempts by job, and a table per job (runs, failed attempts, slowest run, last run)
+- Logs: error and warning lines per service, with the lines below
+- Worker pods: CPU against request and limit, memory against limit
+- Last release: the result of the migrate and smoke jobs and what they wrote
+
+### How the v3 dashboards get their data
+
+- The `Namespace` dropdown offers the namespace from `dashboards.namespace` and every `dembrane-web-*` namespace that runs pods. No query names a namespace itself.
+- Traffic comes from ingress-nginx, pods and autoscalers from kube-state-metrics, CPU and memory from cAdvisor, nodes from node-exporter, the public checks from the blackbox exporter.
+- Queues and jobs come from the worker's log through Loki: the worker logs one `queue.depth` line per queue every minute and one `job done` or `job failed` line per attempt. Loki reads at most 13 hours in one query, so these panels show an error on a longer time range.
+- A colour or a dashed line marks a real limit only: a container limit, an autoscaler maximum, or a threshold of an alert rule in `templates/configmap-prometheus.yaml`.
+
 ## How to Use the Dashboards
 
 1. Access Grafana through your ingress URL (e.g., `https://grafana.echo-next.dembrane.com`)
@@ -87,7 +115,7 @@ Centralized logging for your applications:
 
 These dashboards are provisioned automatically through ConfigMaps in the Helm chart. To make changes:
 
-1. Update the dashboard JSON in `helm/monitoring/templates/configmap-grafana-dashboards.yaml`
+1. Update the dashboard JSON in `helm/monitoring/templates/configmap-grafana-dashboards.yaml`. The two dembrane v3 dashboards are JSON files in `helm/monitoring/dashboards/`; `__NAMESPACE__` in them is replaced by `dashboards.namespace`. A new file there also needs a key in that ConfigMap and an item in `templates/deployment-grafana.yaml`.
 2. Upgrade the Helm release with:
    ```bash
    helm upgrade --install monitoring ./helm/monitoring --namespace monitoring
