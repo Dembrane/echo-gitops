@@ -216,14 +216,6 @@ data:
             target_label: instance
           - target_label: __address__
             replacement: blackbox-exporter.monitoring.svc:9115
-          - source_labels: [__param_target]
-            regex: .*/(api|directus)(?:/.*)?$
-            target_label: svc
-            replacement: $1
-          - source_labels: [__param_target]
-            regex: https?://(api|directus)\.
-            target_label: svc
-            replacement: $1
 
   node-alerts.yml: |
     groups:
@@ -278,17 +270,14 @@ data:
           summary: "Critical error rate via ingress on {{ "{{" }} $labels.svc {{ "}}" }}"
           description: "5xx ratio > 20% over 5m: {{ "{{" }} $value {{ "}}" }}"
 
-      # Latency thresholds raised from 0.5s/10m -> 1s/15m (warning) and
-      # 1.5s/5m -> 3s/10m (critical) per ECHO-813. Starting values; tune
-      # once we have p95 distribution data from the cluster.
+      # Latency thresholds: 1s/15m (warning) and 3s/10m (critical).
       #
-      # Note: nginx_ingress_controller_request_duration_seconds is bucketed
-      # by `svc` (service-level), not by path. Long-tail endpoints
-      # (transcription, LLM streaming) get aggregated into the `api` svc's
-      # p95 and can drag it up. Path-level alerting would need a route
-      # label that isn't currently extracted — separate follow-up.
+      # The ingress histogram is per service, not per route. The dashboard service proxies
+      # the live streams (the conversation monitor and map events), so its p95 is how long
+      # people keep a stream open, not page speed: it is left out of these alerts. Route
+      # level latency comes from the API's own request log lines in Loki (v3 overview).
       - alert: IngressHighLatencyP95
-        expr: histogram_quantile(0.95, sum by (svc, le) ( label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="dembrane-web-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="dembrane-web-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 1
+        expr: histogram_quantile(0.95, sum by (svc, le) ( label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="dembrane-web-prod", service!="dembrane-web-dashboard", exported_service!="dembrane-web-dashboard"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="dembrane-web-prod", service!="dembrane-web-dashboard", exported_service!="dembrane-web-dashboard"}[5m]), "svc", "$1", "service", "(.*)") )) > 1
         for: 15m
         labels:
           severity: warning
@@ -297,7 +286,7 @@ data:
           description: "> 1s over 15m: {{ "{{" }} $value {{ "}}" }}"
 
       - alert: IngressCriticalLatencyP95
-        expr: histogram_quantile(0.95, sum by (svc, le) ( label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="dembrane-web-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="dembrane-web-prod"}[5m]), "svc", "$1", "service", "(.*)") )) > 3
+        expr: histogram_quantile(0.95, sum by (svc, le) ( label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="dembrane-web-prod", service!="dembrane-web-dashboard", exported_service!="dembrane-web-dashboard"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="dembrane-web-prod", service!="dembrane-web-dashboard", exported_service!="dembrane-web-dashboard"}[5m]), "svc", "$1", "service", "(.*)") )) > 3
         for: 10m
         labels:
           severity: critical
