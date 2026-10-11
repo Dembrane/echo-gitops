@@ -251,7 +251,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "quantile_over_time(0.95, {namespace=\"$namespace\", container=\"api\"} | json | message=\"request\" | route!~\".*/(stream|events)$\" | unwrap duration(httpRequest_latency) [5m])",
+          "expr": "quantile_over_time(0.95, {namespace=\"$namespace\", container=\"api\"} | json | message=\"request\" | route!~\".*/(stream|events)$\" | unwrap duration(httpRequest_latency) [5m]) by (namespace)",
           "editorMode": "code",
           "queryType": "instant",
           "instant": true,
@@ -806,7 +806,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "quantile_over_time(0.95, {namespace=\"$namespace\", container=\"api\"} | json | message=\"request\" | route!~\".*/(stream|events)$\" | route!~\"/(health|ready|api/health)\" | label_format group=`{{ regexReplaceAll \"^/api/(v2/bff/|participant/|)([a-z-]+).*\" .route \"${2}\" }}` | unwrap duration(httpRequest_latency) [5m]) by (group)",
+          "expr": "quantile_over_time(0.95, {namespace=\"$namespace\", container=\"api\"} | json | message=\"request\" | route=~\"/api/.*\" | route!~\".*/(stream|events)$\" | route!=\"/api/health\" | label_format group=`{{ regexReplaceAll \"^/api/(v2/bff/|v2/|v1/|participant/|)([a-z-]+).*\" .route \"${2}\" }}` | unwrap duration(httpRequest_latency) [5m]) by (group)",
           "editorMode": "code",
           "legendFormat": "{{group}}",
           "queryType": "range",
