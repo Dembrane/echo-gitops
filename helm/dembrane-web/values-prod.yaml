@@ -39,7 +39,8 @@ env:
   STORAGE_S3_REGION: us-east-1
   # Postgres connection budget. The DO cluster's direct-connection limit is shared with the old
   # stack until it is scaled to 0. Per API pod: pool + 4 fixed = 9; per worker: pool + queue
-  # pool + 4 fixed = 13; migrate 3. At api max 4 and worker 2: 36 + 26 + 3 = 65.
+  # pool + 4 fixed = 13; migrate 3. At api max 8 and worker 4: 72 + 52 + 3 = 127 of the
+  # cluster's 200.
   DATABASE_POOL_MAX: "5"
   DATABASE_QUEUE_POOL_MAX: "4"
   # The GCP project the Vertex service account key (GCP_SA_JSON) belongs to: the old stack's
@@ -55,8 +56,8 @@ env:
 api:
   hpa:
     enabled: true
-    minReplicas: 2
-    maxReplicas: 4
+    minReplicas: 3
+    maxReplicas: 8
     cpuUtilization: 70
   resources:
     requests: { cpu: 500m, memory: 768Mi }
@@ -66,7 +67,7 @@ worker:
   # v3 runs the jobs the old stack's Dramatiq workers and scheduler ran (emails, webhooks,
   # billing timers) against the same database, so it is above 0 only while they are stopped
   # (CUTOVER.md step 4).
-  replicas: 2
+  replicas: 4
   resources:
     requests: { cpu: 500m, memory: 768Mi }
     limits: { cpu: "1", memory: 1Gi }
@@ -74,8 +75,8 @@ worker:
 media:
   hpa:
     enabled: true
-    minReplicas: 1
-    maxReplicas: 4
+    minReplicas: 2
+    maxReplicas: 6
     cpuUtilization: 60
   resources:
     requests: { cpu: "1", memory: 2Gi }
@@ -84,12 +85,12 @@ media:
 web:
   roles:
     dashboard:
-      hpa: { enabled: true, minReplicas: 2, maxReplicas: 4, cpuUtilization: 70 }
+      hpa: { enabled: true, minReplicas: 2, maxReplicas: 6, cpuUtilization: 70 }
       resources:
         requests: { cpu: 100m, memory: 192Mi }
         limits: { cpu: "1", memory: 512Mi }
     portal:
-      hpa: { enabled: true, minReplicas: 2, maxReplicas: 4, cpuUtilization: 70 }
+      hpa: { enabled: true, minReplicas: 2, maxReplicas: 6, cpuUtilization: 70 }
       resources:
         requests: { cpu: 100m, memory: 192Mi }
         limits: { cpu: "1", memory: 512Mi }
