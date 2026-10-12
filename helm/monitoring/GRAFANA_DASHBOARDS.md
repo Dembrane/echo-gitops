@@ -13,9 +13,9 @@ The dashboards that follow the v3 stack live as JSON files in `dashboards/`:
 - **dembrane v3: overview**: is it up, where does it hurt, is it scaling (ingress, pods, nodes, and API latency by route group from the API's own request log, live streams left out).
 - **dembrane v3: worker and jobs**: the worker's queues and jobs, from its log lines.
 - **dembrane v3: product**: who is recording now; conversations, hours, chunks, reports, chats, assistant runs and pipeline steps per Amsterdam day, today against yesterday.
-- **dembrane v3: AI**: model calls, latency, context size, errors, refusals, retries and an estimated cost, per operation and per day.
+- **dembrane v3: AI**: model calls, latency, context size, errors, refusals, retries and an estimated cost, per operation and per day. Its first row compares every environment and does not follow the Environment dropdown: production, staging and sam from their own record of calls, the previews from Google's count of tokens.
 - **dembrane: sam**: sam, the team's agent in Slack: how long people wait for a first answer, what a request costs, how many model calls a request takes, and what fails again and again. Its model calls also show in the AI dashboard, as the environment `sam`.
-- **dembrane v3: staging and previews**: the environments on Google Cloud Run: requests, 5xx, response time, containers, the database and the app's own log lines at warning level or above.
+- **dembrane v3: staging and previews**: the environments on Google Cloud Run: requests, 5xx, response time, containers, the worker's queues, the database, AI usage (Google's count of tokens and calls for the project, and the app's newest model calls with the pull request on previews) and the app's own log lines at warning level or above.
 
 The product and AI dashboards read each environment's Postgres through the `obs` views (counts, durations and sizes only) as a read-only role (`sql/grafana-obs-role.sql`). Their "Environment" dropdown switches between the data sources named `dembrane <env>`, so production and staging share one dashboard; each data source's address and login come from the secret `grafana-obs-db`.
 
