@@ -446,3 +446,7 @@ data:
 {{ .Files.Get "dashboards/v3-product.json" | trim | indent 4 }}
   v3-ai.json: |
 {{ .Files.Get "dashboards/v3-ai.json" | trim | indent 4 }}
+{{- if .Values.google.environments }}
+  v3-staging-previews.json: |
+{{ .Files.Get "dashboards/v3-staging-previews.json" | trim | indent 4 }}
+{{- end }}

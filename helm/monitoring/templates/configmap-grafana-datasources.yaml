@@ -47,3 +47,28 @@ data:
           password: {{ printf "$__env{OBS_%s_DB_PASSWORD}" (upper .name) | quote }}
         editable: false
 {{- end }}
+{{- /*
+  Environments on Google Cloud Run: their service metrics come from Cloud Monitoring (a
+  data source Grafana ships with) and their logs from Cloud Logging (a plugin, installed by
+  the init container in deployment-grafana.yaml). The uids are fixed, gcm-<name> and
+  gcl-<name>, because the dashboard "staging and previews" builds them from its Environment
+  dropdown. Project and login come from the secret (values.yaml), so no file names a
+  project; the dashboard reads it from the metrics (GRAFANA_DASHBOARDS.md).
+*/}}
+{{- range $name := .Values.google.environments }}
+{{- range $kind := list (dict "word" "metrics" "type" "stackdriver" "uid" "gcm") (dict "word" "logs" "type" $.Values.google.loggingPlugin.id "uid" "gcl") }}
+      - name: {{ printf "google %s %s" $kind.word $name | quote }}
+        type: {{ $kind.type }}
+        access: proxy
+        uid: {{ printf "%s-%s" $kind.uid $name | quote }}
+        isDefault: false
+        jsonData:
+          authenticationType: jwt
+          tokenUri: "$__env{GOOGLE_TOKEN_URI}"
+          clientEmail: "$__env{GOOGLE_CLIENT_EMAIL}"
+          defaultProject: {{ printf "$__env{GOOGLE_PROJECT_%s}" (upper $name) | quote }}
+        secureJsonData:
+          privateKey: "$__env{GOOGLE_PRIVATE_KEY}"
+        editable: false
+{{- end }}
+{{- end }}

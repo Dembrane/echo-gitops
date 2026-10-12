@@ -24,6 +24,43 @@ spec:
         fsGroup: 472
         runAsUser: 472
         runAsGroup: 472
+{{- if .Values.google.environments }}
+      # Installs the Cloud Logging plugin into Grafana's volume, once per version. It always
+      # ends with success and stops after two minutes: a download that fails or hangs leaves
+      # the log panels empty and never keeps Grafana from starting. The next start tries again.
+      # The image is Grafana's own, for its plugin installer: change both lines together.
+      initContainers:
+        - name: install-plugins
+          image: grafana/grafana:10.0.3
+          command:
+            - sh
+            - -c
+            - |
+              dir=/var/lib/grafana/plugins
+              if grep -q "\"version\": \"$PLUGIN_VERSION\"" "$dir/$PLUGIN_ID/plugin.json" 2>/dev/null; then
+                echo "$PLUGIN_ID $PLUGIN_VERSION is present"
+                exit 0
+              fi
+              mkdir -p "$dir"
+              timeout 120 grafana cli --pluginsDir "$dir" plugins install "$PLUGIN_ID" "$PLUGIN_VERSION" \
+                || echo "$PLUGIN_ID $PLUGIN_VERSION was not installed; Grafana starts without it"
+              exit 0
+          env:
+            - name: PLUGIN_ID
+              value: {{ .Values.google.loggingPlugin.id | quote }}
+            - name: PLUGIN_VERSION
+              value: {{ .Values.google.loggingPlugin.version | quote }}
+          volumeMounts:
+            - name: grafana-storage
+              mountPath: /var/lib/grafana
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "64Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+{{- end }}
       containers:
         - name: grafana
           image: grafana/grafana:10.0.3
@@ -71,6 +108,22 @@ spec:
                 secretKeyRef:
                   name: grafana-obs-db
                   key: {{ printf "OBS_%s_DB_%s" (upper $env.name) $part }}
+                  optional: true
+{{- end }}
+{{- end }}
+{{- /* The Google login and one project per environment, all from the secret; optional,
+       so a missing secret leaves those data sources without data and Grafana untouched. */}}
+{{- if .Values.google.environments }}
+{{- $keys := list "GOOGLE_CLIENT_EMAIL" "GOOGLE_PRIVATE_KEY" "GOOGLE_TOKEN_URI" }}
+{{- range $name := .Values.google.environments }}
+{{- $keys = append $keys (printf "GOOGLE_PROJECT_%s" (upper $name)) }}
+{{- end }}
+{{- range $key := $keys }}
+            - name: {{ $key }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.google.secretName }}
+                  key: {{ $key }}
                   optional: true
 {{- end }}
 {{- end }}
@@ -162,3 +215,7 @@ spec:
                 path: v3-product.json
               - key: v3-ai.json
                 path: v3-ai.json
+{{- if .Values.google.environments }}
+              - key: v3-staging-previews.json
+                path: v3-staging-previews.json
+{{- end }}
