@@ -92,3 +92,19 @@ alerting:
 # Dashboards (env-specific variables injected into configmap-grafana-dashboards)
 dashboards:
   namespace: "dembrane-web-dummy"
+# Product dashboards: one Postgres data source per environment, on that database's obs
+# views, as a read-only role. Where the database is and the login come from the secret
+# grafana-obs-db in the monitoring namespace: keys OBS_<NAME>_DB_HOST (host:port),
+# OBS_<NAME>_DB_NAME, OBS_<NAME>_DB_USER and OBS_<NAME>_DB_PASSWORD, names upper-cased.
+# The test cluster provisions none: its drafts were added through the Grafana API and it
+# is being retired; production holds the prod and staging sources (values-prod.yaml).
+obs:
+  environments: []
+  # Staging's database (Google Cloud SQL) is reached through the Cloud SQL Auth proxy as a
+  # sidecar of Grafana. Off until the secret grafana-cloud-sql-sa exists (keys
+  # credentials.json and instance); turning it on before that would keep Grafana from
+  # starting, and the deployment recreates its one pod.
+  cloudSqlProxy:
+    enabled: false
+    port: 5433
+    secretName: grafana-cloud-sql-sa

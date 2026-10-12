@@ -442,3 +442,7 @@ data:
 {{ .Files.Get "dashboards/v3-overview.json" | replace "__NAMESPACE__" .Values.dashboards.namespace | trim | indent 4 }}
   v3-worker-jobs.json: |
 {{ .Files.Get "dashboards/v3-worker-jobs.json" | replace "__NAMESPACE__" .Values.dashboards.namespace | trim | indent 4 }}
+  v3-product.json: |
+{{ .Files.Get "dashboards/v3-product.json" | trim | indent 4 }}
+  v3-ai.json: |
+{{ .Files.Get "dashboards/v3-ai.json" | trim | indent 4 }}
