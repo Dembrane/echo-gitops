@@ -44,8 +44,8 @@ app.kubernetes.io/component: {{ .component }}
 {{/* A map of name: value as env vars, in name order. */}}
 {{- define "dw.mapEnv" -}}
 {{- range $k, $v := . }}
-{{- /* A key set to null in a later values file is left out: how values-echo-next.yaml drops a
-key of values-prod.yaml. */}}
+{{- /* A key set to null in a later values file is left out: how a values file layered over
+values-prod.yaml drops one of its keys instead of rendering "<nil>". */}}
 {{- if not (kindIs "invalid" $v) }}
 - name: {{ $k }}
   value: {{ $v | toString | quote }}
