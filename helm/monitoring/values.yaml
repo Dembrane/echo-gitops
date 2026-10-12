@@ -108,3 +108,21 @@ obs:
     enabled: false
     port: 5433
     secretName: grafana-cloud-sql-sa
+
+# Environments that run on Google Cloud Run keep their logs and service metrics in Google
+# Cloud Logging and Cloud Monitoring. Each name here gets two read-only data sources,
+# "google metrics <name>" and "google logs <name>", and turns on the dashboard "staging and
+# previews" (a new name also goes into that dashboard's Environment dropdown). The Google
+# project of each name and the login come from the secret named below, in the monitoring
+# namespace: GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY, GOOGLE_TOKEN_URI and
+# GOOGLE_PROJECT_<NAME>, names upper-cased. A missing secret or a refused key leaves these
+# data sources without data; Grafana starts.
+google:
+  environments: []
+  secretName: grafana-google-sources
+  # The Cloud Logging data source is a plugin. An init container installs this version into
+  # Grafana's volume once and never fails the pod: without the plugin only the log panels
+  # are empty. 1.6.3 is the last version for Grafana 10; move both together.
+  loggingPlugin:
+    id: googlecloud-logging-datasource
+    version: "1.6.3"

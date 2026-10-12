@@ -105,3 +105,15 @@ obs:
     enabled: true
     port: 5433
     secretName: grafana-cloud-sql-sa
+
+# Staging and the PR previews run on Google Cloud Run: their logs and service metrics are
+# read from Google with a read-only login (see values.yaml). Needs the secret
+# grafana-google-sources in the monitoring namespace.
+google:
+  environments:
+    - staging
+    - previews
+  secretName: grafana-google-sources
+  loggingPlugin:
+    id: googlecloud-logging-datasource
+    version: "1.6.3"

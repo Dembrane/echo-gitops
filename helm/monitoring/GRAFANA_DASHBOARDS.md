@@ -14,8 +14,13 @@ The dashboards that follow the v3 stack live as JSON files in `dashboards/`:
 - **dembrane v3: worker and jobs**: the worker's queues and jobs, from its log lines.
 - **dembrane v3: product**: who is recording now; conversations, hours, chunks, reports, chats, assistant runs and pipeline steps per Amsterdam day, today against yesterday.
 - **dembrane v3: AI**: model calls, latency, context size, errors, refusals, retries and an estimated cost, per operation and per day.
+- **dembrane v3: staging and previews**: the environments on Google Cloud Run: requests, 5xx, response time, containers, the database and the app's own log lines at warning level or above.
 
 The product and AI dashboards read each environment's Postgres through the `obs` views (counts, durations and sizes only) as a read-only role (`sql/grafana-obs-role.sql`). Their "Environment" dropdown switches between the data sources named `dembrane <env>`, so production and staging share one dashboard; each data source's address and login come from the secret `grafana-obs-db`.
+
+The staging and previews dashboard reads Google Cloud Monitoring and Cloud Logging through two read-only data sources per environment, `google metrics <env>` and `google logs <env>` (uids `gcm-<env>` and `gcl-<env>`, which its "Environment" dropdown builds). The login and each environment's Google project come from the secret `grafana-google-sources`, so no file names a project: the dashboard reads the project from the metrics themselves, in a hidden variable. That variable leans on two behaviours of Grafana 10.0 (a metric query without a project uses the data source's default project, and the query needs a project field that is not empty before it runs), so open this dashboard first after a Grafana upgrade. For a free log search use Explore with a `google logs` data source and press "Run query"; the editor fills in the project.
+
+The Cloud Logging data source is a plugin, pinned in `values.yaml` to the last version for Grafana 10. An init container installs it into Grafana's volume once and always succeeds: without the plugin the log panels are empty and everything else works.
 
 ### 2. Kubernetes Cluster Monitoring
 
