@@ -363,7 +363,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(process_cpu_seconds_total{namespace=\"ingress-nginx\"}[5m]))",
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"ingress-nginx\", container=\"controller\"}[5m]))",
               "legendFormat": "CPU Usage"
             }
           ],
