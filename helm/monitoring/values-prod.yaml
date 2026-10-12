@@ -100,6 +100,10 @@ obs:
       sslmode: require
     - name: staging
       sslmode: disable
+    # sam, the team's agent: a database of its own on staging's instance, filled from sam's
+    # records by a loader. The AI dashboard lists it; the product dashboard leaves it out.
+    - name: sam
+      sslmode: disable
   # Needs the secret grafana-cloud-sql-sa in the monitoring namespace. The proxy is a
   # container of the Grafana pod: if it cannot start, the pod is not ready and Grafana
   # is unreachable, so set this to false first when Grafana does not come up.

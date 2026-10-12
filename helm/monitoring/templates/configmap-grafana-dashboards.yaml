@@ -446,6 +446,13 @@ data:
 {{ .Files.Get "dashboards/v3-product.json" | trim | indent 4 }}
   v3-ai.json: |
 {{ .Files.Get "dashboards/v3-ai.json" | trim | indent 4 }}
+{{- /* sam, the team's agent: its own database behind the data source "dembrane sam". */}}
+{{- range .Values.obs.environments }}
+{{- if eq .name "sam" }}
+  sam.json: |
+{{ $.Files.Get "dashboards/sam.json" | trim | indent 4 }}
+{{- end }}
+{{- end }}
 {{- if .Values.google.environments }}
   v3-staging-previews.json: |
 {{ .Files.Get "dashboards/v3-staging-previews.json" | trim | indent 4 }}

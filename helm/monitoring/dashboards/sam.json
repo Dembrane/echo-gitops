@@ -1,0 +1,2811 @@
+{
+  "uid": "sam",
+  "title": "dembrane: sam",
+  "description": "sam, the team's agent in Slack: how long people wait, what a request costs, how sam spends its model calls and what fails again and again. Names and numbers only.",
+  "tags": [
+    "dembrane-sam"
+  ],
+  "schemaVersion": 38,
+  "version": 1,
+  "editable": true,
+  "graphTooltip": 1,
+  "fiscalYearStartMonth": 0,
+  "liveNow": false,
+  "style": "dark",
+  "timezone": "Europe/Amsterdam",
+  "weekStart": "monday",
+  "refresh": "5m",
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "annotations": {
+    "list": []
+  },
+  "links": [
+    {
+      "type": "link",
+      "title": "sam's model calls (AI dashboard)",
+      "url": "/d/v3-ai?var-ds=dembrane%20sam",
+      "icon": "dashboard",
+      "keepTime": false,
+      "includeVars": false,
+      "targetBlank": false,
+      "asDropdown": false,
+      "tags": [],
+      "tooltip": ""
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "type": "datasource",
+        "name": "ds",
+        "label": "Environment",
+        "query": "postgres",
+        "regex": "/^dembrane sam$/",
+        "current": {
+          "text": "dembrane sam",
+          "value": "dembrane sam",
+          "selected": true
+        },
+        "hide": 2,
+        "includeAll": false,
+        "multi": false,
+        "refresh": 1
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "People, today (Amsterdam day)",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "panels": []
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Requests from people",
+      "description": "Sessions a person started in Slack today.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select count(*) as value from obs.sam_sessions where trigger = 'person' and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "none yet"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Wait for a first sign from sam, median",
+      "description": "From the moment sam starts on the message to the first thing the person can see: a status line, an acknowledgement or a reply.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select percentile_cont(0.5) within group (order by first_ack_s) as value from obs.sam_sessions where trigger = 'person' and first_ack_s is not null and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 30
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "noValue": "none yet",
+          "decimals": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Wait for the first answer, median",
+      "description": "Counted from the moment sam starts on the message to its first reply or question in the thread. Time in the queue before sam starts is not measured yet.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select percentile_cont(0.5) within group (order by first_reply_s) as value from obs.sam_sessions where trigger = 'person' and replied and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 120
+              },
+              {
+                "color": "red",
+                "value": 300
+              }
+            ]
+          },
+          "noValue": "none yet",
+          "decimals": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Wait for the first answer, slowest tenth",
+      "description": "Nine in ten people got their first answer faster than this today. Counted from the moment sam starts on the message to its first reply or question in the thread. Time in the queue before sam starts is not measured yet.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select percentile_cont(0.9) within group (order by first_reply_s) as value from obs.sam_sessions where trigger = 'person' and replied and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 300
+              },
+              {
+                "color": "red",
+                "value": 600
+              }
+            ]
+          },
+          "noValue": "none yet",
+          "decimals": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Median wait for an answer, last 7 days",
+      "description": "The same median over the seven days before today, to compare with.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select percentile_cont(0.5) within group (order by first_reply_s) as value from obs.sam_sessions where trigger = 'person' and replied and day >= (now() at time zone 'Europe/Amsterdam')::date - 7 and day < (now() at time zone 'Europe/Amsterdam')::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "none yet",
+          "decimals": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Time until sam is done, median",
+      "description": "From the start of a person's session to its end.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select percentile_cont(0.5) within group (order by duration_s) as value from obs.sam_sessions where trigger = 'person' and exit_state <> 'cut' and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "none yet",
+          "decimals": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "Ended without a reply",
+      "description": "A person's sessions today that ended with no reply and no question. Some are answered by a later session in the same thread.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 0,
+        "y": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select count(*) as value from obs.sam_sessions where trigger = 'person' and not replied and exit_state <> 'cut' and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "none yet"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Cut by a restart",
+      "description": "Sessions that were working when sam restarted and left no ledger row, today. Counted 45 minutes after their last step.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 6,
+        "y": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select count(*) as value from obs.sam_sessions where exit_state = 'cut' and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "none yet"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Failed",
+      "description": "Sessions that errored, got stuck or timed out today.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 12,
+        "y": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select count(*) as value from obs.sam_sessions where exit_state in ('errored', 'stuck', 'timed_out') and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "none yet"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "Asked a person and is waiting",
+      "description": "Sessions today that stopped to ask someone a question.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 18,
+        "y": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select count(*) as value from obs.sam_sessions where asked_operator and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "none yet"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 12,
+      "type": "row",
+      "title": "Cost (estimated from tokens at the invoice's rates)",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "panels": []
+    },
+    {
+      "id": 13,
+      "type": "stat",
+      "title": "Cost today",
+      "description": "Every session today: uncached input, cached input and output tokens times the rates in sam_rate.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 0,
+        "y": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select coalesce(sum(eur), 0) as value from obs.sam_sessions where day = (now() at time zone 'Europe/Amsterdam')::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "none yet",
+          "decimals": 2
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 14,
+      "type": "stat",
+      "title": "Cost this month",
+      "description": "The same estimate, this calendar month.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 3,
+        "y": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select coalesce(sum(eur), 0) as value from obs.sam_sessions where day >= date_trunc('month', (now() at time zone 'Europe/Amsterdam')::date)::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "none yet",
+          "decimals": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 15,
+      "type": "stat",
+      "title": "Cost of one request, median",
+      "description": "What one request from a person cost today.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 6,
+        "y": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select percentile_cont(0.5) within group (order by eur) as value from obs.sam_sessions where trigger = 'person' and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 2
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          },
+          "noValue": "none yet",
+          "decimals": 2
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 16,
+      "type": "stat",
+      "title": "Mentor this month, budget EUR 200",
+      "description": "What the Opus mentor spent this calendar month: sam's own meter, or the invoice where that is higher. The mentor stops for the month at 200.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 9,
+        "y": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select greatest((select coalesce(sum(eur), 0) from obs.sam_mentor_calls where day >= date_trunc('month', (now() at time zone 'Europe/Amsterdam')::date)::date), (select coalesce(sum(eur), 0) from obs.sam_billed_days where service like 'Claude%' and day >= date_trunc('month', (now() at time zone 'Europe/Amsterdam')::date)::date)) as value",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 150
+              },
+              {
+                "color": "red",
+                "value": 190
+              }
+            ]
+          },
+          "noValue": "none yet",
+          "decimals": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 17,
+      "type": "stat",
+      "title": "Input read from cache",
+      "description": "Share of today's input tokens that came from the cache, at a tenth of the price. The aim is above 85%.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 12,
+        "y": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select 100.0 * sum(cached_tokens) / nullif(sum(prompt_tokens), 0) as value from obs.sam_sessions where day = (now() at time zone 'Europe/Amsterdam')::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "green",
+                "value": 85
+              }
+            ]
+          },
+          "noValue": "none yet",
+          "decimals": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 18,
+      "type": "stat",
+      "title": "Input tokens",
+      "description": "Tokens sent to the models today, cached or not.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 15,
+        "y": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select coalesce(sum(prompt_tokens), 0) as value from obs.sam_sessions where day = (now() at time zone 'Europe/Amsterdam')::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "none yet"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 19,
+      "type": "stat",
+      "title": "Output tokens",
+      "description": "Tokens the models wrote today, thinking included.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select coalesce(sum(output_tokens), 0) as value from obs.sam_sessions where day = (now() at time zone 'Europe/Amsterdam')::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "none yet"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 20,
+      "type": "row",
+      "title": "How sam works, today",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "panels": []
+    },
+    {
+      "id": 21,
+      "type": "stat",
+      "title": "Model calls per request, median",
+      "description": "How many times sam called a model to finish one request from a person. Every call re-sends the whole conversation.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 14
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select percentile_cont(0.5) within group (order by llm_calls) as value from obs.sam_sessions where trigger = 'person' and llm_calls > 0 and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 40
+              },
+              {
+                "color": "red",
+                "value": 70
+              }
+            ]
+          },
+          "noValue": "none yet",
+          "decimals": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 22,
+      "type": "stat",
+      "title": "Tools per model call",
+      "description": "Tool calls divided by model calls today. At 1 sam does one thing per turn; above 1 it batches.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 14
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select sum(tool_calls)::numeric / nullif(sum(llm_calls), 0) as value from obs.sam_sessions where day = (now() at time zone 'Europe/Amsterdam')::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1.2
+              }
+            ]
+          },
+          "noValue": "none yet",
+          "decimals": 2
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 23,
+      "type": "stat",
+      "title": "Context per call, average",
+      "description": "Average tokens in one request to a model today.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 14
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select sum(prompt_tokens) / nullif(sum(llm_calls), 0) as value from obs.sam_sessions where day = (now() at time zone 'Europe/Amsterdam')::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "none yet",
+          "decimals": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 24,
+      "type": "stat",
+      "title": "Cost in sessions over 50 calls",
+      "description": "Share of today's cost spent in sessions of more than 50 model calls.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 14
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select 100.0 * sum(eur) filter (where llm_calls > 50) / nullif(sum(eur), 0) as value from obs.sam_sessions where day = (now() at time zone 'Europe/Amsterdam')::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 75
+              }
+            ]
+          },
+          "noValue": "none yet",
+          "decimals": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 25,
+      "type": "stat",
+      "title": "Steps that failed the usual way",
+      "description": "Tool calls today that failed in one of the known, repeating ways. The chart below splits them by kind.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 14
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select count(*) as value from obs.sam_tool_calls where failure is not null and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 40
+              }
+            ]
+          },
+          "noValue": "none yet"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 26,
+      "type": "stat",
+      "title": "Scheduled runs",
+      "description": "Sessions started by a timer today.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 14
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select count(*) as value from obs.sam_sessions where trigger = 'scheduled' and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "none yet"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 27,
+      "type": "row",
+      "title": "Over the selected time, one point per Amsterdam day",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "panels": []
+    },
+    {
+      "id": 28,
+      "type": "timeseries",
+      "title": "Wait for the first answer (s)",
+      "description": "Counted from the moment sam starts on the message to its first reply or question in the thread. Time in the queue before sam starts is not measured yet.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 19
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, percentile_cont(0.5) within group (order by first_reply_s) as median, percentile_cont(0.9) within group (order by first_reply_s) as \"slowest tenth\" from obs.sam_sessions where $__timeFilter(started_at) and trigger = 'person' and replied group by day order by 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 29,
+      "type": "timeseries",
+      "title": "Sessions per day, by what started them",
+      "description": "person: a message in Slack. scheduled: a timer. webhook: an event from GitHub or the product. retry: sam picking work up again.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 19
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, trigger as metric, count(*) as value from obs.sam_sessions where $__timeFilter(started_at) and exit_state <> 'cut' group by day, trigger order by 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 70,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 30,
+      "type": "timeseries",
+      "title": "Cost per day (EUR), by what started the session",
+      "description": "Estimated from tokens.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 27
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, trigger as metric, sum(eur) as value from obs.sam_sessions where $__timeFilter(started_at) group by day, trigger order by 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 70,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 31,
+      "type": "timeseries",
+      "title": "Input read from cache (%)",
+      "description": "Share of input tokens served from the cache per day.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 27
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, 100.0 * sum(cached_tokens) / nullif(sum(prompt_tokens), 0) as \"cached share\" from obs.sam_sessions where $__timeFilter(started_at) group by day order by 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 32,
+      "type": "timeseries",
+      "title": "Model calls per request, median",
+      "description": "Requests from people only.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 35
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, percentile_cont(0.5) within group (order by llm_calls) as \"calls per request\" from obs.sam_sessions where $__timeFilter(started_at) and trigger = 'person' and llm_calls > 0 group by day order by 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 33,
+      "type": "timeseries",
+      "title": "Tools per model call",
+      "description": "Above 1 means sam batches independent steps into one turn.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 35
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, sum(tool_calls)::numeric / nullif(sum(llm_calls), 0) as \"tools per call\" from obs.sam_sessions where $__timeFilter(started_at) group by day order by 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 34,
+      "type": "timeseries",
+      "title": "Steps that failed the usual way, per day",
+      "description": "By class of failure.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 43
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, failure as metric, count(*) as value from obs.sam_tool_calls where $__timeFilter(ts) and failure is not null group by day, failure order by 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 70,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 35,
+      "type": "timeseries",
+      "title": "Sessions cut by a restart or failed, per day",
+      "description": "cut: sam restarted under a working session. The rest ended in an error, a timeout or stuck.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 43
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, exit_state as metric, count(*) as value from obs.sam_sessions where $__timeFilter(started_at) and exit_state <> 'clean' group by day, exit_state order by 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 70,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 36,
+      "type": "timeseries",
+      "title": "From the invoice: EUR per day, by service",
+      "description": "What Google billed sam's project, before credits. Arrives a day late, and only while the loader can read the billing export.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 51
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, service as metric, sum(eur) as value from obs.sam_billed_days where $__timeFilter(day::timestamp at time zone 'Europe/Amsterdam') and eur > 0.5 group by day, service order by 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 70,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 37,
+      "type": "timeseries",
+      "title": "Mentor consults per day",
+      "description": "How often sam asked the Opus mentor.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 51
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, sum(mentor_consults) as consults from obs.sam_sessions where $__timeFilter(started_at) group by day order by 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 70,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 38,
+      "type": "row",
+      "title": "Where it goes, last 7 days",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 59
+      },
+      "panels": []
+    },
+    {
+      "id": 39,
+      "type": "table",
+      "title": "By channel",
+      "description": "Requests from people per Slack channel.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 60
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select coalesce(channel, channel_id, '(unknown)') as channel, count(*) as requests, round(percentile_cont(0.5) within group (order by first_reply_s) filter (where replied)) as median_wait, round(sum(eur)::numeric, 2) as eur, round((sum(eur) / count(*))::numeric, 2) as eur_per_request, round(percentile_cont(0.5) within group (order by llm_calls)) as median_calls from obs.sam_sessions where trigger = 'person' and day >= (now() at time zone 'Europe/Amsterdam')::date - 7 group by 1 order by eur desc",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "median_wait"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "eur"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyEUR"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "eur_per_request"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyEUR"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 40,
+      "type": "table",
+      "title": "Scheduled jobs",
+      "description": "Every job a timer started.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 60
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select coalesce(job, '(unnamed)') as job, count(*) as runs, round(sum(eur)::numeric, 2) as eur, round((sum(eur) / count(*))::numeric, 2) as eur_per_run, round(percentile_cont(0.5) within group (order by llm_calls)) as median_calls, count(*) filter (where exit_state <> 'clean') as not_clean from obs.sam_sessions where trigger = 'scheduled' and day >= (now() at time zone 'Europe/Amsterdam')::date - 7 group by 1 order by eur desc",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "eur"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyEUR"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "eur_per_run"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyEUR"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 41,
+      "type": "table",
+      "title": "Most expensive sessions",
+      "description": "The twenty sessions that cost most.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 69
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select to_char(started_at at time zone 'Europe/Amsterdam', 'MM-DD HH24:MI') as started, coalesce(channel, job, trigger) as \"where\", trigger, llm_calls as calls, max_context_tokens as largest_request, cached_pct, round(first_reply_s) as wait, eur, session_id from obs.sam_sessions where day >= (now() at time zone 'Europe/Amsterdam')::date - 7 order by eur desc nulls last limit 20",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "eur"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyEUR"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "wait"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cached_pct"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 42,
+      "type": "table",
+      "title": "Longest waits for a first answer",
+      "description": "The twenty requests where a person waited longest.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 69
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select to_char(started_at at time zone 'Europe/Amsterdam', 'MM-DD HH24:MI') as started, coalesce(channel, channel_id) as channel, round(first_reply_s) as wait, round(duration_s) as until_done, llm_calls as calls, eur, session_id from obs.sam_sessions where trigger = 'person' and replied and day >= (now() at time zone 'Europe/Amsterdam')::date - 7 order by first_reply_s desc limit 20",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "eur"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyEUR"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "wait"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "until_done"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 43,
+      "type": "table",
+      "title": "Sessions cut by a restart",
+      "description": "Left no ledger row. The thread is where a person may still be waiting.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 78
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select to_char(started_at at time zone 'Europe/Amsterdam', 'MM-DD HH24:MI') as started, to_char(ended_at at time zone 'Europe/Amsterdam', 'HH24:MI:SS') as last_step, trigger, tool_calls as steps, replied, session_id from obs.sam_sessions where exit_state = 'cut' and day >= (now() at time zone 'Europe/Amsterdam')::date - 7 order by started_at desc",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 44,
+      "type": "table",
+      "title": "How fresh this page is",
+      "description": "What the loader read last, and when. The loader runs every ten minutes.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 78
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select source, loaded_through, to_char(loaded_at at time zone 'Europe/Amsterdam', 'MM-DD HH24:MI') as loaded_at, rows from obs.sam_loads order by source",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": []
+      }
+    }
+  ]
+}

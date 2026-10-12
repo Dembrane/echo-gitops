@@ -18,7 +18,7 @@
   "annotations": {"list": []},
   "links": [{"type": "link", "title": "AI", "url": "/d/v3-ai", "icon": "dashboard", "keepTime": true, "includeVars": true, "targetBlank": false, "asDropdown": false, "tags": [], "tooltip": ""}, {"type": "link", "title": "Overview", "url": "/d/v3-overview", "icon": "dashboard", "keepTime": true, "includeVars": true, "targetBlank": false, "asDropdown": false, "tags": [], "tooltip": ""}, {"type": "link", "title": "Worker and jobs", "url": "/d/v3-worker-jobs", "icon": "dashboard", "keepTime": true, "includeVars": true, "targetBlank": false, "asDropdown": false, "tags": [], "tooltip": ""}],
   "templating": {"list": [
-    {"type": "datasource", "name": "ds", "label": "Environment", "query": "postgres", "regex": "/^dembrane/", "current": {"text": "dembrane prod", "value": "dembrane prod", "selected": true}, "hide": 0, "includeAll": false, "multi": false, "refresh": 1}
+    {"type": "datasource", "name": "ds", "label": "Environment", "query": "postgres", "regex": "/^dembrane (?!sam$)/", "current": {"text": "dembrane prod", "value": "dembrane prod", "selected": true}, "hide": 0, "includeAll": false, "multi": false, "refresh": 1}
   ]},
   "panels": [
     {"id": 1, "type": "row", "title": "Right now", "collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}, "panels": []},
