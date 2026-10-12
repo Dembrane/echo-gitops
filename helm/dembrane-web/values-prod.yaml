@@ -55,6 +55,10 @@ env:
   # sender name (infra/config.yaml in Dembrane/sam).
   SAM_INBOX_URL: https://europe-west1-dembrane-sameer-cli.cloudfunctions.net/sam-inbox-proxy/inbox
   SAM_INBOX_FROM: api.dembrane.com
+  # sam also takes the offer flow messages (offer sent or withdrawn, invoice request, a task
+  # that waits on the customer). sam's sender for this host must take the invoice request
+  # (invoice_requests in its infra/config.yaml): the two settings go together.
+  ACCOUNTS_OFFER_MESSAGES: "true"
   # Off Cloud Run there is no metadata server to mint identity tokens; media is reachable only
   # inside the cluster (NetworkPolicy), so calls go without one.
   MEDIA_AUTH: none
