@@ -74,7 +74,7 @@
     {
       "id": 2,
       "type": "stat",
-      "title": "Requests from people",
+      "title": "People asking",
       "description": "Sessions a person started in Slack today.",
       "datasource": {
         "type": "postgres",
@@ -140,7 +140,7 @@
     {
       "id": 3,
       "type": "stat",
-      "title": "Wait for a first sign from sam, median",
+      "title": "First sign, median",
       "description": "From the moment sam starts on the message to the first thing the person can see: a status line, an acknowledgement or a reply.",
       "datasource": {
         "type": "postgres",
@@ -215,7 +215,7 @@
     {
       "id": 4,
       "type": "stat",
-      "title": "Wait for the first answer, median",
+      "title": "First answer, median",
       "description": "Counted from the moment sam starts on the message to its first reply or question in the thread. Time in the queue before sam starts is not measured yet.",
       "datasource": {
         "type": "postgres",
@@ -290,7 +290,7 @@
     {
       "id": 5,
       "type": "stat",
-      "title": "Wait for the first answer, slowest tenth",
+      "title": "Answer, slowest tenth",
       "description": "Nine in ten people got their first answer faster than this today. Counted from the moment sam starts on the message to its first reply or question in the thread. Time in the queue before sam starts is not measured yet.",
       "datasource": {
         "type": "postgres",
@@ -365,7 +365,7 @@
     {
       "id": 6,
       "type": "stat",
-      "title": "Median wait for an answer, last 7 days",
+      "title": "Answer, 7 day median",
       "description": "The same median over the seven days before today, to compare with.",
       "datasource": {
         "type": "postgres",
@@ -432,7 +432,7 @@
     {
       "id": 7,
       "type": "stat",
-      "title": "Time until sam is done, median",
+      "title": "Done, median",
       "description": "From the start of a person's session to its end.",
       "datasource": {
         "type": "postgres",
@@ -709,7 +709,7 @@
     {
       "id": 11,
       "type": "stat",
-      "title": "Asked a person and is waiting",
+      "title": "Asked a person",
       "description": "Sessions today that stopped to ask someone a question.",
       "datasource": {
         "type": "postgres",
@@ -796,7 +796,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
+        "w": 4,
         "x": 0,
         "y": 9
       },
@@ -863,8 +863,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
-        "x": 3,
+        "w": 4,
+        "x": 4,
         "y": 9
       },
       "targets": [
@@ -914,7 +914,7 @@
             ]
           },
           "noValue": "none yet",
-          "decimals": 0
+          "decimals": 2
         },
         "overrides": []
       }
@@ -922,7 +922,7 @@
     {
       "id": 15,
       "type": "stat",
-      "title": "Cost of one request, median",
+      "title": "Cost per request",
       "description": "What one request from a person cost today.",
       "datasource": {
         "type": "postgres",
@@ -930,8 +930,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
-        "x": 6,
+        "w": 4,
+        "x": 8,
         "y": 9
       },
       "targets": [
@@ -997,7 +997,7 @@
     {
       "id": 16,
       "type": "stat",
-      "title": "Mentor this month, budget EUR 200",
+      "title": "Mentor, of EUR 200",
       "description": "What the Opus mentor spent this calendar month: sam's own meter, or the invoice where that is higher. The mentor stops for the month at 200.",
       "datasource": {
         "type": "postgres",
@@ -1005,8 +1005,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
-        "x": 9,
+        "w": 4,
+        "x": 12,
         "y": 9
       },
       "targets": [
@@ -1072,7 +1072,7 @@
     {
       "id": 17,
       "type": "stat",
-      "title": "Input read from cache",
+      "title": "Input from cache",
       "description": "Share of today's input tokens that came from the cache, at a tenth of the price. The aim is above 85%.",
       "datasource": {
         "type": "postgres",
@@ -1080,8 +1080,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
-        "x": 12,
+        "w": 4,
+        "x": 16,
         "y": 9
       },
       "targets": [
@@ -1155,8 +1155,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
-        "x": 15,
+        "w": 4,
+        "x": 20,
         "y": 9
       },
       "targets": [
@@ -1212,72 +1212,6 @@
     },
     {
       "id": 19,
-      "type": "stat",
-      "title": "Output tokens",
-      "description": "Tokens the models wrote today, thinking included.",
-      "datasource": {
-        "type": "postgres",
-        "uid": "${ds}"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 9
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "postgres",
-            "uid": "${ds}"
-          },
-          "rawSql": "select coalesce(sum(output_tokens), 0) as value from obs.sam_sessions where day = (now() at time zone 'Europe/Amsterdam')::date",
-          "format": "table",
-          "rawQuery": true,
-          "editorMode": "code"
-        }
-      ],
-      "options": {
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "orientation": "auto",
-        "textMode": "value",
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "text": {
-          "titleSize": 14,
-          "valueSize": 26
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "text",
-                "value": null
-              }
-            ]
-          },
-          "noValue": "none yet"
-        },
-        "overrides": []
-      }
-    },
-    {
-      "id": 20,
       "type": "row",
       "title": "How sam works, today",
       "collapsed": false,
@@ -1290,9 +1224,9 @@
       "panels": []
     },
     {
-      "id": 21,
+      "id": 20,
       "type": "stat",
-      "title": "Model calls per request, median",
+      "title": "Calls per request",
       "description": "How many times sam called a model to finish one request from a person. Every call re-sends the whole conversation.",
       "datasource": {
         "type": "postgres",
@@ -1365,9 +1299,9 @@
       }
     },
     {
-      "id": 22,
+      "id": 21,
       "type": "stat",
-      "title": "Tools per model call",
+      "title": "Tools per call",
       "description": "Tool calls divided by model calls today. At 1 sam does one thing per turn; above 1 it batches.",
       "datasource": {
         "type": "postgres",
@@ -1436,9 +1370,9 @@
       }
     },
     {
-      "id": 23,
+      "id": 22,
       "type": "stat",
-      "title": "Context per call, average",
+      "title": "Context per call",
       "description": "Average tokens in one request to a model today.",
       "datasource": {
         "type": "postgres",
@@ -1503,9 +1437,9 @@
       }
     },
     {
-      "id": 24,
+      "id": 23,
       "type": "stat",
-      "title": "Cost in sessions over 50 calls",
+      "title": "Cost in long sessions",
       "description": "Share of today's cost spent in sessions of more than 50 model calls.",
       "datasource": {
         "type": "postgres",
@@ -1578,9 +1512,9 @@
       }
     },
     {
-      "id": 25,
+      "id": 24,
       "type": "stat",
-      "title": "Steps that failed the usual way",
+      "title": "Repeat failures",
       "description": "Tool calls today that failed in one of the known, repeating ways. The chart below splits them by kind.",
       "datasource": {
         "type": "postgres",
@@ -1652,7 +1586,7 @@
       }
     },
     {
-      "id": 26,
+      "id": 25,
       "type": "stat",
       "title": "Scheduled runs",
       "description": "Sessions started by a timer today.",
@@ -1718,7 +1652,7 @@
       }
     },
     {
-      "id": 27,
+      "id": 26,
       "type": "row",
       "title": "Over the selected time, one point per Amsterdam day",
       "collapsed": false,
@@ -1731,9 +1665,9 @@
       "panels": []
     },
     {
-      "id": 28,
+      "id": 27,
       "type": "timeseries",
-      "title": "Wait for the first answer (s)",
+      "title": "Wait for the first answer: median and slowest tenth",
       "description": "Counted from the moment sam starts on the message to its first reply or question in the thread. Time in the queue before sam starts is not measured yet.",
       "datasource": {
         "type": "postgres",
@@ -1795,7 +1729,7 @@
       }
     },
     {
-      "id": 29,
+      "id": 28,
       "type": "timeseries",
       "title": "Sessions per day, by what started them",
       "description": "person: a message in Slack. scheduled: a timer. webhook: an event from GitHub or the product. retry: sam picking work up again.",
@@ -1859,7 +1793,7 @@
       }
     },
     {
-      "id": 30,
+      "id": 29,
       "type": "timeseries",
       "title": "Cost per day (EUR), by what started the session",
       "description": "Estimated from tokens.",
@@ -1880,7 +1814,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, trigger as metric, sum(eur) as value from obs.sam_sessions where $__timeFilter(started_at) group by day, trigger order by 1",
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, trigger as metric, sum(eur) as value from obs.sam_sessions where $__timeFilter(started_at) and exit_state <> 'cut' group by day, trigger order by 1",
           "format": "time_series",
           "rawQuery": true,
           "editorMode": "code"
@@ -1923,7 +1857,7 @@
       }
     },
     {
-      "id": 31,
+      "id": 30,
       "type": "timeseries",
       "title": "Input read from cache (%)",
       "description": "Share of input tokens served from the cache per day.",
@@ -1987,7 +1921,7 @@
       }
     },
     {
-      "id": 32,
+      "id": 31,
       "type": "timeseries",
       "title": "Model calls per request, median",
       "description": "Requests from people only.",
@@ -2051,7 +1985,7 @@
       }
     },
     {
-      "id": 33,
+      "id": 32,
       "type": "timeseries",
       "title": "Tools per model call",
       "description": "Above 1 means sam batches independent steps into one turn.",
@@ -2115,7 +2049,7 @@
       }
     },
     {
-      "id": 34,
+      "id": 33,
       "type": "timeseries",
       "title": "Steps that failed the usual way, per day",
       "description": "By class of failure.",
@@ -2179,7 +2113,7 @@
       }
     },
     {
-      "id": 35,
+      "id": 34,
       "type": "timeseries",
       "title": "Sessions cut by a restart or failed, per day",
       "description": "cut: sam restarted under a working session. The rest ended in an error, a timeout or stuck.",
@@ -2243,7 +2177,7 @@
       }
     },
     {
-      "id": 36,
+      "id": 35,
       "type": "timeseries",
       "title": "From the invoice: EUR per day, by service",
       "description": "What Google billed sam's project, before credits. Arrives a day late, and only while the loader can read the billing export.",
@@ -2307,7 +2241,7 @@
       }
     },
     {
-      "id": 37,
+      "id": 36,
       "type": "timeseries",
       "title": "Mentor consults per day",
       "description": "How often sam asked the Opus mentor.",
@@ -2371,7 +2305,7 @@
       }
     },
     {
-      "id": 38,
+      "id": 37,
       "type": "row",
       "title": "Where it goes, last 7 days",
       "collapsed": false,
@@ -2384,10 +2318,10 @@
       "panels": []
     },
     {
-      "id": 39,
+      "id": 38,
       "type": "table",
       "title": "By channel",
-      "description": "Requests from people per Slack channel.",
+      "description": "Requests from people per Slack channel. wait: median wait for the first answer. each: cost per request. calls: median model calls per request.",
       "datasource": {
         "type": "postgres",
         "uid": "${ds}"
@@ -2405,7 +2339,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select coalesce(channel, channel_id, '(unknown)') as channel, count(*) as requests, round(percentile_cont(0.5) within group (order by first_reply_s) filter (where replied)) as median_wait, round(sum(eur)::numeric, 2) as eur, round((sum(eur) / count(*))::numeric, 2) as eur_per_request, round(percentile_cont(0.5) within group (order by llm_calls)) as median_calls from obs.sam_sessions where trigger = 'person' and day >= (now() at time zone 'Europe/Amsterdam')::date - 7 group by 1 order by eur desc",
+          "rawSql": "select coalesce(channel, channel_id, '(unknown)') as channel, count(*) as requests, round(percentile_cont(0.5) within group (order by first_reply_s) filter (where replied)) as wait, round(sum(eur)::numeric, 2) as eur, round((sum(eur) / count(*))::numeric, 2) as each, round(percentile_cont(0.5) within group (order by llm_calls)) as calls from obs.sam_sessions where trigger = 'person' and day >= (now() at time zone 'Europe/Amsterdam')::date - 7 group by 1 order by eur desc",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
@@ -2432,7 +2366,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "median_wait"
+              "options": "wait"
             },
             "properties": [
               {
@@ -2456,7 +2390,80 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "eur_per_request"
+              "options": "each"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyEUR"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 39,
+      "type": "table",
+      "title": "Scheduled jobs",
+      "description": "Every job a timer started. each: cost per run. calls: median model calls per run. bad: runs that did not end clean.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 60
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select coalesce(job, '(unnamed)') as job, count(*) as runs, round(sum(eur)::numeric, 2) as eur, round((sum(eur) / count(*))::numeric, 2) as each, round(percentile_cont(0.5) within group (order by llm_calls)) as calls, count(*) filter (where exit_state <> 'clean') as bad from obs.sam_sessions where trigger = 'scheduled' and day >= (now() at time zone 'Europe/Amsterdam')::date - 7 group by 1 order by eur desc",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "eur"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyEUR"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "each"
             },
             "properties": [
               {
@@ -2471,88 +2478,15 @@
     {
       "id": 40,
       "type": "table",
-      "title": "Scheduled jobs",
-      "description": "Every job a timer started.",
-      "datasource": {
-        "type": "postgres",
-        "uid": "${ds}"
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 60
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "postgres",
-            "uid": "${ds}"
-          },
-          "rawSql": "select coalesce(job, '(unnamed)') as job, count(*) as runs, round(sum(eur)::numeric, 2) as eur, round((sum(eur) / count(*))::numeric, 2) as eur_per_run, round(percentile_cont(0.5) within group (order by llm_calls)) as median_calls, count(*) filter (where exit_state <> 'clean') as not_clean from obs.sam_sessions where trigger = 'scheduled' and day >= (now() at time zone 'Europe/Amsterdam')::date - 7 group by 1 order by eur desc",
-          "format": "table",
-          "rawQuery": true,
-          "editorMode": "code"
-        }
-      ],
-      "options": {
-        "showHeader": true,
-        "cellHeight": "sm",
-        "footer": {
-          "show": false
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "filterable": false
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "eur"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "currencyEUR"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "eur_per_run"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "currencyEUR"
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "id": 41,
-      "type": "table",
       "title": "Most expensive sessions",
-      "description": "The twenty sessions that cost most.",
+      "description": "The fifteen sessions that cost most. largest: tokens in the biggest single request. cached: share of input read from the cache. wait: until the first answer.",
       "datasource": {
         "type": "postgres",
         "uid": "${ds}"
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
+        "h": 10,
+        "w": 24,
         "x": 0,
         "y": 69
       },
@@ -2563,7 +2497,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select to_char(started_at at time zone 'Europe/Amsterdam', 'MM-DD HH24:MI') as started, coalesce(channel, job, trigger) as \"where\", trigger, llm_calls as calls, max_context_tokens as largest_request, cached_pct, round(first_reply_s) as wait, eur, session_id from obs.sam_sessions where day >= (now() at time zone 'Europe/Amsterdam')::date - 7 order by eur desc nulls last limit 20",
+          "rawSql": "select to_char(started_at at time zone 'Europe/Amsterdam', 'MM-DD HH24:MI') as started, coalesce(channel, job, trigger) as \"where\", trigger, llm_calls as calls, max_context_tokens as largest, cached_pct as cached, round(first_reply_s) as wait, eur, session_id as session from obs.sam_sessions where day >= (now() at time zone 'Europe/Amsterdam')::date - 7 order by eur desc nulls last limit 15",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
@@ -2614,7 +2548,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "cached_pct"
+              "options": "cached"
             },
             "properties": [
               {
@@ -2627,10 +2561,10 @@
       }
     },
     {
-      "id": 42,
+      "id": 41,
       "type": "table",
       "title": "Longest waits for a first answer",
-      "description": "The twenty requests where a person waited longest.",
+      "description": "The requests where a person waited longest.",
       "datasource": {
         "type": "postgres",
         "uid": "${ds}"
@@ -2638,8 +2572,8 @@
       "gridPos": {
         "h": 9,
         "w": 12,
-        "x": 12,
-        "y": 69
+        "x": 0,
+        "y": 79
       },
       "targets": [
         {
@@ -2648,7 +2582,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select to_char(started_at at time zone 'Europe/Amsterdam', 'MM-DD HH24:MI') as started, coalesce(channel, channel_id) as channel, round(first_reply_s) as wait, round(duration_s) as until_done, llm_calls as calls, eur, session_id from obs.sam_sessions where trigger = 'person' and replied and day >= (now() at time zone 'Europe/Amsterdam')::date - 7 order by first_reply_s desc limit 20",
+          "rawSql": "select to_char(started_at at time zone 'Europe/Amsterdam', 'MM-DD HH24:MI') as started, coalesce(channel, channel_id) as channel, round(first_reply_s) as wait, llm_calls as calls, eur from obs.sam_sessions where trigger = 'person' and replied and day >= (now() at time zone 'Europe/Amsterdam')::date - 7 order by first_reply_s desc limit 12",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
@@ -2695,36 +2629,24 @@
                 "value": "s"
               }
             ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "until_done"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "s"
-              }
-            ]
           }
         ]
       }
     },
     {
-      "id": 43,
+      "id": 42,
       "type": "table",
       "title": "Sessions cut by a restart",
-      "description": "Left no ledger row. The thread is where a person may still be waiting.",
+      "description": "Left no ledger row. Someone may still be waiting in that thread.",
       "datasource": {
         "type": "postgres",
         "uid": "${ds}"
       },
       "gridPos": {
-        "h": 7,
+        "h": 9,
         "w": 12,
-        "x": 0,
-        "y": 78
+        "x": 12,
+        "y": 79
       },
       "targets": [
         {
@@ -2733,7 +2655,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select to_char(started_at at time zone 'Europe/Amsterdam', 'MM-DD HH24:MI') as started, to_char(ended_at at time zone 'Europe/Amsterdam', 'HH24:MI:SS') as last_step, trigger, tool_calls as steps, replied, session_id from obs.sam_sessions where exit_state = 'cut' and day >= (now() at time zone 'Europe/Amsterdam')::date - 7 order by started_at desc",
+          "rawSql": "select to_char(started_at at time zone 'Europe/Amsterdam', 'MM-DD HH24:MI') as started, to_char(ended_at at time zone 'Europe/Amsterdam', 'HH24:MI:SS') as \"last step\", trigger, tool_calls as steps, replied, session_id as session from obs.sam_sessions where exit_state = 'cut' and day >= (now() at time zone 'Europe/Amsterdam')::date - 7 order by started_at desc",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
@@ -2760,19 +2682,19 @@
       }
     },
     {
-      "id": 44,
+      "id": 43,
       "type": "table",
       "title": "How fresh this page is",
-      "description": "What the loader read last, and when. The loader runs every ten minutes.",
+      "description": "What the loader read last, and when. It runs every ten minutes.",
       "datasource": {
         "type": "postgres",
         "uid": "${ds}"
       },
       "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
-        "y": 78
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 88
       },
       "targets": [
         {
@@ -2781,7 +2703,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select source, loaded_through, to_char(loaded_at at time zone 'Europe/Amsterdam', 'MM-DD HH24:MI') as loaded_at, rows from obs.sam_loads order by source",
+          "rawSql": "select source, loaded_through as \"loaded through\", to_char(loaded_at at time zone 'Europe/Amsterdam', 'MM-DD HH24:MI') as \"loaded at\", rows from obs.sam_loads order by source",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
