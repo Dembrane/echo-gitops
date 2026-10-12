@@ -3,6 +3,10 @@ kind: ConfigMap
 metadata:
   name: grafana-dashboards-config
   namespace: monitoring
+  annotations:
+    # Replaced, not patched: a patch copies the whole object into an annotation that may
+    # hold 262144 bytes, and the dashboards together are larger than that.
+    argocd.argoproj.io/sync-options: Replace=true
 data:
   dashboards.yaml: |
     apiVersion: 1
