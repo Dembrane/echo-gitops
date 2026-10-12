@@ -88,14 +88,16 @@ httpChecks:
 # Dashboards (env-specific variables injected into configmap-grafana-dashboards)
 dashboards:
   namespace: "dembrane-web-prod"
-# Product dashboards: staging (Google Cloud SQL) is read through the Cloud SQL Auth proxy
-# sidecar on localhost, so its OBS_STAGING_DB_HOST is 127.0.0.1:5433 and it needs no TLS of
-# its own. The login is the read-only role of sql/grafana-obs-role.sql. Hosts, names, users
-# and passwords live in the secret grafana-obs-db (see values.yaml). Production joins the
-# list (name: prod, sslmode: require) once its release with the obs views is out and its
-# OBS_PROD_DB_* keys are in the secret.
+# Product dashboards: each environment's obs views, read as the read-only role of
+# sql/grafana-obs-role.sql. Production is read at its own database with TLS. Staging (Google
+# Cloud SQL) is read through the Cloud SQL Auth proxy sidecar on localhost, so its
+# OBS_STAGING_DB_HOST is 127.0.0.1:5433 and it needs no TLS of its own. Hosts, names, users
+# and passwords live in the secret grafana-obs-db (see values.yaml). The first in the list
+# is what a dashboard opens with.
 obs:
   environments:
+    - name: prod
+      sslmode: require
     - name: staging
       sslmode: disable
   # Needs the secret grafana-cloud-sql-sa in the monitoring namespace. The proxy is a
