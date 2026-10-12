@@ -215,6 +215,12 @@ spec:
                 path: v3-product.json
               - key: v3-ai.json
                 path: v3-ai.json
+{{- range .Values.obs.environments }}
+{{- if eq .name "sam" }}
+              - key: sam.json
+                path: sam.json
+{{- end }}
+{{- end }}
 {{- if .Values.google.environments }}
               - key: v3-staging-previews.json
                 path: v3-staging-previews.json
