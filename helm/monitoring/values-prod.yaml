@@ -88,19 +88,20 @@ httpChecks:
 # Dashboards (env-specific variables injected into configmap-grafana-dashboards)
 dashboards:
   namespace: "dembrane-web-prod"
-# Product dashboards: prod reads its own database; staging (Google Cloud SQL) through the
-# Cloud SQL Auth proxy sidecar on localhost, so its OBS_STAGING_DB_HOST is 127.0.0.1:5433 and
-# it needs no TLS of its own. Both use the read-only role of sql/grafana-obs-role.sql. Hosts,
-# names, users and passwords live in the secret grafana-obs-db (see values.yaml).
+# Product dashboards: staging (Google Cloud SQL) is read through the Cloud SQL Auth proxy
+# sidecar on localhost, so its OBS_STAGING_DB_HOST is 127.0.0.1:5433 and it needs no TLS of
+# its own. The login is the read-only role of sql/grafana-obs-role.sql. Hosts, names, users
+# and passwords live in the secret grafana-obs-db (see values.yaml). Production joins the
+# list (name: prod, sslmode: require) once its release with the obs views is out and its
+# OBS_PROD_DB_* keys are in the secret.
 obs:
   environments:
-    - name: prod
-      sslmode: require
     - name: staging
       sslmode: disable
-  # Turn on once the secret grafana-cloud-sql-sa exists in the monitoring namespace; the
-  # staging data source stays unreachable (not Grafana) until then.
+  # Needs the secret grafana-cloud-sql-sa in the monitoring namespace. The proxy is a
+  # container of the Grafana pod: if it cannot start, the pod is not ready and Grafana
+  # is unreachable, so set this to false first when Grafana does not come up.
   cloudSqlProxy:
-    enabled: false
+    enabled: true
     port: 5433
     secretName: grafana-cloud-sql-sa
