@@ -2359,7 +2359,8 @@
             "cellOptions": {
               "type": "auto"
             },
-            "filterable": false
+            "filterable": false,
+            "minWidth": 50
           }
         },
         "overrides": [
@@ -2444,7 +2445,8 @@
             "cellOptions": {
               "type": "auto"
             },
-            "filterable": false
+            "filterable": false,
+            "minWidth": 50
           }
         },
         "overrides": [
@@ -2517,7 +2519,8 @@
             "cellOptions": {
               "type": "auto"
             },
-            "filterable": false
+            "filterable": false,
+            "minWidth": 50
           }
         },
         "overrides": [
@@ -2602,7 +2605,8 @@
             "cellOptions": {
               "type": "auto"
             },
-            "filterable": false
+            "filterable": false,
+            "minWidth": 50
           }
         },
         "overrides": [
@@ -2675,7 +2679,8 @@
             "cellOptions": {
               "type": "auto"
             },
-            "filterable": false
+            "filterable": false,
+            "minWidth": 50
           }
         },
         "overrides": []
@@ -2723,7 +2728,8 @@
             "cellOptions": {
               "type": "auto"
             },
-            "filterable": false
+            "filterable": false,
+            "minWidth": 50
           }
         },
         "overrides": []
