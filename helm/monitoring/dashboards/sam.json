@@ -21,7 +21,26 @@
   },
   "timepicker": {},
   "annotations": {
-    "list": []
+    "list": [
+      {
+        "builtIn": 0,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "iconColor": "blue",
+        "name": "sam deploys",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [
+            "sam-deploy"
+          ],
+          "type": "tags"
+        }
+      }
+    ]
   },
   "links": [
     {

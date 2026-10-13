@@ -214,6 +214,8 @@ spec:
 {{- if eq .name "sam" }}
               - key: sam.json
                 path: sam.json
+              - key: sam-performance.json
+                path: sam-performance.json
 {{- end }}
 {{- end }}
 {{- if .Values.google.environments }}
