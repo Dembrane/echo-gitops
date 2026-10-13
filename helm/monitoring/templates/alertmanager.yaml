@@ -24,6 +24,8 @@ spec:
     metadata:
       labels:
         app: alertmanager
+      annotations:
+        checksum/config: {{ .Files.Get "alertmanager/alertmanager.yml" | sha256sum }}
     spec:
       {{- include "monitoring.nodeSelector" . | nindent 6 }}
       containers:

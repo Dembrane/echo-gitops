@@ -37,6 +37,19 @@ data:
         relabel_configs:
           - action: labelmap
             regex: __meta_kubernetes_node_label_(.+)
+          # Direct node TLS scrapes fail on this managed cluster. Use the
+          # same authenticated API-server proxy as the cAdvisor job below.
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics
+        metric_relabel_configs:
+          # Only the PVC capacity signals are needed here; avoid growing
+          # six months of unrelated kubelet series.
+          - source_labels: [__name__]
+            action: keep
+            regex: kubelet_volume_stats_(available|capacity|used)_bytes
 
       # Required job for Grafana dashboard #315 - Kubernetes cluster monitoring
       - job_name: 'kubernetes-nodes-cadvisor'

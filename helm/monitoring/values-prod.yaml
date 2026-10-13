@@ -11,14 +11,15 @@ monitoring:
 storage:
   storageClassName: "do-block-storage"
   prometheus:
-    size: "20Gi"
+    size: "40Gi"
   loki:
-    size: "20Gi"
+    size: "40Gi"
   grafana:
     size: "10Gi"
 
 # Prometheus settings
 prometheus:
+  retentionTime: "200d"
   extraArgs:
     - --query.max-concurrency=40
     - --web.max-connections=1024
@@ -47,6 +48,8 @@ grafana:
 
 # Loki settings
 loki:
+  retentionPeriod: "4800h"  # 200 days, more than six calendar months
+  maxQueryLength: "25h"    # 24-hour dashboards plus lookback-window headroom
   resources:
     requests:
       cpu: "500m"
