@@ -1,6 +1,6 @@
 {
   "uid": "v3-errors",
-  "title": "What is going wrong",
+  "title": "dembrane v3: what is going wrong",
   "description": "Only what is failing, everywhere: production, staging, the pull request previews and sam. The first row is the state right now, the second counts what went wrong in the selected time, then one row per layer with the detail. Zero and green mean nothing is wrong there. Log based panels read at most 13 hours.",
   "tags": ["dembrane-v3"],
   "schemaVersion": 38,
