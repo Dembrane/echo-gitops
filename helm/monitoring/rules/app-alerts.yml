@@ -1,0 +1,252 @@
+# Production alerts. Every alert carries three sentences a person can act on without knowing
+# the cluster: summary (what happened), impact (who feels it), action (the first step).
+# The Slack message is made of those three (templates/alertmanager.yaml).
+#
+# severity critical: someone is affected now; the channel is tagged and the message repeats.
+# severity notice:   nobody is affected yet; posted once, no tag.
+# severity warning:  not posted; counted in the weekly digest.
+#
+# rules/app-alerts.test.yml replays these rules on example series: run
+#   promtool test rules helm/monitoring/rules/app-alerts.test.yml
+groups:
+  - name: work
+    rules:
+      # The worker writes each queue's depth to its log once a minute; promtail turns the
+      # lines into the dembrane_queue_* series (templates/configmap-promtail.yaml).
+      - alert: TranscriptionWaiting
+        expr: max(dembrane_queue_oldest_ready_seconds{queue="conversations.chunk"}) > 120
+        for: 3m
+        labels:
+          severity: critical
+          component: worker
+        annotations:
+          summary: >-
+            Audio is waiting to be transcribed: {{ with query "max(dembrane_queue_ready{queue='conversations.chunk'})" }}{{ . | first | value | printf "%.0f" }}{{ end }}
+            pieces in the queue, the oldest for {{ $value | humanizeDuration }}
+          impact: >-
+            People who record now see no transcript appear. Nothing is lost: the audio is
+            stored and is transcribed in order once the queue moves.
+          action: >-
+            Check that the workers are up and not restarting (kubectl -n dembrane-web-prod get pods),
+            then the worker log for failed jobs. Dashboard: https://grafana.dembrane.com/d/v3-worker-jobs
+
+      - alert: JobsWaiting
+        expr: max by (queue) (dembrane_queue_oldest_ready_seconds{queue!="conversations.chunk"}) > 900
+        for: 5m
+        labels:
+          severity: notice
+          component: worker
+        annotations:
+          summary: >-
+            Background work is piling up in {{ $labels.queue }}: the oldest job has waited {{ $value | humanizeDuration }}
+          impact: >-
+            What this queue produces arrives late (summaries, reports, emails or analysis,
+            by its name). Recording and transcription are not affected.
+          action: >-
+            Look for a failing job in the worker log before adding workers.
+            Dashboard: https://grafana.dembrane.com/d/v3-worker-jobs
+
+      # A worker that restarts counts as available between two restarts, so this reads the
+      # average over ten minutes and not the value of the moment.
+      - alert: WorkersDown
+        expr: |
+          avg_over_time(kube_deployment_status_replicas_available{namespace="dembrane-web-prod", deployment="dembrane-web-worker"}[10m])
+            / avg_over_time(kube_deployment_spec_replicas{namespace="dembrane-web-prod", deployment="dembrane-web-worker"}[10m]) < 0.5
+        labels:
+          severity: critical
+          component: worker
+        annotations:
+          summary: >-
+            Most workers are down: on average {{ with query "avg_over_time(kube_deployment_status_replicas_available{namespace='dembrane-web-prod', deployment='dembrane-web-worker'}[10m])" }}{{ . | first | value | printf "%.1f" }}{{ end }}
+            of {{ with query "max(kube_deployment_spec_replicas{namespace='dembrane-web-prod', deployment='dembrane-web-worker'})" }}{{ . | first | value | printf "%.0f" }}{{ end }} were up in the last 10 minutes
+          impact: >-
+            Transcription, summaries, reports, analysis and emails are slow or stopped.
+            Recording still works and the audio is stored; the work waits in the queue and
+            runs when the workers are back.
+          action: >-
+            Find why they stop: kubectl -n dembrane-web-prod describe pod on a worker shows
+            the last reason (OOMKilled means the memory limit in values-prod.yaml is too low).
+
+      # The API answers 503 here when no worker has checked in for 90 seconds. It is asked
+      # from outside the workers, so it also catches a worker that hangs without restarting.
+      - alert: WorkersSilent
+        expr: probe_success{job="blackbox_http", svc="worker"} == 0
+        for: 3m
+        labels:
+          severity: critical
+          component: worker
+        annotations:
+          summary: No worker has checked in with the API for 3 minutes
+          impact: >-
+            Scheduled and background work is not running: transcription, summaries,
+            reports and emails wait. Recording still works and the audio is stored.
+          action: >-
+            Open https://api.dembrane.com/ready/worker for the age of the last check-in, then
+            look at the worker pods and their log (signal worker.boot_failed names a start failure).
+
+  - name: application
+    rules:
+      - alert: OutOfMemory
+        expr: |
+          sum by (component) (
+            label_replace(
+              (kube_pod_container_status_last_terminated_reason{namespace="dembrane-web-prod", reason="OOMKilled"} == 1)
+                * on (pod, container) group_left
+              increase(kube_pod_container_status_restarts_total{namespace="dembrane-web-prod"}[10m]),
+              "component", "$1", "pod", "dembrane-web-([a-z]+)-.*")
+          ) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: >-
+            {{ $labels.component }} ran out of memory and was stopped {{ if eq (printf "%.0f" $value) "1" }}once{{ else }}{{ $value | printf "%.0f" }} times{{ end }} in the last 10 minutes
+          impact: >-
+            {{ if eq $labels.component "worker" }}The jobs it was running start again on another worker. If every worker stops this way, nothing is transcribed, summarised or emailed until one stays up; recording still works and the audio is stored.{{ else if eq $labels.component "api" }}Requests in flight fail: people see errors in the app and on the recording page while it restarts.{{ else if eq $labels.component "media" }}The audio job it was converting fails; uploaded files and merged recordings are retried.{{ else if eq $labels.component "portal" }}Participants get errors on the recording page while it restarts.{{ else }}People get errors in the app while it restarts.{{ end }}
+          action: >-
+            Raise the memory limit of {{ $labels.component }} in helm/dembrane-web/values-prod.yaml
+            (branch prod-v3) and sync, or find what grew: memory per pod is on
+            https://grafana.dembrane.com/d/v3-overview
+
+      - alert: ContainerRestarting
+        expr: |
+          sum by (component) (
+            label_replace(
+              increase(kube_pod_container_status_restarts_total{namespace="dembrane-web-prod"}[10m]),
+              "component", "$1", "pod", "dembrane-web-([a-z]+)-.*")
+          ) >= 3
+        labels:
+          severity: critical
+        annotations:
+          summary: >-
+            {{ $labels.component }} keeps restarting: {{ $value | printf "%.0f" }} restarts in the last 10 minutes
+          impact: >-
+            {{ if eq $labels.component "worker" }}Jobs in progress start again each time. If no worker stays up, nothing is transcribed, summarised or emailed; recording still works and the audio is stored.{{ else if eq $labels.component "api" }}People see errors in the app and on the recording page each time it restarts.{{ else if eq $labels.component "media" }}Audio conversion fails each time: uploaded files and merged recordings are retried.{{ else if eq $labels.component "portal" }}Participants get errors on the recording page each time it restarts.{{ else }}People get errors in the app each time it restarts.{{ end }}
+          action: >-
+            Read why it stops: kubectl -n dembrane-web-prod logs deploy/dembrane-web-{{ $labels.component }} --previous
+            and the last state in kubectl describe pod.
+
+      - alert: ServiceDown
+        expr: kube_deployment_status_replicas_available{namespace="dembrane-web-prod", deployment=~"dembrane-web-(api|media|dashboard|portal)"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'No instance of {{ $labels.deployment | reReplaceAll "dembrane-web-" "" }} is running'
+          impact: >-
+            {{ if eq $labels.deployment "dembrane-web-api" }}The app and the recording page do not work: nobody can sign in, open a project or record.{{ else if eq $labels.deployment "dembrane-web-portal" }}Participants cannot open the recording page.{{ else if eq $labels.deployment "dembrane-web-dashboard" }}Nobody can open the app. Recordings that are running continue.{{ else }}Audio cannot be converted: uploaded files and merged recordings wait.{{ end }}
+          action: >-
+            kubectl -n dembrane-web-prod get pods and describe the pods of {{ $labels.deployment }}:
+            a failed start, a missing image or a full node shows there.
+
+      - alert: ServiceShort
+        expr: |
+          (
+            sum by (deployment) (kube_deployment_spec_replicas{namespace="dembrane-web-prod", deployment=~"dembrane-web-(api|worker|media|dashboard|portal)"})
+          - sum by (deployment) (kube_deployment_status_replicas_available{namespace="dembrane-web-prod", deployment=~"dembrane-web-(api|worker|media|dashboard|portal)"})
+          ) > 0
+        for: 10m
+        labels:
+          severity: notice
+        annotations:
+          summary: '{{ $labels.deployment | reReplaceAll "dembrane-web-" "" }} has run with {{ if eq (printf "%.0f" $value) "1" }}one instance{{ else }}{{ $value | printf "%.0f" }} instances{{ end }} too few for 10 minutes'
+          impact: >-
+            Nobody is affected while the others cope; there is less room for a busy moment
+            and none for another failure.
+          action: >-
+            kubectl -n dembrane-web-prod get pods: a pod that cannot be placed (Pending) needs
+            a node, a pod that restarts has its reason in describe pod.
+
+      - alert: MemoryNearLimit
+        expr: |
+          max by (component) (
+            label_replace(
+              max_over_time(container_memory_working_set_bytes{namespace="dembrane-web-prod", container!="", image!=""}[15m])
+                / on (pod, container) group_left
+              kube_pod_container_resource_limits{namespace="dembrane-web-prod", resource="memory"},
+              "component", "$1", "pod", "dembrane-web-([a-z]+)-.*")
+          ) > 0.85
+        labels:
+          severity: notice
+        annotations:
+          summary: '{{ $labels.component }} used {{ $value | humanizePercentage }} of its memory limit in the last 15 minutes'
+          impact: >-
+            Nobody is affected yet. Above the limit it is stopped and restarts, and what it
+            was doing fails or starts again.
+          action: >-
+            Raise the limit in helm/dembrane-web/values-prod.yaml (branch prod-v3) before it
+            is reached, or find what grew on https://grafana.dembrane.com/d/v3-overview
+
+      - alert: SiteUnreachable
+        expr: probe_success{job="blackbox_http", svc!="worker"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: '{{ $labels.instance }} has not answered for 2 minutes'
+          impact: >-
+            {{ if eq $labels.svc "portal" }}Participants cannot open the recording page.{{ else if eq $labels.svc "dashboard" }}Nobody can open the app.{{ else }}The app and the recording page cannot reach the API: nobody can sign in, open a project or record.{{ end }}
+          action: >-
+            Open the address yourself. If it fails for you too: ingress pods, the certificate
+            and DNS; if only the API fails, its pods and the database.
+
+      - alert: IngressHighErrorRate
+        expr: (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="dembrane-web-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="dembrane-web-prod"}[5m]), "svc", "$1", "service", "(.*)") ) ) / (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="dembrane-web-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="dembrane-web-prod"}[5m]), "svc", "$1", "service", "(.*)") ) ) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: '{{ $value | humanizePercentage }} of requests to {{ $labels.svc | reReplaceAll "dembrane-web-" "" }} fail'
+
+      - alert: IngressCriticalErrorRate
+        expr: (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="dembrane-web-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="dembrane-web-prod"}[5m]), "svc", "$1", "service", "(.*)") ) ) / (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="dembrane-web-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="dembrane-web-prod"}[5m]), "svc", "$1", "service", "(.*)") ) ) > 0.2
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: '{{ $value | humanizePercentage }} of requests to {{ $labels.svc | reReplaceAll "dembrane-web-" "" }} fail'
+          impact: >-
+            {{ if eq $labels.svc "dembrane-web-portal" }}Participants get errors on the recording page.{{ else }}People get errors in the app: pages do not load or changes are not saved.{{ end }}
+          action: >-
+            Read the API log for severity ERROR (every line has a request id) and check the
+            database. Dashboard: https://grafana.dembrane.com/d/v3-overview
+
+      # The dashboard holds live streams open, so it is left out of the latency rules.
+      - alert: IngressHighLatencyP95
+        expr: histogram_quantile(0.95, sum by (svc, le) ( label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="dembrane-web-prod", service!="dembrane-web-dashboard", exported_service!="dembrane-web-dashboard"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="dembrane-web-prod", service!="dembrane-web-dashboard", exported_service!="dembrane-web-dashboard"}[5m]), "svc", "$1", "service", "(.*)") ) ) > 1
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: '1 in 20 requests to {{ $labels.svc | reReplaceAll "dembrane-web-" "" }} takes longer than {{ $value | humanizeDuration }}'
+
+      - alert: IngressCriticalLatencyP95
+        expr: histogram_quantile(0.95, sum by (svc, le) ( label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="dembrane-web-prod", service!="dembrane-web-dashboard", exported_service!="dembrane-web-dashboard"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="dembrane-web-prod", service!="dembrane-web-dashboard", exported_service!="dembrane-web-dashboard"}[5m]), "svc", "$1", "service", "(.*)") ) ) > 3
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: '{{ $labels.svc | reReplaceAll "dembrane-web-" "" }} is slow: 1 in 20 requests takes longer than {{ $value | humanizeDuration }}'
+          impact: >-
+            {{ if eq $labels.svc "dembrane-web-portal" }}The recording page loads slowly for participants.{{ else }}The app feels slow or stuck for everyone using it.{{ end }}
+          action: >-
+            Look for slow database queries and busy API pods on
+            https://grafana.dembrane.com/d/v3-overview
+
+      - alert: HighContainerCPUUtilization
+        expr: ( sum by (pod, namespace)(rate(container_cpu_usage_seconds_total{namespace="dembrane-web-prod", image!="", container!=""}[5m])) ) / clamp_min(sum by (pod, namespace)(kube_pod_container_resource_requests{namespace="dembrane-web-prod", resource="cpu", unit="core", container!=""}), 0.1) > 0.9
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.pod }} uses more CPU than it asked for"
+
+  - name: pipeline
+    rules:
+      # Always fires, to show that rules are evaluated and Alertmanager receives them.
+      # Routed nowhere; a check from outside can read it from the Alertmanager API.
+      - alert: Watchdog
+        expr: vector(1)
+        labels:
+          severity: none
+        annotations:
+          summary: "Alerting pipeline is alive"

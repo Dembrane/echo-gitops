@@ -124,9 +124,28 @@ To import a dashboard:
 
 ## Alerts
 
-Alert rules are defined in the Prometheus configuration. Alerts are shown in Prometheus.
+The application rules are `rules/app-alerts.yml`, the routing and the Slack message are
+`alertmanager/alertmanager.yml`; both are plain files, so their own tools check them:
 
-To customize alert rules, edit `helm/monitoring/templates/configmap-prometheus.yaml`.
+```
+promtool check rules helm/monitoring/rules/app-alerts.yml
+promtool test rules helm/monitoring/rules/app-alerts.test.yml
+amtool check-config helm/monitoring/alertmanager/alertmanager.yml
+```
+
+Every alert carries three sentences: `summary` (what happened), `impact` (who feels it) and
+`action` (the first step). The Slack message is made of those three. A `critical` alert tags
+the channel and repeats every 30 minutes while it lasts, a `notice` is posted once, a
+`warning` is only counted in the weekly digest.
+
+The queue alerts read `dembrane_queue_*`, which promtail makes from the worker's
+`queue.depth` log lines (`templates/configmap-promtail.yaml`). Try a change to those stages
+with the same promtail image and `-dry-run` before it is merged: a stage promtail cannot
+parse stops it from starting.
+
+Prometheus and Alertmanager mount their files by subPath and promtail reads its config at
+start, so after a sync: `kubectl -n monitoring rollout restart ds/promtail deploy/prometheus
+deploy/alertmanager`.
 
 ## Handling Secrets
 

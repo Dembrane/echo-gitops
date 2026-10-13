@@ -4,60 +4,9 @@ metadata:
   name: alertmanager-config
   namespace: monitoring
 data:
+  # A plain file, so amtool can check it and its braces need no escaping.
   alertmanager.yml: |
-    global:
-      resolve_timeout: 5m
-      slack_api_url_file: /etc/alertmanager/secrets/slack-webhook-url
-    route:
-      group_by: ['alertname','service']
-      group_wait: 30s
-      group_interval: 5m
-      repeat_interval: 2h
-      # Default: drop. Only alerts that explicitly match a child route are
-      # routed elsewhere. This makes "did I forget to label this alert?"
-      # a silent dev-time bug rather than a 3am page.
-      receiver: 'blackhole'
-      routes:
-        # Watchdog: always-firing canary. Routed to null so it never pages,
-        # but still visible in the alertmanager UI. A future dead-man's-switch
-        # consumer can poll the API for this alert to confirm the pipeline
-        # is alive.
-        - matchers:
-            - alertname = "Watchdog"
-          receiver: 'blackhole'
-          continue: false
-        # Critical alerts -> #prod-alerts (current behaviour)
-        - matchers:
-            - severity = "critical"
-          receiver: 'slack-prod'
-          continue: false
-        # Warning alerts -> null receiver (visible in alertmanager UI for
-        # debugging, no slack notification). Discoverability via weekly
-        # digest (ECHO-817).
-        - matchers:
-            - severity = "warning"
-          receiver: 'blackhole'
-          continue: false
-    receivers:
-      - name: 'blackhole'
-      - name: 'slack-prod'
-        slack_configs:
-          - channel: '#prod-alerts'
-            send_resolved: true
-            link_names: true
-            title: ':rotating_light: [{{ `{{` }} .Status {{ `}}` }}] {{ `{{` }} .CommonLabels.alertname {{ `}}` }}'
-            text: |
-              :rotating_light: *Alert:* {{ `{{` }} .CommonLabels.alertname {{ `}}` }}
-              :warning: *Severity:* {{ `{{` }} .CommonLabels.severity {{ `}}` }}
-              :x: *Description:* {{ `{{` }} .CommonAnnotations.description {{ `}}` }}
-              *Details:*
-              ```
-              {{ `{{` }} .CommonLabels {{ `}}` }}
-              ```
-            mrkdwn_in:
-              - text
-              - title
-              - fields
+{{ .Files.Get "alertmanager/alertmanager.yml" | indent 4 }}
 ---
 apiVersion: apps/v1
 kind: Deployment

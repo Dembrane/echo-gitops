@@ -84,6 +84,9 @@ httpChecks:
       url: https://dashboard.dembrane.com/
     - name: portal
       url: https://portal.dembrane.com/
+    # Answers 503 when no worker has checked in for 90 seconds (alert WorkersSilent).
+    - name: worker
+      url: https://api.dembrane.com/ready/worker
 
 # Dashboards (env-specific variables injected into configmap-grafana-dashboards)
 dashboards:
