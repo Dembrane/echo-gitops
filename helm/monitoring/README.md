@@ -115,7 +115,7 @@ volume: add its file here to keep it with the others.
 
 ## Alerts
 
-The application rules are `rules/app-alerts.yml`, the routing and the Slack message are
+The application rules are `rules/app-alerts.yml` and the routing is
 `alertmanager/alertmanager.yml`; both are plain files, so their own tools check them:
 
 ```
@@ -124,10 +124,41 @@ promtool test rules helm/monitoring/rules/app-alerts.test.yml
 amtool check-config helm/monitoring/alertmanager/alertmanager.yml
 ```
 
-Every alert carries three sentences: `summary` (what happened), `impact` (who feels it) and
-`action` (the first step). The Slack message is made of those three. A `critical` alert tags
-the channel and repeats every 30 minutes while it lasts, a `notice` is posted once, a
-`warning` is only counted in the weekly digest.
+Every alert carries a `title` (the thing and what happened to it), three sentences:
+`summary` (what happened), `impact` (who feels it) and `action` (the first step), and a
+`link`. The Slack message is made of those. A `critical` alert tags the channel and is sent
+again every 30 minutes while it lasts, a `notice` tags nobody and is sent again every 12
+hours, a `warning` is only counted in the weekly digest.
+
+Alertmanager sends each alert to sam, the team's agent, which keeps one Slack message per
+alert: it posts the message, edits it when the alert changes or is over, and replies in its
+thread while it lasts. Alertmanager only says what fires; how the message looks is sam's.
+
+### The token for alerts
+
+Alertmanager shows sam a token with every alert. It reads it from the file
+`sam-alerts-token` of `monitoring-secrets`, on every send, so a new value needs no restart.
+The value comes from the secret store of sam's project (`ALERTMANAGER_WEBHOOK_TOKEN`). To
+add or replace that one key without the other values of the secret:
+
+```bash
+gcloud secrets versions access latest --secret=ALERTMANAGER_WEBHOOK_TOKEN --project=<sam's project> \
+  | kubectl create secret generic monitoring-secrets --namespace monitoring \
+      --dry-run=client --from-file=sam-alerts-token=/dev/stdin -o json \
+  | kubeseal --context=do-ams3-dbr-echo-prod-k8s-cluster \
+      --controller-namespace=kube-system --controller-name=sealed-secrets \
+      --merge-into secrets/sealed-monitoring-secrets-prod.yaml
+
+kubectl --context=do-ams3-dbr-echo-prod-k8s-cluster apply -f secrets/sealed-monitoring-secrets-prod.yaml
+
+# The key is there (this prints its name, never its value):
+kubectl --context=do-ams3-dbr-echo-prod-k8s-cluster -n monitoring get secret monitoring-secrets \
+  -o go-template='{{range $k, $v := .data}}{{$k}}{{"\n"}}{{end}}'
+```
+
+Commit the changed `secrets/sealed-monitoring-secrets-prod.yaml`. The key has to be in the
+cluster before the routes in `alertmanager/alertmanager.yml` point at `sam-prod`: without the
+file Alertmanager cannot send, and no alert is posted.
 
 The queue alerts read `dembrane_queue_*`, which promtail makes from the worker's
 `queue.depth` log lines (`templates/configmap-promtail.yaml`). Try a change to those stages

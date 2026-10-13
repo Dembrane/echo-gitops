@@ -1,8 +1,14 @@
-# Where alerts go and how the Slack message reads. The message follows the rules for every
-# message a program posts in Slack: a header with one icon, the thing and what happened to
-# it; then what happened, who feels it and the first step; then the full link on a line of
-# its own. No rule name, no severity word. A critical alert tags the channel and repeats
-# every 30 minutes while it lasts; a notice is posted once without a tag.
+# Where alerts go. Every alert that is posted goes to sam, the team's agent, which keeps one
+# Slack message per alert: it posts the message, edits it when the alert changes or is over,
+# and replies in its thread while it lasts. sam lays the message out from the alert's own
+# sentences: a header with one icon, the thing and what happened to it; then what happened,
+# who feels it and the first step; then the full link on a line of its own. No rule name, no
+# severity word. A critical alert tags the channel and is sent again every 30 minutes while
+# it lasts; a notice tags nobody and is sent again every 12 hours.
+#
+# One line decides where posted alerts go: the `receiver` of the critical route below. To
+# post straight to Slack again, a new message for every change, write 'slack-prod' there. The
+# notice route follows it, and that receiver and its message are kept for this.
 global:
   resolve_timeout: 5m
   slack_api_url_file: /etc/alertmanager/secrets/slack-webhook-url
@@ -20,11 +26,12 @@ route:
       receiver: 'blackhole'
     - matchers:
         - severity = "critical"
-      receiver: 'slack-prod'
+      # Where posted alerts go: 'sam-prod', or 'slack-prod' to post straight to Slack.
+      receiver: &posted 'sam-prod'
       repeat_interval: 30m
     - matchers:
         - severity = "notice"
-      receiver: 'slack-prod'
+      receiver: *posted
       repeat_interval: 12h
     # Warnings are not posted; the weekly digest counts them.
     - matchers:
@@ -45,6 +52,19 @@ inhibit_rules:
     equal: ['deployment']
 receivers:
   - name: 'blackhole'
+  # sam picks the Slack channel by this receiver's name. The token is the key
+  # sam-alerts-token of monitoring-secrets (README.md, "The token for alerts").
+  - name: 'sam-prod'
+    webhook_configs:
+      - url: 'https://europe-west1-dembrane-sameer-cli.cloudfunctions.net/alertmanager-webhook-proxy'
+        send_resolved: true
+        # sam shows ten alerts of one group in full and counts the rest.
+        max_alerts: 20
+        http_config:
+          authorization:
+            type: Bearer
+            credentials_file: /etc/alertmanager/secrets/sam-alerts-token
+  # Straight to Slack through the webhook: not on a route now (see the top of this file).
   - name: 'slack-prod'
     slack_configs:
       # The webhook decides the channel; this line only names it for the reader.
