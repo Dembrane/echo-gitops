@@ -78,9 +78,11 @@ worker:
   # billing timers) against the same database, so it is above 0 only while they are stopped
   # (CUTOVER.md step 4).
   replicas: 4
+  # Analysis jobs hold far more memory than the other jobs. The request keeps two workers
+  # off a node that is already full.
   resources:
-    requests: { cpu: 500m, memory: 768Mi }
-    limits: { cpu: "1", memory: 1Gi }
+    requests: { cpu: 500m, memory: 1536Mi }
+    limits: { cpu: "1", memory: 3Gi }
 
 media:
   hpa:
