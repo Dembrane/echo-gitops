@@ -36,6 +36,9 @@ data:
 {{- if eq .name "sam" }}
   sam.json: |
 {{ $.Files.Get "dashboards/sam.json" | trim | indent 4 }}
+  # Why a request to sam takes as long as it does: model turns, call latency, tool time, one session's timeline.
+  sam-performance.json: |
+{{ $.Files.Get "dashboards/sam-performance.json" | trim | indent 4 }}
 {{- end }}
 {{- end }}
 {{- if .Values.google.environments }}
