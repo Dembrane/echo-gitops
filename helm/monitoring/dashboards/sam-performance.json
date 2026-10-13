@@ -1441,6 +1441,92 @@
         "type": "postgres",
         "uid": "${ds}"
       },
+      "description": "One bucket per amount of thinking in a call. Thinking depth is the strongest driver of call latency: the more a call thinks, the longer it takes. Calls from 2026-10-12.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "minWidth": 50
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "median"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "slowest tenth"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "% of model time"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 42
+      },
+      "id": 36,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select case when thoughts_tokens < 100 then '1: under 100' when thoughts_tokens < 500 then '2: 100 to 500' when thoughts_tokens < 2000 then '3: 500 to 2000' else '4: 2000 and more' end as \"thinking tokens\", count(*) as calls, round((percentile_cont(0.5) within group (order by ms) / 1000.0)::numeric, 1) as median, round((percentile_cont(0.9) within group (order by ms) / 1000.0)::numeric, 1) as \"slowest tenth\", round(100.0 * sum(ms) / (select sum(ms) from obs.sam_model_calls where $__timeFilter(started_at) and model_group = 'main' and measured and ms is not null and thoughts_tokens is not null)) as \"% of model time\" from obs.sam_model_calls where $__timeFilter(started_at) and model_group = 'main' and measured and ms is not null and thoughts_tokens is not null group by 1 order by 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Latency by thinking tokens",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
       "description": "Daily cached share of input tokens, and the number of calls over 50k input that read nothing from cache.",
       "fieldConfig": {
         "defaults": {
@@ -1470,7 +1556,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 42
+        "y": 49
       },
       "id": 24,
       "options": {
@@ -1534,7 +1620,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 42
+        "y": 49
       },
       "id": 25,
       "options": {
@@ -1598,7 +1684,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 50
+        "y": 57
       },
       "id": 26,
       "options": {
@@ -1635,7 +1721,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 58
+        "y": 65
       },
       "id": 27,
       "panels": [],
@@ -1675,7 +1761,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 59
+        "y": 66
       },
       "id": 28,
       "options": {
@@ -1740,7 +1826,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 59
+        "y": 66
       },
       "id": 29,
       "options": {
@@ -1843,7 +1929,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 67
+        "y": 74
       },
       "id": 30,
       "options": {
@@ -1934,7 +2020,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 67
+        "y": 74
       },
       "id": 31,
       "options": {
@@ -1966,7 +2052,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 76
+        "y": 83
       },
       "id": 32,
       "panels": [],
@@ -2062,7 +2148,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 77
+        "y": 84
       },
       "id": 33,
       "options": {
@@ -2121,7 +2207,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 86
+        "y": 93
       },
       "id": 34,
       "options": {
@@ -2200,7 +2286,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 94
+        "y": 101
       },
       "id": 35,
       "options": {
