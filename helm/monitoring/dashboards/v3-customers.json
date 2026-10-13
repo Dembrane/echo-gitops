@@ -7,7 +7,7 @@
     "customers"
   ],
   "schemaVersion": 38,
-  "version": 1,
+  "version": 2,
   "editable": true,
   "graphTooltip": 1,
   "timezone": "Europe/Amsterdam",
@@ -78,7 +78,7 @@
         "refresh": 1,
         "multi": true,
         "includeAll": true,
-        "allValue": "__all",
+        "allValue": "'__all'",
         "current": {
           "text": "All",
           "value": "$__all",
