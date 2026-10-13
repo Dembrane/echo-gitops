@@ -2051,6 +2051,134 @@
     {
       "id": 33,
       "type": "timeseries",
+      "title": "Reads sam still types by hand, per day",
+      "description": "A production query, a pull request, a Slack thread or a Linear issue read with hand-written shell. Each has a tool since Dembrane/sam #442, so this goes to zero when sam uses them.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 43
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, reads as metric, count(*) as value from obs.sam_tool_calls where $__timeFilter(ts) and reads is not null and not by_tool group by day, reads order by 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 70,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 34,
+      "type": "timeseries",
+      "title": "The same reads through a tool, per day",
+      "description": "One call each: query_database, github_pr, read_slack, linear_issue.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 43
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, reads as metric, count(*) as value from obs.sam_tool_calls where $__timeFilter(ts) and reads is not null and by_tool group by day, reads order by 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 70,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 35,
+      "type": "timeseries",
       "title": "Steps that failed the usual way, per day",
       "description": "By class of failure.",
       "datasource": {
@@ -2061,7 +2189,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 43
+        "y": 51
       },
       "targets": [
         {
@@ -2113,7 +2241,7 @@
       }
     },
     {
-      "id": 34,
+      "id": 36,
       "type": "timeseries",
       "title": "Sessions cut by a restart or failed, per day",
       "description": "cut: sam restarted under a working session. The rest ended in an error, a timeout or stuck.",
@@ -2125,7 +2253,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 43
+        "y": 51
       },
       "targets": [
         {
@@ -2177,7 +2305,7 @@
       }
     },
     {
-      "id": 35,
+      "id": 37,
       "type": "timeseries",
       "title": "From the invoice: EUR per day, by service",
       "description": "What Google billed sam's project, before credits. Arrives a day late, and only while the loader can read the billing export.",
@@ -2189,7 +2317,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 51
+        "y": 59
       },
       "targets": [
         {
@@ -2241,7 +2369,7 @@
       }
     },
     {
-      "id": 36,
+      "id": 38,
       "type": "timeseries",
       "title": "Mentor consults per day",
       "description": "How often sam asked the Opus mentor.",
@@ -2253,7 +2381,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 51
+        "y": 59
       },
       "targets": [
         {
@@ -2305,7 +2433,7 @@
       }
     },
     {
-      "id": 37,
+      "id": 39,
       "type": "row",
       "title": "Where it goes, last 7 days",
       "collapsed": false,
@@ -2313,12 +2441,12 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 59
+        "y": 67
       },
       "panels": []
     },
     {
-      "id": 38,
+      "id": 40,
       "type": "table",
       "title": "By channel",
       "description": "Requests from people per Slack channel. wait: median wait for the first answer. each: cost per request. calls: median model calls per request.",
@@ -2330,7 +2458,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 60
+        "y": 68
       },
       "targets": [
         {
@@ -2404,7 +2532,7 @@
       }
     },
     {
-      "id": 39,
+      "id": 41,
       "type": "table",
       "title": "Scheduled jobs",
       "description": "Every job a timer started. each: cost per run. calls: median model calls per run. bad: runs that did not end clean.",
@@ -2416,7 +2544,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 60
+        "y": 68
       },
       "targets": [
         {
@@ -2478,7 +2606,7 @@
       }
     },
     {
-      "id": 40,
+      "id": 42,
       "type": "table",
       "title": "Most expensive sessions",
       "description": "The fifteen sessions that cost most. largest: tokens in the biggest single request. cached: share of input read from the cache. wait: until the first answer.",
@@ -2490,7 +2618,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 69
+        "y": 77
       },
       "targets": [
         {
@@ -2564,7 +2692,7 @@
       }
     },
     {
-      "id": 41,
+      "id": 43,
       "type": "table",
       "title": "Longest waits for a first answer",
       "description": "The requests where a person waited longest.",
@@ -2576,7 +2704,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 79
+        "y": 87
       },
       "targets": [
         {
@@ -2638,7 +2766,7 @@
       }
     },
     {
-      "id": 42,
+      "id": 44,
       "type": "table",
       "title": "Sessions cut by a restart",
       "description": "Left no ledger row. Someone may still be waiting in that thread.",
@@ -2650,7 +2778,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 79
+        "y": 87
       },
       "targets": [
         {
@@ -2687,7 +2815,7 @@
       }
     },
     {
-      "id": 43,
+      "id": 45,
       "type": "table",
       "title": "How fresh this page is",
       "description": "What the loader read last, and when. It runs every ten minutes.",
@@ -2699,7 +2827,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 88
+        "y": 96
       },
       "targets": [
         {
