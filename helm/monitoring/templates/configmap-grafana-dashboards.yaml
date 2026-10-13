@@ -25,6 +25,12 @@ data:
 {{ .Files.Get "dashboards/v3-worker-jobs.json" | replace "__NAMESPACE__" .Values.dashboards.namespace | trim | indent 4 }}
   v3-product.json: |
 {{ .Files.Get "dashboards/v3-product.json" | trim | indent 4 }}
+{{- range .Values.obs.environments }}
+{{- if eq .name "prod" }}
+  v3-customers.json: |
+{{ $.Files.Get "dashboards/v3-customers.json" | trim | indent 4 }}
+{{- end }}
+{{- end }}
   v3-ai.json: |
 {{ .Files.Get "dashboards/v3-ai.json" | trim | indent 4 }}
   # What is going wrong: only failures, of every layer and environment. It has no dropdown;
