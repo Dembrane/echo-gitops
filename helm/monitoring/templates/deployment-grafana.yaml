@@ -216,6 +216,8 @@ spec:
                 path: v3-product.json
               - key: v3-ai.json
                 path: v3-ai.json
+              - key: v3-errors.json
+                path: v3-errors.json
 {{- range .Values.obs.environments }}
 {{- if eq .name "sam" }}
               - key: sam.json

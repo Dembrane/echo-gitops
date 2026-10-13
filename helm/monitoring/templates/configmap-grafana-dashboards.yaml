@@ -450,6 +450,10 @@ data:
 {{ .Files.Get "dashboards/v3-product.json" | trim | indent 4 }}
   v3-ai.json: |
 {{ .Files.Get "dashboards/v3-ai.json" | trim | indent 4 }}
+  # What is going wrong: only failures, of every layer and environment. It has no dropdown;
+  # __NAMESPACE__ becomes the namespace its production rows read.
+  v3-errors.json: |
+{{ .Files.Get "dashboards/v3-errors.json" | replace "__NAMESPACE__" .Values.dashboards.namespace | trim | indent 4 }}
 {{- /* sam, the team's agent: its own database behind the data source "dembrane sam". */}}
 {{- range .Values.obs.environments }}
 {{- if eq .name "sam" }}
