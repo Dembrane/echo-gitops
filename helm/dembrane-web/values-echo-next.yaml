@@ -45,6 +45,9 @@ worker:
   resources:
     requests: { cpu: 250m, memory: 384Mi }
     limits: { cpu: "1", memory: 1Gi }
+  # Production's node pool is not this cluster's.
+  nodeSelector: null
+  spreadAcrossNodes: false
 
 media:
   hpa:

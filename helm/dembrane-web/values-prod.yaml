@@ -78,11 +78,15 @@ worker:
   # billing timers) against the same database, so it is above 0 only while they are stopped
   # (CUTOVER.md step 4).
   replicas: 4
-  # Analysis jobs hold far more memory than the other jobs. The request keeps two workers
-  # off a node that is already full.
+  # A worker idles near 150Mi and an analysis job can take it past 2Gi: it asks for what
+  # it normally uses and may grow to the limit. It runs on the large nodes, one per node
+  # where they have room, because a 4 GB node cannot hold a worker at its limit.
   resources:
-    requests: { cpu: 500m, memory: 1536Mi }
+    requests: { cpu: 500m, memory: 512Mi }
     limits: { cpu: "1", memory: 3Gi }
+  nodeSelector:
+    doks.digitalocean.com/node-pool: default-pool
+  spreadAcrossNodes: true
 
 media:
   hpa:

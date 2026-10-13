@@ -56,6 +56,10 @@ worker:
     minAvailable: 1
   terminationGracePeriodSeconds: 120
   resources: {}
+  # Node labels the worker's nodes must carry; empty places it anywhere.
+  nodeSelector: {}
+  # Prefer one worker per node.
+  spreadAcrossNodes: false
   env: {}
 
 media:

@@ -22,6 +22,24 @@ spec:
     spec:
       {{- include "dw.podSecurity" . | nindent 6 }}
       terminationGracePeriodSeconds: {{ .Values.worker.terminationGracePeriodSeconds }}
+      {{- with .Values.worker.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.worker.spreadAcrossNodes }}
+      # One worker per node while the nodes have room, so a job that needs the full memory
+      # limit finds it. A preference only: a worker is never left waiting for it. Counted
+      # per rollout (pod-template-hash), so the pods being replaced do not skew it.
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              {{- include "dw.selector" $c | nindent 14 }}
+          matchLabelKeys:
+            - pod-template-hash
+      {{- end }}
       containers:
         - name: worker
           image: {{ include "dw.image" (dict "root" . "app" "worker") | quote }}
