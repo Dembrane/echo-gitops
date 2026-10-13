@@ -7,7 +7,7 @@
     "customers"
   ],
   "schemaVersion": 38,
-  "version": 2,
+  "version": 3,
   "editable": true,
   "graphTooltip": 1,
   "timezone": "Europe/Amsterdam",
@@ -334,7 +334,7 @@
             "type": "postgres",
             "uid": "obs-prod"
           },
-          "rawSql": "SELECT checked_at FROM obs.customer_attribution_coverage",
+          "rawSql": "SELECT (extract(epoch FROM checked_at) * 1000)::double precision AS value FROM obs.customer_attribution_coverage",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
