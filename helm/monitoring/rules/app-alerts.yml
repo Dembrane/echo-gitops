@@ -16,6 +16,71 @@
 # restart together each object has two series for five minutes; a join on them fails and
 # a sum counts double.
 groups:
+  - name: monitoring-storage
+    rules:
+      - alert: MonitoringStorageLow
+        expr: |
+          min by (persistentvolumeclaim) (kubelet_volume_stats_available_bytes{namespace="monitoring", persistentvolumeclaim=~"loki-data|prometheus-data|grafana-data"})
+          / max by (persistentvolumeclaim) (kubelet_volume_stats_capacity_bytes{namespace="monitoring", persistentvolumeclaim=~"loki-data|prometheus-data|grafana-data"}) < 0.20
+        for: 10m
+        labels:
+          severity: notice
+          component: monitoring
+        annotations:
+          title: 'Production monitoring storage is running low'
+          summary: '{{ $labels.persistentvolumeclaim }} has {{ $value | humanizePercentage }} of its disk space free.'
+          impact: 'Nothing is lost yet. If the disk fills, new monitoring history can stop being stored before the 200-day retention target.'
+          action: 'Expand this claim in helm/monitoring/values-prod.yaml, merge and sync. Keep existing history; do not shorten retention to hide the warning.'
+          link: 'https://grafana.dembrane.com/d/v3-overview'
+
+      - alert: MonitoringStorageFillingSoon
+        expr: |
+          predict_linear((min by (persistentvolumeclaim) (kubelet_volume_stats_available_bytes{namespace="monitoring", persistentvolumeclaim=~"loki-data|prometheus-data|grafana-data"}))[6h:5m], 7 * 24 * 3600) < 0
+          and on (persistentvolumeclaim)
+          (min by (persistentvolumeclaim) (kubelet_volume_stats_available_bytes{namespace="monitoring", persistentvolumeclaim=~"loki-data|prometheus-data|grafana-data"})
+          / max by (persistentvolumeclaim) (kubelet_volume_stats_capacity_bytes{namespace="monitoring", persistentvolumeclaim=~"loki-data|prometheus-data|grafana-data"}) < 0.50)
+        for: 1h
+        labels:
+          severity: notice
+          component: monitoring
+        annotations:
+          title: 'Production monitoring storage may fill this week'
+          summary: '{{ $labels.persistentvolumeclaim }} is predicted to fill within seven days if the last six hours of growth continue.'
+          impact: 'New logs or metrics can stop being stored when the disk is full. This forecast is an estimate, not a confirmed data loss.'
+          action: 'Check recent growth, then expand this claim in helm/monitoring/values-prod.yaml before it fills.'
+          link: 'https://grafana.dembrane.com/d/v3-overview'
+
+      - alert: MonitoringStorageCritical
+        expr: |
+          min by (persistentvolumeclaim) (kubelet_volume_stats_available_bytes{namespace="monitoring", persistentvolumeclaim=~"loki-data|prometheus-data|grafana-data"})
+          / max by (persistentvolumeclaim) (kubelet_volume_stats_capacity_bytes{namespace="monitoring", persistentvolumeclaim=~"loki-data|prometheus-data|grafana-data"}) < 0.05
+        for: 5m
+        labels:
+          severity: critical
+          component: monitoring
+        annotations:
+          title: 'Production monitoring storage is almost full'
+          summary: '{{ $labels.persistentvolumeclaim }} has {{ $value | humanizePercentage }} of its disk space free.'
+          impact: 'New monitoring history is at immediate risk. Customer recordings use different storage and are not measured by this alert.'
+          action: 'Expand this claim now in helm/monitoring/values-prod.yaml and sync. Check whether Loki or Prometheus has already stopped writing.'
+          link: 'https://grafana.dembrane.com/d/v3-overview'
+
+      - alert: MonitoringStorageMetricsMissing
+        expr: |
+          absent(kubelet_volume_stats_capacity_bytes{namespace="monitoring", persistentvolumeclaim="loki-data"})
+          or absent(kubelet_volume_stats_capacity_bytes{namespace="monitoring", persistentvolumeclaim="prometheus-data"})
+          or absent(kubelet_volume_stats_capacity_bytes{namespace="monitoring", persistentvolumeclaim="grafana-data"})
+        for: 15m
+        labels:
+          severity: notice
+          component: monitoring
+        annotations:
+          title: 'Production monitoring storage checks are missing'
+          summary: 'No disk-capacity metric is arriving for {{ $labels.persistentvolumeclaim }}.'
+          impact: 'Low-space alerts cannot be trusted for this disk until its metrics return. Missing data does not mean the disk is healthy.'
+          action: 'Check the kubernetes-nodes scrape targets and kubelet volume metrics, then confirm capacity and free space appear in Prometheus.'
+          link: 'https://grafana.dembrane.com/d/v3-overview'
+
   - name: work
     rules:
       # The worker writes each queue's depth to its log once a minute; promtail turns the

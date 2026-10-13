@@ -1,0 +1,89 @@
+# promtool test rules helm/monitoring/rules/monitoring-storage.test.yml
+rule_files:
+  - app-alerts.yml
+evaluation_interval: 1m
+tests:
+  # Duplicate node samples must not double disk size or hide low free space.
+  - interval: 1m
+    input_series:
+      - series: 'kubelet_volume_stats_capacity_bytes{namespace="monitoring",persistentvolumeclaim="loki-data",instance="node-a"}'
+        values: '100+0x20'
+      - series: 'kubelet_volume_stats_capacity_bytes{namespace="monitoring",persistentvolumeclaim="loki-data",instance="node-b"}'
+        values: '100+0x20'
+      - series: 'kubelet_volume_stats_available_bytes{namespace="monitoring",persistentvolumeclaim="loki-data",instance="node-a"}'
+        values: '15+0x20'
+      - series: 'kubelet_volume_stats_available_bytes{namespace="monitoring",persistentvolumeclaim="loki-data",instance="node-b"}'
+        values: '15+0x20'
+    promql_expr_test:
+      - expr: 'ALERTS{alertname="MonitoringStorageLow",alertstate="firing"}'
+        eval_time: 9m
+        exp_samples: []
+      - expr: 'ALERTS{alertname="MonitoringStorageLow",alertstate="firing"}'
+        eval_time: 11m
+        exp_samples:
+          - labels: 'ALERTS{alertname="MonitoringStorageLow",alertstate="firing",component="monitoring",persistentvolumeclaim="loki-data",severity="notice"}'
+            value: 1
+
+  - interval: 1m
+    input_series:
+      - series: 'kubelet_volume_stats_capacity_bytes{namespace="monitoring",persistentvolumeclaim="prometheus-data"}'
+        values: '100+0x20'
+      - series: 'kubelet_volume_stats_available_bytes{namespace="monitoring",persistentvolumeclaim="prometheus-data"}'
+        values: '3+0x20'
+    promql_expr_test:
+      - expr: 'ALERTS{alertname="MonitoringStorageCritical",alertstate="firing"}'
+        eval_time: 4m
+        exp_samples: []
+      - expr: 'ALERTS{alertname="MonitoringStorageCritical",alertstate="firing"}'
+        eval_time: 6m
+        exp_samples:
+          - labels: 'ALERTS{alertname="MonitoringStorageCritical",alertstate="firing",component="monitoring",persistentvolumeclaim="prometheus-data",severity="critical"}'
+            value: 1
+
+  # Stable capacity is healthy; no growth forecast should fire.
+  - interval: 1m
+    input_series:
+      - series: 'kubelet_volume_stats_capacity_bytes{namespace="monitoring",persistentvolumeclaim="loki-data"}'
+        values: '100+0x120'
+      - series: 'kubelet_volume_stats_available_bytes{namespace="monitoring",persistentvolumeclaim="loki-data"}'
+        values: '80+0x120'
+      - series: 'kubelet_volume_stats_capacity_bytes{namespace="monitoring",persistentvolumeclaim="prometheus-data"}'
+        values: '100+0x120'
+      - series: 'kubelet_volume_stats_available_bytes{namespace="monitoring",persistentvolumeclaim="prometheus-data"}'
+        values: '80+0x120'
+      - series: 'kubelet_volume_stats_capacity_bytes{namespace="monitoring",persistentvolumeclaim="grafana-data"}'
+        values: '100+0x120'
+      - series: 'kubelet_volume_stats_available_bytes{namespace="monitoring",persistentvolumeclaim="grafana-data"}'
+        values: '80+0x120'
+    promql_expr_test:
+      - expr: 'ALERTS{alertname=~"MonitoringStorage.*",alertstate="firing"}'
+        eval_time: 2h
+        exp_samples: []
+
+  # Linear falling free space alerts before crossing the low-space threshold.
+  - interval: 1m
+    input_series:
+      - series: 'kubelet_volume_stats_capacity_bytes{namespace="monitoring",persistentvolumeclaim="loki-data"}'
+        values: '100+0x360'
+      - series: 'kubelet_volume_stats_available_bytes{namespace="monitoring",persistentvolumeclaim="loki-data"}'
+        values: '40-0.02x360'
+    promql_expr_test:
+      - expr: 'ALERTS{alertname="MonitoringStorageFillingSoon",alertstate="firing"}'
+        eval_time: 2h
+        exp_samples:
+          - labels: 'ALERTS{alertname="MonitoringStorageFillingSoon",alertstate="firing",component="monitoring",persistentvolumeclaim="loki-data",severity="notice"}'
+            value: 1
+
+  # Empty telemetry must not be treated as healthy storage.
+  - interval: 1m
+    input_series: []
+    promql_expr_test:
+      - expr: 'ALERTS{alertname="MonitoringStorageMetricsMissing",alertstate="firing"}'
+        eval_time: 16m
+        exp_samples:
+          - labels: 'ALERTS{alertname="MonitoringStorageMetricsMissing",alertstate="firing",component="monitoring",namespace="monitoring",persistentvolumeclaim="loki-data",severity="notice"}'
+            value: 1
+          - labels: 'ALERTS{alertname="MonitoringStorageMetricsMissing",alertstate="firing",component="monitoring",namespace="monitoring",persistentvolumeclaim="prometheus-data",severity="notice"}'
+            value: 1
+          - labels: 'ALERTS{alertname="MonitoringStorageMetricsMissing",alertstate="firing",component="monitoring",namespace="monitoring",persistentvolumeclaim="grafana-data",severity="notice"}'
+            value: 1

@@ -64,10 +64,10 @@ data:
       max_outstanding_per_tenant: 2048
 
     limits_config:
-      retention_period: 7d
+      retention_period: {{ .Values.loki.retentionPeriod | default "168h" }}
       ingestion_rate_mb: 10
       ingestion_burst_size_mb: 20
-      max_query_length: 13h
+      max_query_length: {{ .Values.loki.maxQueryLength | default "13h" }}
       split_queries_by_interval: 30m
       max_query_parallelism: 12
       max_streams_per_user: 10000
@@ -85,4 +85,4 @@ data:
       enable_api: true
 
     analytics:
-      reporting_enabled: false 
+      reporting_enabled: false

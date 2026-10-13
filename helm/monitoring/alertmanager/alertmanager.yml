@@ -7,7 +7,7 @@ global:
   resolve_timeout: 5m
   slack_api_url_file: /etc/alertmanager/secrets/slack-webhook-url
 route:
-  group_by: ['alertname', 'component', 'deployment', 'svc', 'queue']
+  group_by: ['alertname', 'component', 'deployment', 'svc', 'queue', 'persistentvolumeclaim']
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 2h
@@ -31,6 +31,12 @@ route:
         - severity = "warning"
       receiver: 'blackhole'
 inhibit_rules:
+  # One storage cause, one message: a near-full disk supersedes its notice.
+  - source_matchers:
+      - alertname = "MonitoringStorageCritical"
+    target_matchers:
+      - alertname =~ "MonitoringStorageLow|MonitoringStorageFillingSoon"
+    equal: ['persistentvolumeclaim']
   # One message per cause: a stop for memory is also a restart.
   - source_matchers:
       - alertname = "OutOfMemory"

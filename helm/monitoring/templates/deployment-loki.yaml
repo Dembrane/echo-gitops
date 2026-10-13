@@ -21,6 +21,7 @@ spec:
       labels:
         app: loki
       annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap-loki.yaml") . | sha256sum }}
         prometheus.io/scrape: "true"
         prometheus.io/port: "3100"
     spec:
@@ -57,4 +58,4 @@ spec:
             name: loki-config
         - name: storage
           persistentVolumeClaim:
-            claimName: loki-data 
+            claimName: loki-data

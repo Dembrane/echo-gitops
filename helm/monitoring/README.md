@@ -109,6 +109,25 @@ Default login credentials:
 
 ## Dashboards
 
+Production retains Loki logs and Prometheus metrics for 200 days. Loki accepts
+25-hour queries so a 24-hour dashboard also fits its small lookback windows.
+Long retention does not restore history deleted by the previous seven-day policy.
+Development retains its existing seven-day and 13-hour defaults.
+
+Production starts with 40 GiB each for `loki-data` and `prometheus-data`.
+This is a starting capacity, not a guarantee that every growth rate fits 200 days.
+Do not set a Prometheus size-retention cap that silently deletes history early.
+Expand PVCs through `storage` in `values-prod.yaml`, never delete/recreate them.
+The storage class supports expansion; verify claim capacity and filesystem size
+after Argo sync. Volume expansion cannot be rolled back by shrinking the claim.
+
+PVC free-space metrics come from kubelet through the Kubernetes API proxy.
+`#alerts-prod` receives notices below 20% free, a seven-day growth forecast,
+and missing-capacity signals. Below 5% free is critical, with the existing
+channel tag and repeat cadence. Critical disk alerts suppress their earlier
+notices for the same PVC. The rules cover logs, metrics and Grafana's state disk.
+History is not a backup; these volumes are still single copies.
+
 The dashboards are JSON files in `dashboards/`, loaded from this chart; `GRAFANA_DASHBOARDS.md`
 says what each one shows. A dashboard made by hand in Grafana lives only in Grafana's own
 volume: add its file here to keep it with the others.
@@ -179,4 +198,4 @@ For development, basic auth credentials are defined in `values.yaml`. For produc
 4. Apply the sealed secret:
    ```bash
    kubectl apply -f secrets/sealed-monitoring-secrets-prod.yaml
-   ``` 
+   ```
