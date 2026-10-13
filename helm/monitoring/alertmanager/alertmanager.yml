@@ -1,7 +1,8 @@
-# Where alerts go and how the Slack message reads. The message is made of the three
-# sentences every alert carries (rules/app-alerts.yml): what happened as the title, then who
-# feels it and the first step. A critical alert tags the channel and repeats every 30 minutes
-# while it lasts; a notice is posted once without a tag.
+# Where alerts go and how the Slack message reads. The message follows the rules for every
+# message a program posts in Slack: a header with one icon, the thing and what happened to
+# it; then what happened, who feels it and the first step; then the full link on a line of
+# its own. No rule name, no severity word. A critical alert tags the channel and repeats
+# every 30 minutes while it lasts; a notice is posted once without a tag.
 global:
   resolve_timeout: 5m
   slack_api_url_file: /etc/alertmanager/secrets/slack-webhook-url
@@ -50,11 +51,15 @@ receivers:
       - channel: '#alerts-prod'
         send_resolved: true
         color: '{{ if eq .Status "resolved" }}good{{ else if eq .CommonLabels.severity "critical" }}danger{{ else }}warning{{ end }}'
-        title: '{{ if eq .Status "resolved" }}:white_check_mark: Over: {{ else if eq .CommonLabels.severity "critical" }}:red_circle: {{ else }}:large_yellow_circle: {{ end }}{{ (index .Alerts 0).Annotations.summary }}'
+        title: '{{ if eq .Status "resolved" }}:white_check_mark: Over: {{ else if eq .CommonLabels.severity "critical" }}:red_circle: {{ else }}:large_yellow_circle: {{ end }}{{ (index .Alerts 0).Annotations.title }}'
         text: |-
-          {{ if eq .Status "resolved" }}It lasted {{ ((index .Alerts 0).EndsAt.Sub (index .Alerts 0).StartsAt).Round 60000000000 }}.{{ else }}{{ if eq .CommonLabels.severity "critical" }}<!channel> {{ end }}*Who feels it:* {{ (index .Alerts 0).Annotations.impact }}
-          *First step:* {{ (index .Alerts 0).Annotations.action }}{{ range $i, $a := .Alerts }}{{ if $i }}
-          • also: {{ $a.Annotations.summary }}{{ end }}{{ end }}{{ end }}
-        footer: 'production · {{ .CommonLabels.alertname }}'
+          {{ if eq .Status "resolved" }}It lasted {{ ((index .Alerts 0).EndsAt.Sub (index .Alerts 0).StartsAt).Round 60000000000 }}.{{ else }}{{ range $i, $a := .Alerts }}{{ if $i }}
+
+          *Also:* {{ $a.Annotations.title }}
+          {{ end }}*What happened:* {{ $a.Annotations.summary }}
+          *Who feels it:* {{ $a.Annotations.impact }}
+          *First step:* {{ $a.Annotations.action }}
+          {{ $a.Annotations.link }}{{ end }}{{ if eq .CommonLabels.severity "critical" }}
+          <!channel>{{ end }}{{ end }}
         mrkdwn_in:
           - text
