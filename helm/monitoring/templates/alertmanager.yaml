@@ -25,6 +25,7 @@ spec:
       labels:
         app: alertmanager
     spec:
+      {{- include "monitoring.nodeSelector" . | nindent 6 }}
       containers:
         - name: alertmanager
           image: prom/alertmanager:v0.26.0

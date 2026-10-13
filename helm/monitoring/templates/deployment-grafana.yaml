@@ -20,6 +20,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "3000"
     spec:
+      {{- include "monitoring.nodeSelector" . | nindent 6 }}
       securityContext:
         fsGroup: 472
         runAsUser: 472

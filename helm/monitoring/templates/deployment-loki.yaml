@@ -7,6 +7,12 @@ metadata:
     app: loki
 spec:
   replicas: 1
+  # Its volume attaches to one node at a time, so the old pod stops before the new one
+  # starts. The null removes the rolling settings the cluster filled in, which Recreate
+  # refuses.
+  strategy:
+    type: Recreate
+    rollingUpdate: null
   selector:
     matchLabels:
       app: loki
@@ -18,6 +24,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "3100"
     spec:
+      {{- include "monitoring.nodeSelector" . | nindent 6 }}
       # This ensures the PVC is accessible by Loki
       securityContext:
         fsGroup: 10001

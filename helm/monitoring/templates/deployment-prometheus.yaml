@@ -20,6 +20,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9090"
     spec:
+      {{- include "monitoring.nodeSelector" . | nindent 6 }}
       serviceAccountName: prometheus
       securityContext:
         fsGroup: 65534

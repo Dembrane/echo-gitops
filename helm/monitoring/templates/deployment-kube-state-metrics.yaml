@@ -80,6 +80,7 @@ spec:
       labels:
         app: kube-state-metrics
     spec:
+      {{- include "monitoring.nodeSelector" . | nindent 6 }}
       serviceAccountName: kube-state-metrics
       containers:
         - name: kube-state-metrics
