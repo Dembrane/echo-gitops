@@ -24,40 +24,7 @@ The staging and previews dashboard reads Google Cloud Monitoring and Cloud Loggi
 
 The Cloud Logging data source is a plugin, pinned in `values.yaml` to the last version for Grafana 10. An init container installs it into Grafana's volume once and always succeeds: without the plugin the log panels are empty and everything else works.
 
-### 2. Kubernetes Cluster Monitoring
-
-This dashboard provides an overview of your Kubernetes cluster resources, including:
-
-- Cluster-wide filesystem usage
-- Node resource metrics
-- Container statistics
-
-### 3. Node Exporter Full Dashboard
-
-Detailed infrastructure metrics for your cluster nodes:
-
-- CPU usage across all nodes
-- Memory utilization
-- Disk space usage
-- Network I/O
-
-### 4. Nginx Ingress Controller Dashboard
-
-Monitoring for your ingress traffic:
-
-- HTTP request rates by ingress resource
-- Response times
-- Status code distribution
-
-### 5. Loki Logs Dashboard
-
-Centralized logging for your applications:
-
-- Log volume metrics
-- Real-time log viewing with filtering capabilities
-- Error detection
-
-### 6. dembrane v3: overview
+### 2. dembrane v3: overview
 
 One screen for the person on watch: is dembrane v3 up, where does it hurt, is it scaling.
 
@@ -68,7 +35,7 @@ One screen for the person on watch: is dembrane v3 up, where does it hurt, is it
 - Nodes: ready nodes per pool, CPU and memory use per node
 - API routes (closed by default): requests, 5xx answers and p95 latency per route, from the API's request log
 
-### 7. dembrane v3: worker and jobs
+### 3. dembrane v3: worker and jobs
 
 The worker's queues and jobs (DBOS) and the log lines that need attention.
 

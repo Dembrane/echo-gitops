@@ -107,20 +107,10 @@ Default login credentials:
 4. Add Loki as a data source with:
    - URL: http://loki:3100
 
-## Default Dashboards
+## Dashboards
 
-Some recommended dashboards to import:
-- Kubernetes Cluster Monitoring (ID: 15661)
-- Node Exporter Full (ID: 1860)
-- Nginx Ingress Controller (ID: 9614)
-- Loki Logs (ID: 12019)
-- DigitalOcean Kubernetes Service (ID: 11545)
-
-To import a dashboard:
-1. Go to Dashboards → Import
-2. Enter the dashboard ID
-3. Select your Prometheus data source
-4. Click Import
+The dashboards are JSON files in `dashboards/`, loaded from this chart; `GRAFANA_DASHBOARDS.md`
+says what each one shows. A dashboard that is not in this chart is not kept: add its file here.
 
 ## Alerts
 
