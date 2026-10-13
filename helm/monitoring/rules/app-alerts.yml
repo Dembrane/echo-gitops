@@ -8,6 +8,11 @@
 #
 # rules/app-alerts.test.yml replays these rules on example series: run
 #   promtool test rules helm/monitoring/rules/app-alerts.test.yml
+#
+# Every kube-state-metrics series is reduced to one per pod and container (or per
+# deployment) before it is joined or counted. After kube-state-metrics and Prometheus
+# restart together each object has two series for five minutes; a join on them fails and
+# a sum counts double.
 groups:
   - name: work
     rules:
@@ -50,8 +55,8 @@ groups:
       # average over ten minutes and not the value of the moment.
       - alert: WorkersDown
         expr: |
-          avg_over_time(kube_deployment_status_replicas_available{namespace="dembrane-web-prod", deployment="dembrane-web-worker"}[10m])
-            / avg_over_time(kube_deployment_spec_replicas{namespace="dembrane-web-prod", deployment="dembrane-web-worker"}[10m]) < 0.5
+          max by (deployment) (avg_over_time(kube_deployment_status_replicas_available{namespace="dembrane-web-prod", deployment="dembrane-web-worker"}[10m]))
+            / max by (deployment) (avg_over_time(kube_deployment_spec_replicas{namespace="dembrane-web-prod", deployment="dembrane-web-worker"}[10m])) < 0.5
         labels:
           severity: critical
           component: worker
@@ -90,9 +95,9 @@ groups:
         expr: |
           sum by (component) (
             label_replace(
-              (kube_pod_container_status_last_terminated_reason{namespace="dembrane-web-prod", reason="OOMKilled"} == 1)
-                * on (pod, container) group_left
-              increase(kube_pod_container_status_restarts_total{namespace="dembrane-web-prod"}[10m]),
+              max by (pod, container) (kube_pod_container_status_last_terminated_reason{namespace="dembrane-web-prod", reason="OOMKilled"} == 1)
+                * on (pod, container)
+              max by (pod, container) (increase(kube_pod_container_status_restarts_total{namespace="dembrane-web-prod"}[10m])),
               "component", "$1", "pod", "dembrane-web-([a-z]+)-.*")
           ) > 0
         labels:
@@ -111,7 +116,7 @@ groups:
         expr: |
           sum by (component) (
             label_replace(
-              increase(kube_pod_container_status_restarts_total{namespace="dembrane-web-prod"}[10m]),
+              max by (pod, container) (increase(kube_pod_container_status_restarts_total{namespace="dembrane-web-prod"}[10m])),
               "component", "$1", "pod", "dembrane-web-([a-z]+)-.*")
           ) >= 3
         labels:
@@ -126,7 +131,7 @@ groups:
             and the last state in kubectl describe pod.
 
       - alert: ServiceDown
-        expr: kube_deployment_status_replicas_available{namespace="dembrane-web-prod", deployment=~"dembrane-web-(api|media|dashboard|portal)"} == 0
+        expr: max by (namespace, deployment) (kube_deployment_status_replicas_available{namespace="dembrane-web-prod", deployment=~"dembrane-web-(api|media|dashboard|portal)"}) == 0
         for: 2m
         labels:
           severity: critical
@@ -141,8 +146,8 @@ groups:
       - alert: ServiceShort
         expr: |
           (
-            sum by (deployment) (kube_deployment_spec_replicas{namespace="dembrane-web-prod", deployment=~"dembrane-web-(api|worker|media|dashboard|portal)"})
-          - sum by (deployment) (kube_deployment_status_replicas_available{namespace="dembrane-web-prod", deployment=~"dembrane-web-(api|worker|media|dashboard|portal)"})
+            max by (deployment) (kube_deployment_spec_replicas{namespace="dembrane-web-prod", deployment=~"dembrane-web-(api|worker|media|dashboard|portal)"})
+          - max by (deployment) (kube_deployment_status_replicas_available{namespace="dembrane-web-prod", deployment=~"dembrane-web-(api|worker|media|dashboard|portal)"})
           ) > 0
         for: 10m
         labels:
@@ -160,9 +165,9 @@ groups:
         expr: |
           max by (component) (
             label_replace(
-              max_over_time(container_memory_working_set_bytes{namespace="dembrane-web-prod", container!="", image!=""}[15m])
-                / on (pod, container) group_left
-              kube_pod_container_resource_limits{namespace="dembrane-web-prod", resource="memory"},
+              max by (pod, container) (max_over_time(container_memory_working_set_bytes{namespace="dembrane-web-prod", container!="", image!=""}[15m]))
+                / on (pod, container)
+              max by (pod, container) (kube_pod_container_resource_limits{namespace="dembrane-web-prod", resource="memory"}),
               "component", "$1", "pod", "dembrane-web-([a-z]+)-.*")
           ) > 0.85
         labels:
