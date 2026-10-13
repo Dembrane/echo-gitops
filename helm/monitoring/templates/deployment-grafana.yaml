@@ -206,6 +206,12 @@ spec:
                 path: v3-worker-jobs.json
               - key: v3-product.json
                 path: v3-product.json
+              {{- range .Values.obs.environments }}
+              {{- if eq .name "prod" }}
+              - key: v3-customers.json
+                path: v3-customers.json
+              {{- end }}
+              {{- end }}
               - key: v3-ai.json
                 path: v3-ai.json
               - key: v3-errors.json

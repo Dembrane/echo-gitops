@@ -109,6 +109,54 @@ Default login credentials:
 
 ## Dashboards
 
+### Customer activity
+
+`dembrane v3: customers` (`v3-customers`) uses production only. Its default
+audience hides dembrane's own organisation; the selector can include it again.
+Other demo/trial organisations may still appear. These are observed product
+actions, not paid-account counts or an inferred churn score.
+
+Before deploying its JSON, apply `sql/customer-views.sql` as the existing
+observability/migration owner. It adds seven `obs.customer_*` views and grants
+only SELECT on them to `grafana_obs`. Do not grant access to the underlying
+product tables. No customer rows, transcripts, prompts or contact fields change.
+Emails embedded in display names are masked. The fixture function in
+`sql/test-customer-views.py` tests the SQL against session-local temporary
+tables, never real product rows.
+
+Fresh audio uses three-minute client AND server timestamps; visitor telemetry
+uses expiry and a 90-second freshness guard. Neither unfinished conversations
+nor long-lived recording indexes prove a person is still recording. Pageviews
+and idle dashboard tabs are not measured. Samples, clones and deleted content
+are excluded. Attribution gaps and source failures remain visible.
+
+Daily activity covers up to 200 days of retained source rows; first-use
+milestones read the first retained core action, not signup or first-ever use
+of deleted content. Momentum compares equal rolling seven-day windows. Views
+are kept here with the dashboard, independently of the older aggregate views.
+
+### Admin password rotation
+
+Grafana's admin password lives in its database as well as the Kubernetes source.
+Changing `GF_SECURITY_ADMIN_PASSWORD` or its Secret alone does not rotate an
+existing database login. Update the admin password through the authenticated
+Grafana Admin API, update the one encrypted password key in the existing
+SealedSecret, verify reconciliation, and test new login plus old-password rejection.
+Keep all other secret keys unchanged, including the production Slack webhook.
+Commit only sealed ciphertext. Do not put plaintext in command arguments,
+shell history, logs, screenshots or chat.
+
+An authorised operator on a Mac can copy the live credential without printing it:
+
+```sh
+ssh sam2k-predator-ph315-52 \
+  'kubectl --context do-ams3-dbr-echo-prod-k8s-cluster -n monitoring get secret monitoring-secrets -o jsonpath="{.data.grafana-admin-password}" | base64 -d' \
+  | pbcopy
+```
+
+Paste into Grafana or a password manager, then clear the clipboard:
+`printf '' | pbcopy`. This requires SSH and Kubernetes secret-read access.
+
 Production retains Loki logs and Prometheus metrics for 200 days. Loki accepts
 25-hour queries so a 24-hour dashboard also fits its small lookback windows.
 Long retention does not restore history deleted by the previous seven-day policy.
