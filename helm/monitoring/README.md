@@ -110,7 +110,8 @@ Default login credentials:
 ## Dashboards
 
 The dashboards are JSON files in `dashboards/`, loaded from this chart; `GRAFANA_DASHBOARDS.md`
-says what each one shows. A dashboard that is not in this chart is not kept: add its file here.
+says what each one shows. A dashboard made by hand in Grafana lives only in Grafana's own
+volume: add its file here to keep it with the others.
 
 ## Alerts
 
