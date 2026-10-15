@@ -5,11 +5,13 @@ locals {
 # ---- network ----------------------------------------------------------------
 
 resource "scaleway_vpc" "main" {
-  name = "dembrane-eu-prod"
-  tags = local.tags
+  region = var.region
+  name   = "dembrane-eu-prod"
+  tags   = local.tags
 }
 
 resource "scaleway_vpc_private_network" "main" {
+  region = var.region
   name   = "dembrane-eu-prod"
   vpc_id = scaleway_vpc.main.id
   tags   = local.tags
@@ -18,6 +20,7 @@ resource "scaleway_vpc_private_network" "main" {
 # ---- kubernetes -------------------------------------------------------------
 
 resource "scaleway_k8s_cluster" "main" {
+  region                      = var.region
   name                        = "dembrane-eu-prod"
   type                        = "kapsule" # free shared control plane
   version                     = var.k8s_version
@@ -69,6 +72,7 @@ resource "random_password" "db" {
 }
 
 resource "scaleway_rdb_instance" "main" {
+  region            = var.region
   name              = "dembrane-eu-prod"
   engine            = "PostgreSQL-16"
   node_type         = var.db_node_type
@@ -104,8 +108,9 @@ resource "scaleway_rdb_acl" "main" {
 # ---- object storage, registry ----------------------------------------------
 
 resource "scaleway_object_bucket" "uploads" {
-  name = "dembrane-eu-prod-uploads"
-  tags = { env = var.tag }
+  region = var.region
+  name   = "dembrane-eu-prod-uploads"
+  tags   = { env = var.tag }
 
   cors_rule {
     allowed_origins = var.cors_origins
@@ -117,11 +122,13 @@ resource "scaleway_object_bucket" "uploads" {
 }
 
 resource "scaleway_object_bucket_acl" "uploads" {
+  region = var.region
   bucket = scaleway_object_bucket.uploads.id
   acl    = "private"
 }
 
 resource "scaleway_registry_namespace" "main" {
+  region    = var.region
   name      = "dembrane-eu-prod"
   is_public = false
 }
@@ -129,6 +136,7 @@ resource "scaleway_registry_namespace" "main" {
 # ---- transactional email ----------------------------------------------------
 
 resource "scaleway_tem_domain" "main" {
+  region     = "fr-par" # Transactional Email runs in Paris only
   name       = var.base_domain
   accept_tos = true
 }

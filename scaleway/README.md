@@ -1,6 +1,6 @@
 # scaleway/
 
-Terraform for the EU production instance on Scaleway (project `eu-dembrane-web-prod`, fr-par):
+Terraform for the EU production instance on Scaleway (project `eu-dembrane-web-prod`, nl-ams; models and email in fr-par):
 VPC and private network, a Kapsule cluster (Cilium, one autoscaling pool), managed PostgreSQL 16
 (HA, backups on, private network), a private uploads bucket with CORS, a private container
 registry, a Transactional Email domain, a reserved IP for the ingress load balancer, and the

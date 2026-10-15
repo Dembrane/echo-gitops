@@ -4,13 +4,14 @@ variable "project_id" {
 }
 
 variable "region" {
+  # Amsterdam for everything that holds data; models and email exist only in Paris (fr-par).
   type    = string
-  default = "fr-par"
+  default = "nl-ams"
 }
 
 variable "zone" {
   type    = string
-  default = "fr-par-1"
+  default = "nl-ams-1"
 }
 
 variable "tag" {
