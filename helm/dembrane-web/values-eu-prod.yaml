@@ -176,6 +176,7 @@ web:
     PORTAL_URL: https://portal.eu.dembrane.com
     WEB_STORAGE_ORIGINS: https://*.s3.nl-ams.scw.cloud
     WEB_ANALYTICS: "false"
+    WEB_REGION: eu
   roles:
     dashboard:
       replicas: 1
