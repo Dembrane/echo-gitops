@@ -91,3 +91,9 @@ variable "cloudflare_zone_id" {
   description = "Zone id of dembrane.com. Needed when dns_enabled is true."
   default     = null
 }
+
+variable "app_key_generation" {
+  type        = number
+  description = "Bump to replace the app's API key."
+  default     = 1
+}
