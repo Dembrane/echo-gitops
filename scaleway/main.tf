@@ -91,6 +91,7 @@ resource "scaleway_rdb_instance" "main" {
 }
 
 resource "scaleway_rdb_database" "app" {
+  region      = var.region
   instance_id = scaleway_rdb_instance.main.id
   name        = "dembrane"
 }
@@ -98,6 +99,7 @@ resource "scaleway_rdb_database" "app" {
 # The public endpoint accepts nobody (documentation range). The app reaches the database over
 # the private network, which the ACL does not apply to.
 resource "scaleway_rdb_acl" "main" {
+  region      = var.region
   instance_id = scaleway_rdb_instance.main.id
   acl_rules {
     ip          = "192.0.2.1/32"
