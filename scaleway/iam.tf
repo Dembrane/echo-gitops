@@ -27,6 +27,9 @@ resource "scaleway_iam_policy" "app" {
 resource "scaleway_iam_api_key" "app" {
   lifecycle {
     replace_triggered_by = [terraform_data.app_key_generation]
+    # The organization caps key lifetime at one year and sets the expiry itself; rotate by
+    # bumping the generation before it passes.
+    ignore_changes = [expires_at]
   }
   application_id     = scaleway_iam_application.app.id
   description        = "dembrane-eu-app generation ${var.app_key_generation}"
