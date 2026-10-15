@@ -17,3 +17,9 @@ alter default privileges in schema obs grant select on tables to grafana_obs;
 -- Check, as grafana_obs: the first answers, the second is refused.
 --   select * from obs.live_now;
 --   select count(*) from public.conversation;
+
+-- EU support requests are read in the EU Grafana (dashboard eu-support): sam is sent only a
+-- pointer to the row. The role reads these columns of that one table and nothing else in public.
+grant usage on schema public to grafana_obs;
+grant select (id, created_at, source, status, message, page_context, workspace_id, project_id)
+  on public.support_request to grafana_obs;

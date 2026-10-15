@@ -92,6 +92,8 @@ warningDigest:
 
 dashboards:
   namespace: "dembrane-web-prod"
+  # Support requests are read here, not in sam (sql/grafana-obs-eu.sql grants the table).
+  euSupport: true
 
 # The product dashboards read the EU database's obs views as the read-only role of
 # sql/grafana-obs-role.sql. The dashboards address a data source with the uid obs-prod, so the
