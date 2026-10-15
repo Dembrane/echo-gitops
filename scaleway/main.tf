@@ -127,6 +127,11 @@ resource "scaleway_rdb_user" "app" {
 }
 
 resource "scaleway_rdb_privilege" "app" {
+  # Scaleway shows "custom" once the migrate job (or grafana-obs-eu.sql) grants more; setting
+  # it back would rerun Scaleway's grants over ours. The privilege only has to give CONNECT.
+  lifecycle {
+    ignore_changes = [permission]
+  }
   region        = var.region
   instance_id   = scaleway_rdb_instance.main.id
   user_name     = scaleway_rdb_user.app.name
@@ -134,8 +139,9 @@ resource "scaleway_rdb_privilege" "app" {
   permission    = "readwrite"
 }
 
-# Grafana's read-only login. Its rights (the obs views only) come from
-# helm/monitoring/sql/grafana-obs-role.sql, run once after the first migration.
+# Grafana's read-only login. Scaleway grants CONNECT only through a privilege, and readonly
+# also grants select on the public tables that exist then; helm/monitoring/sql/grafana-obs-eu.sql
+# revokes those and grants the obs views, run once after each apply of this privilege.
 resource "random_password" "db_grafana" {
   length           = 40
   special          = true
@@ -152,6 +158,19 @@ resource "scaleway_rdb_user" "grafana" {
   name        = "grafana_obs"
   password    = random_password.db_grafana.result
   is_admin    = false
+}
+
+resource "scaleway_rdb_privilege" "grafana" {
+  # Scaleway shows "custom" once the migrate job (or grafana-obs-eu.sql) grants more; setting
+  # it back would rerun Scaleway's grants over ours. The privilege only has to give CONNECT.
+  lifecycle {
+    ignore_changes = [permission]
+  }
+  region        = var.region
+  instance_id   = scaleway_rdb_instance.main.id
+  user_name     = scaleway_rdb_user.grafana.name
+  database_name = scaleway_rdb_database.app.name
+  permission    = "readonly"
 }
 
 # The public endpoint accepts nobody (documentation range). The app reaches the database over
