@@ -50,3 +50,38 @@ resource "local_sensitive_file" "app" {
     SCW_APP_SECRET_KEY=${scaleway_iam_api_key.app.secret_key}
   EOT
 }
+
+# The key CI pushes images with (Dembrane/echo, job 40-build-images, secret SCW_EU_REGISTRY_KEY):
+# registry write in this project and nothing else, so a leaked CI secret cannot reach data.
+resource "scaleway_iam_application" "ci" {
+  name        = "dembrane-eu-ci"
+  description = "CI: pushes images to the EU registry"
+  tags        = local.tags
+}
+
+resource "scaleway_iam_policy" "ci" {
+  name           = "dembrane-eu-ci"
+  application_id = scaleway_iam_application.ci.id
+  rule {
+    project_ids          = [var.project_id]
+    permission_set_names = ["ContainerRegistryFullAccess"]
+  }
+}
+
+resource "scaleway_iam_api_key" "ci" {
+  lifecycle {
+    ignore_changes = [expires_at]
+  }
+  application_id     = scaleway_iam_application.ci.id
+  description        = "dembrane-eu-ci registry push"
+  default_project_id = var.project_id
+}
+
+resource "local_sensitive_file" "ci" {
+  filename        = "${local.secrets_dir}/ci.env"
+  file_permission = "0600"
+  content         = <<-EOT
+    SCW_CI_ACCESS_KEY=${scaleway_iam_api_key.ci.access_key}
+    SCW_CI_SECRET_KEY=${scaleway_iam_api_key.ci.secret_key}
+  EOT
+}
