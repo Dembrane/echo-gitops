@@ -65,8 +65,10 @@ media, and every optional secret. */}}
 {{- define "dw.appEnv" -}}
 {{ include "dw.baseEnv" . }}
 {{ include "dw.caEnv" . }}
+{{- if .Values.secretFiles.gcpServiceAccountKey }}
 - name: GOOGLE_APPLICATION_CREDENTIALS
   value: {{ printf "%s/gcp-sa.json" .Values.secretFiles.mountPath | quote }}
+{{- end }}
 - name: MEDIA_URL
   value: "http://dembrane-web-media:8080"
 {{- include "dw.mapEnv" .Values.env }}
@@ -80,14 +82,15 @@ media, and every optional secret. */}}
 {{- end }}
 {{- end -}}
 
-{{/* The secret files volume: Vertex key and database CA. */}}
+{{/* The secret files volume: Vertex key and database CA. An environment without Google sets
+secretFiles.gcpServiceAccountKey to null and gets neither the file nor the variable. */}}
 {{- define "dw.secretFilesVolume" -}}
 - name: secret-files
   secret:
     secretName: {{ include "dw.secretName" .root }}
     defaultMode: 0440
     items:
-      {{- if .gcp }}
+      {{- if and .gcp .root.Values.secretFiles.gcpServiceAccountKey }}
       - key: {{ .root.Values.secretFiles.gcpServiceAccountKey }}
         path: gcp-sa.json
       {{- end }}
