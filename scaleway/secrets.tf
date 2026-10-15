@@ -26,6 +26,9 @@ resource "local_sensitive_file" "db" {
     POSTGRES_DB=${scaleway_rdb_database.app.name}
     POSTGRES_PUBLIC_HOST=${try(scaleway_rdb_instance.main.load_balancer[0].ip, "")}
     POSTGRES_PUBLIC_PORT=${try(scaleway_rdb_instance.main.load_balancer[0].port, "")}
+    APP_DATABASE_URL=postgres://${scaleway_rdb_user.app.name}:${random_password.db_app.result}@${local.db_host}:${local.db_port}/${scaleway_rdb_database.app.name}?sslmode=require
+    GRAFANA_DB_USER=${scaleway_rdb_user.grafana.name}
+    GRAFANA_DB_PASSWORD=${random_password.db_grafana.result}
   EOT
 }
 

@@ -96,6 +96,54 @@ resource "scaleway_rdb_database" "app" {
   name        = "dembrane"
 }
 
+# The runtime login. The migrate job runs as dembrane_admin and grants this role its data
+# rights (APP_DB_ROLE), so the app itself cannot change the schema.
+resource "random_password" "db_app" {
+  length           = 40
+  special          = true
+  override_special = "-_"
+  min_special      = 1
+  min_upper        = 1
+  min_lower        = 1
+  min_numeric      = 1
+}
+
+resource "scaleway_rdb_user" "app" {
+  region      = var.region
+  instance_id = scaleway_rdb_instance.main.id
+  name        = "echo_app"
+  password    = random_password.db_app.result
+  is_admin    = false
+}
+
+resource "scaleway_rdb_privilege" "app" {
+  region        = var.region
+  instance_id   = scaleway_rdb_instance.main.id
+  user_name     = scaleway_rdb_user.app.name
+  database_name = scaleway_rdb_database.app.name
+  permission    = "readwrite"
+}
+
+# Grafana's read-only login. Its rights (the obs views only) come from
+# helm/monitoring/sql/grafana-obs-role.sql, run once after the first migration.
+resource "random_password" "db_grafana" {
+  length           = 40
+  special          = true
+  override_special = "-_"
+  min_special      = 1
+  min_upper        = 1
+  min_lower        = 1
+  min_numeric      = 1
+}
+
+resource "scaleway_rdb_user" "grafana" {
+  region      = var.region
+  instance_id = scaleway_rdb_instance.main.id
+  name        = "grafana_obs"
+  password    = random_password.db_grafana.result
+  is_admin    = false
+}
+
 # The public endpoint accepts nobody (documentation range). The app reaches the database over
 # the private network, which the ACL does not apply to.
 resource "scaleway_rdb_acl" "main" {

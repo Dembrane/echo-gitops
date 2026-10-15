@@ -1,5 +1,6 @@
 # The key the app runs with, kept apart from the operator key: it reads and writes objects,
-# calls the models and sends email in this project, and can change no infrastructure.
+# calls the models, sends email and pulls images in this project, and can change no
+# infrastructure.
 # Rotation: bump `app_key_generation` and apply; the plan replaces the key.
 
 resource "scaleway_iam_application" "app" {
@@ -20,6 +21,7 @@ resource "scaleway_iam_policy" "app" {
       "ObjectStorageObjectsDelete",
       "GenerativeApisModelAccess",
       "TransactionalEmailEmailApiCreate",
+      "ContainerRegistryReadOnly",
     ]
   }
 }
