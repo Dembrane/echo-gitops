@@ -57,8 +57,15 @@ resource "scaleway_lb_ip" "ingress" {
 # ---- postgres ---------------------------------------------------------------
 
 resource "random_password" "db" {
-  length  = 40
-  special = false
+  # Scaleway asks for a digit, an upper, a lower and a special character; "-" and "_" keep the
+  # password safe inside a connection URL.
+  length           = 40
+  special          = true
+  override_special = "-_"
+  min_special      = 1
+  min_upper        = 1
+  min_lower        = 1
+  min_numeric      = 1
 }
 
 resource "scaleway_rdb_instance" "main" {
