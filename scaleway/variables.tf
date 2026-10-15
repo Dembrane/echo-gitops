@@ -26,8 +26,10 @@ variable "k8s_version" {
 
 variable "node_type" {
   type        = string
-  description = "Kapsule node type: the cheapest 8 GB type Kapsule accepts (fallbacks DEV1-L, PLAY2-MICRO)."
-  default     = "BASIC2-A2C-8G"
+  # amd64, because the images are built for amd64 only, the same images production runs.
+  # The cheaper 8 GB types (BASIC2-A2C-8G) are arm64 and would need a second image build.
+  description = "Kapsule node type: the cheapest amd64 8 GB type (fallback PLAY2-MICRO)."
+  default     = "DEV1-L"
 }
 
 variable "pool_size" {
