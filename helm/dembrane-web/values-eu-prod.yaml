@@ -140,28 +140,28 @@ env:
 api:
   hpa:
     enabled: true
-    minReplicas: 2
-    maxReplicas: 4
+    minReplicas: 1
+    maxReplicas: 2
     cpuUtilization: 70
   resources:
     requests: { cpu: 250m, memory: 512Mi }
     limits: { cpu: "1", memory: 1Gi }
 
 worker:
-  # The one worker type: queues and every schedule. Two, one per node.
-  replicas: 2
+  # The one worker type: queues and every schedule. One client at a time, so one worker.
+  replicas: 1
   resources:
     requests: { cpu: 500m, memory: 512Mi }
     limits: { cpu: "1", memory: 3Gi }
   # Every node of the EU cluster is the same size, so no node pool is named.
   nodeSelector: {}
-  spreadAcrossNodes: true
+  spreadAcrossNodes: false
 
 media:
   hpa:
     enabled: true
     minReplicas: 1
-    maxReplicas: 3
+    maxReplicas: 2
     cpuUtilization: 60
   resources:
     requests: { cpu: 500m, memory: 1Gi }
@@ -178,13 +178,13 @@ web:
     WEB_ANALYTICS: "false"
   roles:
     dashboard:
-      replicas: 2
+      replicas: 1
       hpa: { enabled: false }
       resources:
         requests: { cpu: 50m, memory: 128Mi }
         limits: { cpu: "1", memory: 512Mi }
     portal:
-      replicas: 2
+      replicas: 1
       hpa: { enabled: false }
       resources:
         requests: { cpu: 50m, memory: 128Mi }

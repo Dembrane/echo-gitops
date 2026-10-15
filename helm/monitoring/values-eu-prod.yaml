@@ -19,15 +19,15 @@ storage:
   # Scaleway Block Storage (SSD), the Kapsule default class.
   storageClassName: "scw-bssd"
   prometheus:
-    size: "20Gi"
+    size: "10Gi"
   loki:
-    size: "20Gi"
+    size: "10Gi"
   grafana:
     size: "5Gi"
 
 prometheus:
-  # 90 days on a 20 GiB disk; the rule MonitoringStorageFillingSoon warns before it fills.
-  retentionTime: "90d"
+  # 30 days on a 10 GiB disk; the rule MonitoringStorageFillingSoon warns before it fills.
+  retentionTime: "30d"
   extraArgs:
     - --query.max-concurrency=20
     - --query.timeout=2m
@@ -43,7 +43,7 @@ grafana:
     limits: { cpu: "500m", memory: "768Mi" }
 
 loki:
-  retentionPeriod: "2160h" # 90 days
+  retentionPeriod: "720h" # 30 days
   maxQueryLength: "25h"
   resources:
     requests: { cpu: "200m", memory: "512Mi" }
