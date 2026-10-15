@@ -25,18 +25,18 @@ variable "k8s_version" {
 
 variable "node_type" {
   type        = string
-  description = "Kapsule node type: 2 vCPU, 8 GB, cheapest that Kapsule accepts."
-  default     = "BASIC3-X2C-8G"
+  description = "Kapsule node type: the cheapest 8 GB type Kapsule accepts (fallbacks DEV1-L, PLAY2-MICRO)."
+  default     = "BASIC2-A2C-8G"
 }
 
 variable "pool_size" {
   type    = number
-  default = 3
+  default = 1
 }
 
 variable "pool_max_size" {
   type    = number
-  default = 5
+  default = 2
 }
 
 variable "db_node_type" {
@@ -46,7 +46,7 @@ variable "db_node_type" {
 
 variable "db_volume_gb" {
   type    = number
-  default = 50
+  default = 10
 }
 
 variable "base_domain" {

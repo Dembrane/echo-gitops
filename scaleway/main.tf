@@ -65,7 +65,7 @@ resource "scaleway_rdb_instance" "main" {
   name              = "dembrane-eu-prod"
   engine            = "PostgreSQL-16"
   node_type         = var.db_node_type
-  is_ha_cluster     = true
+  is_ha_cluster     = false # one client at a time; daily backups are the recovery path
   user_name         = "dembrane_admin"
   password          = random_password.db.result
   volume_type       = "sbs_5k"
@@ -74,7 +74,8 @@ resource "scaleway_rdb_instance" "main" {
   tags              = local.tags
 
   private_network {
-    pn_id = scaleway_vpc_private_network.main.id
+    pn_id       = scaleway_vpc_private_network.main.id
+    enable_ipam = true
   }
 }
 
