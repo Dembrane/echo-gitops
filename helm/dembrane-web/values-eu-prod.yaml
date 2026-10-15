@@ -6,35 +6,22 @@
 # DigitalOcean, Google or other non-EU setting behind. Every setting that production has and
 # the EU must not have is listed under "Left out on purpose" below.
 #
-# Sized for three nodes of 2 vCPU and 8 GB. Requests add up to about 2.2 CPU and 3.5 GiB, so
-# the monitoring stack (about 1.2 CPU and 3.5 GiB, helm/monitoring/values-eu-prod.yaml) and the
-# system pods still fit with room to roll a deployment.
+# Sized for one or two DEV1-L nodes (4 vCPU, 8 GB, amd64). Requests add up to about 2.2 CPU and
+# 3.5 GiB; with the monitoring stack (helm/monitoring/values-eu-prod.yaml) the autoscaler keeps
+# the second node.
 #
-# PLACEHOLDERS to fill before the first sync (search for CHANGE_ME):
-#   global.registry   the Scaleway Container Registry namespace
-#   global.imageTag   a Dembrane/echo main commit sha whose images were copied to that registry
-#   FILES_S3_BUCKET / STORAGE_S3_BUCKET   the Scaleway Object Storage bucket
-#
-# PENDING THE ECHO CHANGE. These keys are added to Dembrane/echo in a parallel change. The names
-# below are the ones that change uses today, except the three marked "name not final".
-#   LLM_PROVIDER, LLM_BASE_URL, LLM_COMPAT_TEXT_FAST, LLM_COMPAT_MULTI_MODAL_FAST,
-#   LLM_COMPAT_MULTI_MODAL_PRO, LLM_COMPAT_EMBEDDING_MODEL, LLM_TRANSCRIPTION_MODEL,
-#   LLM_SEARCH_GROUNDING (fact-check), MAIL_PROVIDER, SCALEWAY_MAIL_PROJECT_ID,
-#   SCALEWAY_MAIL_REGION, and the secret keys LLM_API_KEY and SCALEWAY_MAIL_SECRET_KEY.
-#   WEB_ANALYTICS           browser analytics switch
-#   WEB_STORAGE_ORIGINS     bucket origins the web security policy accepts
-# Until the images contain that change, an unknown key is ignored and the app still tries
-# Google: do not sync before the image tag carries it.
+# The provider, mail, storage-origin and analytics keys below need an image built from an echo
+# commit that has them (feat/eu-scaleway and later). An older image ignores them and calls
+# Google: never set imageTag to a commit without them.
 #
 # Secrets: never in this file. The Secret dembrane-web-eu-secrets is read as production reads
 # its own; the keys are in secrets/dembrane-web-eu-secrets.keys.md.
 
 global:
-  # CHANGE_ME: a Dembrane/echo main commit sha. The images must exist at
+  # A Dembrane/echo commit sha. The images must exist at
   # <registry>/dembrane-web-{api,worker,media,web,migrate}:<sha> (docs/eu-images.md).
-  imageTag: "CHANGE_ME_IMAGE_TAG"
-  # CHANGE_ME: the Scaleway Container Registry namespace.
-  registry: rg.nl-ams.scw.cloud/CHANGE_ME_NAMESPACE
+  imageTag: "2093348518163c6b57428040e046cc4b19878ce6"
+  registry: rg.nl-ams.scw.cloud/dembrane-eu-prod
   imagePrefix: dembrane-web-
   # Docker-registry Secret for a private registry namespace, made in dembrane-web-prod on the
   # EU cluster (secrets/dembrane-web-eu-secrets.keys.md, "The registry pull secret").
@@ -75,10 +62,10 @@ env:
 
   # Object storage: Scaleway Object Storage, nl-ams. Keys come from the secret.
   FILES_S3_ENDPOINT: https://s3.nl-ams.scw.cloud
-  FILES_S3_BUCKET: CHANGE_ME_BUCKET
+  FILES_S3_BUCKET: dembrane-eu-prod-uploads
   FILES_S3_REGION: nl-ams
   STORAGE_S3_ENDPOINT: https://s3.nl-ams.scw.cloud
-  STORAGE_S3_BUCKET: CHANGE_ME_BUCKET
+  STORAGE_S3_BUCKET: dembrane-eu-prod-uploads
   STORAGE_S3_REGION: nl-ams
   # Browsers upload to and play from the bucket directly; the web security policy must accept
   # this origin. Also add the dashboard and portal hosts to the bucket's CORS rules.
@@ -107,7 +94,7 @@ env:
   # verified in that Scaleway project.
   MAIL_PROVIDER: scaleway
   SCALEWAY_MAIL_REGION: fr-par
-  SCALEWAY_MAIL_PROJECT_ID: CHANGE_ME_SCALEWAY_PROJECT_ID
+  SCALEWAY_MAIL_PROJECT_ID: c581992c-8cce-4c75-acef-2b2a1cc0aea9
   EMAIL_FROM: do-not-reply@eu.dembrane.com
 
   # Browser analytics (PostHog) and its session replay: off.
@@ -192,9 +179,7 @@ web:
         limits: { cpu: "1", memory: 512Mi }
 
 migrate:
-  # A fresh database: no old stack reads the old tables, so contract migrations run. The migrate
-  # step has not been run on an empty database yet (it copies identities from Directus tables
-  # the baseline creates): try it on a scratch database before the first sync.
+  # A fresh database: no old stack reads the old tables, so contract migrations run.
   holdContract: false
   appDbRole: echo_app
   activeDeadlineSeconds: 3600

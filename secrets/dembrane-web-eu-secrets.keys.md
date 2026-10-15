@@ -11,7 +11,7 @@ Everything below is created new for the EU. No value is shared with production.
 
 | Key | Read by | Value |
 |---|---|---|
-| `DATABASE_URL` | api, worker | Scaleway Managed PostgreSQL, **direct** connection (not a pooler: queues use LISTEN/NOTIFY and session advisory locks), as the runtime login `echo_app`, ending in `?sslmode=verify-full`. |
+| `DATABASE_URL` | api, worker | Scaleway Managed PostgreSQL, **direct** connection (not a pooler: queues use LISTEN/NOTIFY and session advisory locks), as the runtime login `echo_app`, over the private network, ending in `?sslmode=require`. |
 | `MIGRATION_DATABASE_URL` | migrate | Same host and database, as the owner login with DDL rights. |
 | `DATABASE_CA_CERT` | api, worker, migrate | The database's CA certificate (PEM), mounted as a file and trusted through `NODE_EXTRA_CA_CERTS`. |
 | `AUTH_SECRET` | api | New: `openssl rand -base64 48`. |
@@ -32,7 +32,7 @@ them for the EU (`optionalSecretKeys` in values-eu-prod.yaml).
 ## The registry pull secret
 
 `scw-registry-secret` (`kubernetes.io/dockerconfigjson`) in `dembrane-web-prod`: server
-`rg.fr-par.scw.cloud`, user `nologin`, password a Scaleway secret key with read access to the
+`rg.nl-ams.scw.cloud`, user `nologin`, password a Scaleway secret key with read access to the
 registry namespace.
 
 ## Monitoring secrets (namespace `monitoring`)
