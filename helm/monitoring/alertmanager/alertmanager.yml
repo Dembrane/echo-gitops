@@ -57,7 +57,7 @@ receivers:
       - channel: '#alerts-prod'
         send_resolved: true
         color: '{{ if eq .Status "resolved" }}good{{ else if eq .CommonLabels.severity "critical" }}danger{{ else }}warning{{ end }}'
-        title: '{{ if eq .Status "resolved" }}:white_check_mark: Over: {{ else if eq .CommonLabels.severity "critical" }}:red_circle: {{ else }}:large_yellow_circle: {{ end }}{{ (index .Alerts 0).Annotations.title }}'
+        title: '{{ if eq .Status "resolved" }}:white_check_mark: Over: {{ else if eq .CommonLabels.severity "critical" }}:red_circle: {{ else }}:large_yellow_circle: {{ end }}__TITLE_PREFIX__{{ (index .Alerts 0).Annotations.title }}'
         text: |-
           {{ if eq .Status "resolved" }}It lasted {{ ((index .Alerts 0).EndsAt.Sub (index .Alerts 0).StartsAt).Round 60000000000 }}.{{ else }}{{ range $i, $a := .Alerts }}{{ if $i }}
 

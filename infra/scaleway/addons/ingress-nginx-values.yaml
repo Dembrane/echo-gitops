@@ -1,0 +1,7 @@
+# The address is the reserved scaleway_lb_ip; install.sh passes it as controller.service.loadBalancerIP.
+controller:
+  service:
+    type: LoadBalancer
+    externalTrafficPolicy: Local
+    annotations:
+      service.beta.kubernetes.io/scw-loadbalancer-zone: nl-ams-1

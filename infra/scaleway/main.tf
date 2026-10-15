@@ -1,0 +1,221 @@
+locals {
+  tags = [var.tag]
+}
+
+# ---- network ----------------------------------------------------------------
+
+resource "scaleway_vpc" "main" {
+  region = var.region
+  name   = "dembrane-eu-prod"
+  tags   = local.tags
+}
+
+resource "scaleway_vpc_private_network" "main" {
+  region = var.region
+  name   = "dembrane-eu-prod"
+  vpc_id = scaleway_vpc.main.id
+  tags   = local.tags
+}
+
+# ---- kubernetes -------------------------------------------------------------
+
+resource "scaleway_k8s_cluster" "main" {
+  region                      = var.region
+  name                        = "dembrane-eu-prod"
+  type                        = "kapsule" # free shared control plane
+  version                     = var.k8s_version
+  cni                         = "cilium"
+  private_network_id          = scaleway_vpc_private_network.main.id
+  delete_additional_resources = true
+  tags                        = local.tags
+
+  auto_upgrade {
+    enable                        = true
+    maintenance_window_start_hour = 2
+    maintenance_window_day        = "sunday"
+  }
+}
+
+resource "scaleway_k8s_pool" "main" {
+  cluster_id          = scaleway_k8s_cluster.main.id
+  name                = "main"
+  node_type           = var.node_type
+  zone                = var.zone
+  size                = var.pool_size
+  min_size            = var.pool_size
+  max_size            = var.pool_max_size
+  autoscaling         = true
+  autohealing         = true
+  wait_for_pool_ready = true
+  tags                = local.tags
+}
+
+# A fixed public address for the ingress load balancer. The ingress-nginx Service asks for it
+# by address (scaleway/install.sh), so DNS survives the Service being recreated.
+resource "scaleway_lb_ip" "ingress" {
+  zone = var.zone
+  tags = local.tags
+}
+
+# ---- postgres ---------------------------------------------------------------
+
+resource "random_password" "db" {
+  # Scaleway asks for a digit, an upper, a lower and a special character; "-" and "_" keep the
+  # password safe inside a connection URL.
+  length           = 40
+  special          = true
+  override_special = "-_"
+  min_special      = 1
+  min_upper        = 1
+  min_lower        = 1
+  min_numeric      = 1
+}
+
+resource "scaleway_rdb_instance" "main" {
+  region            = var.region
+  name              = "dembrane-eu-prod"
+  engine            = "PostgreSQL-16"
+  node_type         = var.db_node_type
+  is_ha_cluster     = false # one client at a time; daily backups are the recovery path
+  user_name         = "dembrane_admin"
+  password          = random_password.db.result
+  volume_type       = "sbs_5k"
+  volume_size_in_gb = var.db_volume_gb
+  disable_backup    = false
+  tags              = local.tags
+
+  private_network {
+    pn_id       = scaleway_vpc_private_network.main.id
+    enable_ipam = true
+  }
+}
+
+resource "scaleway_rdb_database" "app" {
+  region      = var.region
+  instance_id = scaleway_rdb_instance.main.id
+  name        = "dembrane"
+}
+
+# Scaleway gives a new database's users no rights on it, the admin included. The migrate job
+# runs as this login and owns the schema.
+resource "scaleway_rdb_privilege" "admin" {
+  region        = var.region
+  instance_id   = scaleway_rdb_instance.main.id
+  user_name     = scaleway_rdb_instance.main.user_name
+  database_name = scaleway_rdb_database.app.name
+  permission    = "all"
+}
+
+# The runtime login. The migrate job runs as dembrane_admin and grants this role its data
+# rights (APP_DB_ROLE), so the app itself cannot change the schema.
+resource "random_password" "db_app" {
+  length           = 40
+  special          = true
+  override_special = "-_"
+  min_special      = 1
+  min_upper        = 1
+  min_lower        = 1
+  min_numeric      = 1
+}
+
+resource "scaleway_rdb_user" "app" {
+  region      = var.region
+  instance_id = scaleway_rdb_instance.main.id
+  name        = "echo_app"
+  password    = random_password.db_app.result
+  is_admin    = false
+}
+
+resource "scaleway_rdb_privilege" "app" {
+  # Scaleway shows "custom" once the migrate job (or grafana-obs-eu.sql) grants more; setting
+  # it back would rerun Scaleway's grants over ours. The privilege only has to give CONNECT.
+  lifecycle {
+    ignore_changes = [permission]
+  }
+  region        = var.region
+  instance_id   = scaleway_rdb_instance.main.id
+  user_name     = scaleway_rdb_user.app.name
+  database_name = scaleway_rdb_database.app.name
+  permission    = "readwrite"
+}
+
+# Grafana's read-only login. Scaleway grants CONNECT only through a privilege, and readonly
+# also grants select on the public tables that exist then; helm/monitoring/sql/grafana-obs-eu.sql
+# revokes those and grants the obs views, run once after each apply of this privilege.
+resource "random_password" "db_grafana" {
+  length           = 40
+  special          = true
+  override_special = "-_"
+  min_special      = 1
+  min_upper        = 1
+  min_lower        = 1
+  min_numeric      = 1
+}
+
+resource "scaleway_rdb_user" "grafana" {
+  region      = var.region
+  instance_id = scaleway_rdb_instance.main.id
+  name        = "grafana_obs"
+  password    = random_password.db_grafana.result
+  is_admin    = false
+}
+
+resource "scaleway_rdb_privilege" "grafana" {
+  # Scaleway shows "custom" once the migrate job (or grafana-obs-eu.sql) grants more; setting
+  # it back would rerun Scaleway's grants over ours. The privilege only has to give CONNECT.
+  lifecycle {
+    ignore_changes = [permission]
+  }
+  region        = var.region
+  instance_id   = scaleway_rdb_instance.main.id
+  user_name     = scaleway_rdb_user.grafana.name
+  database_name = scaleway_rdb_database.app.name
+  permission    = "readonly"
+}
+
+# The public endpoint accepts nobody (documentation range). The app reaches the database over
+# the private network, which the ACL does not apply to.
+resource "scaleway_rdb_acl" "main" {
+  region      = var.region
+  instance_id = scaleway_rdb_instance.main.id
+  acl_rules {
+    ip          = "192.0.2.1/32"
+    description = "placeholder: public access closed"
+  }
+}
+
+# ---- object storage, registry ----------------------------------------------
+
+resource "scaleway_object_bucket" "uploads" {
+  region = var.region
+  name   = "dembrane-eu-prod-uploads"
+  tags   = { env = var.tag }
+
+  cors_rule {
+    allowed_origins = var.cors_origins
+    allowed_methods = ["GET", "PUT", "POST", "HEAD", "DELETE"]
+    allowed_headers = ["*"]
+    expose_headers  = ["ETag"]
+    max_age_seconds = 3600
+  }
+}
+
+resource "scaleway_object_bucket_acl" "uploads" {
+  region = var.region
+  bucket = scaleway_object_bucket.uploads.id
+  acl    = "private"
+}
+
+resource "scaleway_registry_namespace" "main" {
+  region    = var.region
+  name      = "dembrane-eu-prod"
+  is_public = false
+}
+
+# ---- transactional email ----------------------------------------------------
+
+resource "scaleway_tem_domain" "main" {
+  region     = "fr-par" # Transactional Email runs in Paris only
+  name       = var.base_domain
+  accept_tos = true
+}
