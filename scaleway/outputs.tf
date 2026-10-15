@@ -9,9 +9,9 @@ locals {
     }],
     [
       {
-        key     = "spf"
-        name    = var.base_domain
-        type    = "TXT"
+        key  = "spf"
+        name = var.base_domain
+        type = "TXT"
         # spf_config is only the include; the record needs the version tag and a policy.
         content = "v=spf1 ${scaleway_tem_domain.main.spf_config} -all"
       },
