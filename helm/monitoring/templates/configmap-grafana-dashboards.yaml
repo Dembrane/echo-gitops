@@ -47,6 +47,11 @@ data:
 {{ $.Files.Get "dashboards/sam-performance.json" | trim | indent 4 }}
 {{- end }}
 {{- end }}
+{{- /* The EU's support requests, read inside the EU: sam only gets a pointer to a row. */}}
+{{- if (.Values.dashboards).euSupport }}
+  eu-support.json: |
+{{ .Files.Get "dashboards/eu-support.json" | trim | indent 4 }}
+{{- end }}
 {{- if .Values.google.environments }}
   v3-staging-previews.json: |
 {{ .Files.Get "dashboards/v3-staging-previews.json" | trim | indent 4 }}

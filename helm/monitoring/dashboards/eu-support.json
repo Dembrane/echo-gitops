@@ -1,0 +1,97 @@
+{
+  "uid": "eu-support",
+  "title": "EU support requests",
+  "schemaVersion": 38,
+  "editable": false,
+  "tags": [
+    "eu",
+    "support"
+  ],
+  "time": {
+    "from": "now-90d",
+    "to": "now"
+  },
+  "refresh": "",
+  "description": "Support requests filed on the EU environment. sam gets only a pointer to a row here; the text never leaves the EU.",
+  "templating": {
+    "list": [
+      {
+        "name": "id",
+        "label": "Request id",
+        "type": "textbox",
+        "query": "",
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "hide": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "table",
+      "title": "Support requests (newest first)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "obs-prod"
+      },
+      "gridPos": {
+        "h": 24,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": true
+          },
+          "noValue": "No support requests"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Message"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 520
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "auto",
+                  "wrapText": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "obs-prod"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "select created_at as \"Filed\", id::text as \"Request\", source as \"From\", status as \"Status\", message as \"Message\", page_context as \"Page\", workspace_id as \"Workspace\", project_id as \"Project\" from public.support_request where ('${id}' = '' or id::text = '${id}') order by created_at desc limit 200"
+        }
+      ]
+    }
+  ]
+}
