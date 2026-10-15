@@ -67,9 +67,11 @@ env:
   STORAGE_S3_ENDPOINT: https://s3.nl-ams.scw.cloud
   STORAGE_S3_BUCKET: dembrane-eu-prod-uploads
   STORAGE_S3_REGION: nl-ams
-  # Browsers upload to and play from the bucket directly; the web security policy must accept
-  # this origin. Also add the dashboard and portal hosts to the bucket's CORS rules.
-  WEB_STORAGE_ORIGINS: https://*.s3.nl-ams.scw.cloud
+  # Browsers upload to and play from the bucket directly, on path-style URLs
+  # (s3.nl-ams.scw.cloud/<bucket>/...), so the web security policy must accept that exact host:
+  # a *.s3.nl-ams.scw.cloud wildcard does not match it. The bucket's CORS rules name the
+  # dashboard and portal hosts (scaleway/variables.tf).
+  WEB_STORAGE_ORIGINS: https://s3.nl-ams.scw.cloud
 
   # Postgres connection budget (Scaleway Managed PostgreSQL, direct connection, not a pooler).
   # Per API pod pool + 4 = 9; per worker pool + queue pool + 4 = 13; migrate 3.
@@ -161,7 +163,7 @@ web:
     API_PUBLIC_URL: https://api.eu.dembrane.com
     DASHBOARD_URL: https://dashboard.eu.dembrane.com
     PORTAL_URL: https://portal.eu.dembrane.com
-    WEB_STORAGE_ORIGINS: https://*.s3.nl-ams.scw.cloud
+    WEB_STORAGE_ORIGINS: https://s3.nl-ams.scw.cloud
     WEB_ANALYTICS: "false"
     WEB_REGION: eu
   roles:
