@@ -9,7 +9,7 @@ INGRESS_IP="${INGRESS_IP:-$(grep '^INGRESS_IP=' "$HOME/.config/dembrane-eu/infra
 
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx >/dev/null
 helm repo add jetstack https://charts.jetstack.io >/dev/null
-helm repo add sealed-secrets https://bitnami-labs.github.io/sealed-secrets >/dev/null
+helm repo add sealed-secrets https://bitnami.github.io/sealed-secrets >/dev/null
 helm repo add argo https://argoproj.github.io/argo-helm >/dev/null
 helm repo update >/dev/null
 
