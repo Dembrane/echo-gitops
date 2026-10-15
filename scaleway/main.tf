@@ -96,6 +96,16 @@ resource "scaleway_rdb_database" "app" {
   name        = "dembrane"
 }
 
+# Scaleway gives a new database's users no rights on it, the admin included. The migrate job
+# runs as this login and owns the schema.
+resource "scaleway_rdb_privilege" "admin" {
+  region        = var.region
+  instance_id   = scaleway_rdb_instance.main.id
+  user_name     = scaleway_rdb_instance.main.user_name
+  database_name = scaleway_rdb_database.app.name
+  permission    = "all"
+}
+
 # The runtime login. The migrate job runs as dembrane_admin and grants this role its data
 # rights (APP_DB_ROLE), so the app itself cannot change the schema.
 resource "random_password" "db_app" {
