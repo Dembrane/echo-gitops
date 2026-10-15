@@ -21,6 +21,65 @@ data:
           - role: pod
         pipeline_stages:
           - cri: {}
+          # The worker writes each queue's depth once a minute and a heartbeat line; both
+          # become metrics here, so an alert can say how much work waits and for how long.
+          # The queue name is a label only while the metrics are made: the stream that goes
+          # to Loki keeps its labels.
+          # The selectors keep their escaped quotes: this promtail refuses a backtick string
+          # in a match stage and then does not start.
+          - match:
+              selector: '{namespace="dembrane-web-prod", container="worker"} |= "\"signal\":\"queue.depth\""'
+              stages:
+                - json:
+                    expressions:
+                      queue: name
+                      ready: ready
+                      active: active
+                      oldest_ready_s: oldestReadyS
+                - template:
+                    source: oldest_ready_s
+                    template: '{{ "{{" }} if .Value {{ "}}" }}{{ "{{" }} .Value {{ "}}" }}{{ "{{" }} else {{ "}}" }}0{{ "{{" }} end {{ "}}" }}'
+                - labels:
+                    queue:
+                - metrics:
+                    queue_ready:
+                      type: Gauge
+                      description: Jobs waiting in the queue
+                      prefix: dembrane_
+                      source: ready
+                      max_idle_duration: 3m
+                      config:
+                        action: set
+                    queue_active:
+                      type: Gauge
+                      description: Jobs running
+                      prefix: dembrane_
+                      source: active
+                      max_idle_duration: 3m
+                      config:
+                        action: set
+                    queue_oldest_ready_seconds:
+                      type: Gauge
+                      description: How long the oldest waiting job has waited
+                      prefix: dembrane_
+                      source: oldest_ready_s
+                      max_idle_duration: 3m
+                      config:
+                        action: set
+                - labeldrop:
+                    - queue
+          - match:
+              selector: '{namespace="dembrane-web-prod", container="worker"} |= "\"signal\":\"worker.heartbeat\""'
+              stages:
+                - metrics:
+                    worker_heartbeats_total:
+                      type: Counter
+                      description: Heartbeat jobs a worker ran
+                      prefix: dembrane_
+                      max_idle_duration: 1h
+                      config:
+                        match_all: true
+                        action: inc
         relabel_configs:
           # Only keep pods that are scheduled on this node (each Promtail scrapes its own host)
           - action: keep

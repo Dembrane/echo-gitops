@@ -107,26 +107,103 @@ Default login credentials:
 4. Add Loki as a data source with:
    - URL: http://loki:3100
 
-## Default Dashboards
+## Dashboards
 
-Some recommended dashboards to import:
-- Kubernetes Cluster Monitoring (ID: 15661)
-- Node Exporter Full (ID: 1860)
-- Nginx Ingress Controller (ID: 9614)
-- Loki Logs (ID: 12019)
-- DigitalOcean Kubernetes Service (ID: 11545)
+### Customer activity
 
-To import a dashboard:
-1. Go to Dashboards → Import
-2. Enter the dashboard ID
-3. Select your Prometheus data source
-4. Click Import
+`dembrane v3: customers` (`v3-customers`) uses production only. Its default
+audience hides dembrane's own organisation; the selector can include it again.
+Other demo/trial organisations may still appear. These are observed product
+actions, not paid-account counts or an inferred churn score.
+
+Before deploying its JSON, apply `sql/customer-views.sql` as the existing
+observability/migration owner. It adds seven `obs.customer_*` views and grants
+only SELECT on them to `grafana_obs`. Do not grant access to the underlying
+product tables. No customer rows, transcripts, prompts or contact fields change.
+Emails embedded in display names are masked. The fixture function in
+`sql/test-customer-views.py` tests the SQL against session-local temporary
+tables, never real product rows.
+
+Fresh audio uses three-minute client AND server timestamps; visitor telemetry
+uses expiry and a 90-second freshness guard. Neither unfinished conversations
+nor long-lived recording indexes prove a person is still recording. Pageviews
+and idle dashboard tabs are not measured. Samples, clones and deleted content
+are excluded. Attribution gaps and source failures remain visible.
+
+Daily activity covers up to 200 days of retained source rows; first-use
+milestones read the first retained core action, not signup or first-ever use
+of deleted content. Momentum compares equal rolling seven-day windows. Views
+are kept here with the dashboard, independently of the older aggregate views.
+
+### Admin password rotation
+
+Grafana's admin password lives in its database as well as the Kubernetes source.
+Changing `GF_SECURITY_ADMIN_PASSWORD` or its Secret alone does not rotate an
+existing database login. Update the admin password through the authenticated
+Grafana Admin API, update the one encrypted password key in the existing
+SealedSecret, verify reconciliation, and test new login plus old-password rejection.
+Keep all other secret keys unchanged, including the production Slack webhook.
+Commit only sealed ciphertext. Do not put plaintext in command arguments,
+shell history, logs, screenshots or chat.
+
+An authorised operator on a Mac can copy the live credential without printing it:
+
+```sh
+ssh sam2k-predator-ph315-52 \
+  'kubectl --context do-ams3-dbr-echo-prod-k8s-cluster -n monitoring get secret monitoring-secrets -o jsonpath="{.data.grafana-admin-password}" | base64 -d' \
+  | pbcopy
+```
+
+Paste into Grafana or a password manager, then clear the clipboard:
+`printf '' | pbcopy`. This requires SSH and Kubernetes secret-read access.
+
+Production retains Loki logs and Prometheus metrics for 200 days. Loki accepts
+25-hour queries so a 24-hour dashboard also fits its small lookback windows.
+Long retention does not restore history deleted by the previous seven-day policy.
+Development retains its existing seven-day and 13-hour defaults.
+
+Production starts with 40 GiB each for `loki-data` and `prometheus-data`.
+This is a starting capacity, not a guarantee that every growth rate fits 200 days.
+Do not set a Prometheus size-retention cap that silently deletes history early.
+Expand PVCs through `storage` in `values-prod.yaml`, never delete/recreate them.
+The storage class supports expansion; verify claim capacity and filesystem size
+after Argo sync. Volume expansion cannot be rolled back by shrinking the claim.
+
+PVC free-space metrics come from kubelet through the Kubernetes API proxy.
+`#alerts-prod` receives notices below 20% free, a seven-day growth forecast,
+and missing-capacity signals. Below 5% free is critical, with the existing
+channel tag and repeat cadence. Critical disk alerts suppress their earlier
+notices for the same PVC. The rules cover logs, metrics and Grafana's state disk.
+History is not a backup; these volumes are still single copies.
+
+The dashboards are JSON files in `dashboards/`, loaded from this chart; `GRAFANA_DASHBOARDS.md`
+says what each one shows. A dashboard made by hand in Grafana lives only in Grafana's own
+volume: add its file here to keep it with the others.
 
 ## Alerts
 
-Alert rules are defined in the Prometheus configuration. Alerts are shown in Prometheus.
+The application rules are `rules/app-alerts.yml`, the routing and the Slack message are
+`alertmanager/alertmanager.yml`; both are plain files, so their own tools check them:
 
-To customize alert rules, edit `helm/monitoring/templates/configmap-prometheus.yaml`.
+```
+promtool check rules helm/monitoring/rules/app-alerts.yml
+promtool test rules helm/monitoring/rules/app-alerts.test.yml
+amtool check-config helm/monitoring/alertmanager/alertmanager.yml
+```
+
+Every alert carries three sentences: `summary` (what happened), `impact` (who feels it) and
+`action` (the first step). The Slack message is made of those three. A `critical` alert tags
+the channel and repeats every 30 minutes while it lasts, a `notice` is posted once, a
+`warning` is only counted in the weekly digest.
+
+The queue alerts read `dembrane_queue_*`, which promtail makes from the worker's
+`queue.depth` log lines (`templates/configmap-promtail.yaml`). Try a change to those stages
+with the same promtail image and `-dry-run` before it is merged: a stage promtail cannot
+parse stops it from starting.
+
+Prometheus and Alertmanager mount their files by subPath and promtail reads its config at
+start, so after a sync: `kubectl -n monitoring rollout restart ds/promtail deploy/prometheus
+deploy/alertmanager`.
 
 ## Handling Secrets
 
@@ -169,4 +246,4 @@ For development, basic auth credentials are defined in `values.yaml`. For produc
 4. Apply the sealed secret:
    ```bash
    kubectl apply -f secrets/sealed-monitoring-secrets-prod.yaml
-   ``` 
+   ```

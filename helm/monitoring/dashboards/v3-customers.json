@@ -1,0 +1,1501 @@
+{
+  "uid": "v3-customers",
+  "title": "dembrane v3: customers",
+  "description": "Production customer activity: fresh signals, repeat use, adoption and momentum. Organisation-level counts only; no transcripts, emails or prompts.",
+  "tags": [
+    "dembrane-v3",
+    "customers"
+  ],
+  "schemaVersion": 38,
+  "version": 3,
+  "editable": true,
+  "graphTooltip": 1,
+  "timezone": "Europe/Amsterdam",
+  "weekStart": "monday",
+  "refresh": "1m",
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "annotations": {
+    "list": []
+  },
+  "links": [
+    {
+      "type": "link",
+      "title": "Product",
+      "url": "/d/v3-product",
+      "icon": "dashboard",
+      "keepTime": true
+    },
+    {
+      "type": "link",
+      "title": "Errors",
+      "url": "/d/v3-errors",
+      "icon": "dashboard",
+      "keepTime": true
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "audience",
+        "label": "Audience",
+        "type": "custom",
+        "query": "Hide dembrane : external, All organisations : all",
+        "current": {
+          "text": "Hide dembrane",
+          "value": "external",
+          "selected": true
+        },
+        "options": [
+          {
+            "text": "Hide dembrane",
+            "value": "external",
+            "selected": true
+          },
+          {
+            "text": "All organisations",
+            "value": "all",
+            "selected": false
+          }
+        ],
+        "multi": false,
+        "includeAll": false,
+        "hide": 0
+      },
+      {
+        "name": "customer",
+        "label": "Organisation",
+        "type": "query",
+        "datasource": {
+          "type": "postgres",
+          "uid": "obs-prod"
+        },
+        "query": "SELECT org_name || ' · ' || left(org_id,8) AS __text, org_id AS __value FROM obs.customer_organisations WHERE (${audience:sqlstring}='all' OR lower(btrim(org_name))<>'dembrane') ORDER BY org_name",
+        "definition": "SELECT org_name || ' · ' || left(org_id,8) AS __text, org_id AS __value FROM obs.customer_organisations WHERE (${audience:sqlstring}='all' OR lower(btrim(org_name))<>'dembrane') ORDER BY org_name",
+        "refresh": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": "'__all'",
+        "current": {
+          "text": "All",
+          "value": "$__all",
+          "selected": true
+        },
+        "hide": 0,
+        "options": []
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "What this page sees",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 3
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**Production only.** Fresh audio, onboarding and server-side actions, then customer usage over the selected time. Sample projects, copied conversations and deleted content are excluded. Organisation names do not prove paid status. A quiet radar does not mean nobody has a page open. No transcripts, email addresses or prompts are exposed. The default audience hides dembrane's own organisation; other trial/demo organisations can still appear."
+      }
+    },
+    {
+      "id": 2,
+      "type": "row",
+      "title": "Customer radar: fixed live windows, independent of the time picker",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Fresh audio conversations (3m)",
+      "description": "Conversations with audio arriving within three minutes, with client and server timestamp guards. Not an unfinished-conversation count. Uploads are not live recording.",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "obs-prod"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "obs-prod"
+          },
+          "rawSql": "SELECT coalesce(sum(audio_conversations),0) AS value FROM obs.customer_live WHERE (('__all' IN (${customer:sqlstring}) OR org_id IN (${customer:sqlstring})) AND (${audience:sqlstring}='all' OR org_id NOT IN (SELECT org_id FROM obs.customer_organisations WHERE lower(btrim(org_name))='dembrane')))",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "no data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Onboarding sessions (90s)",
+      "description": "Unexpired visitor signals seen within 90 seconds. Sessions are not unique people.",
+      "gridPos": {
+        "x": 6,
+        "y": 4,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "obs-prod"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "obs-prod"
+          },
+          "rawSql": "SELECT coalesce(sum(onboarding_sessions),0) AS value FROM obs.customer_live WHERE (('__all' IN (${customer:sqlstring}) OR org_id IN (${customer:sqlstring})) AND (${audience:sqlstring}='all' OR org_id NOT IN (SELECT org_id FROM obs.customer_organisations WHERE lower(btrim(org_name))='dembrane')))",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "no data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Organisations with fresh signals",
+      "description": "Fresh audio/onboarding, or a project, conversation, chat or report action in the last 15 minutes.",
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "obs-prod"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "obs-prod"
+          },
+          "rawSql": "SELECT count(DISTINCT org_id) AS value FROM obs.customer_live WHERE (('__all' IN (${customer:sqlstring}) OR org_id IN (${customer:sqlstring})) AND (${audience:sqlstring}='all' OR org_id NOT IN (SELECT org_id FROM obs.customer_organisations WHERE lower(btrim(org_name))='dembrane')))",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "no data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Database checked at",
+      "description": "Time this live read succeeded, not proof of customer activity. Errors remain visible.",
+      "gridPos": {
+        "x": 18,
+        "y": 4,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "obs-prod"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "obs-prod"
+          },
+          "rawSql": "SELECT (extract(epoch FROM checked_at) * 1000)::double precision AS value FROM obs.customer_attribution_coverage",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dateTimeAsLocal",
+          "noValue": "no data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 7,
+      "type": "table",
+      "title": "Who is doing what now",
+      "description": "Empty means no signal in these windows, not zero logged-in people. Audio and onboarding have shorter windows than chat/report activity.",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "obs-prod"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "obs-prod"
+          },
+          "rawSql": "SELECT org_id, org_name AS \"Organisation\",workspace_name AS \"Workspace\",project_name AS \"Project\",CASE WHEN audio_conversations>0 THEN 'Fresh audio' WHEN onboarding_sessions>0 THEN 'Onboarding' WHEN chats_15m>0 THEN 'Using chat' WHEN reports_15m>0 THEN 'Creating analysis' ELSE 'Project / conversation activity' END AS \"Signal\",audio_conversations AS \"Audio (3m)\",onboarding_sessions AS \"Onboarding\",chats_15m AS \"Questions (15m)\",reports_15m AS \"Outputs (15m)\",last_signal_at AS \"Last signal\" FROM obs.customer_live WHERE (('__all' IN (${customer:sqlstring}) OR org_id IN (${customer:sqlstring})) AND (${audience:sqlstring}='all' OR org_id NOT IN (SELECT org_id FROM obs.customer_organisations WHERE lower(btrim(org_name))='dembrane'))) ORDER BY last_signal_at DESC LIMIT 100",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          },
+          "noValue": "",
+          "decimals": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "org_id"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Organisation"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Focus this organisation",
+                    "url": "/d/v3-customers?orgId=1&var-customer=${__data.fields[\"org_id\"]}&${audience:queryparam}&from=${__from}&to=${__to}",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "type": "row",
+      "title": "Customer use over the selected time: core actions, not pageviews",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Active organisations",
+      "description": "Organisations with retained input, user chat questions or published/archived outputs.",
+      "gridPos": {
+        "x": 0,
+        "y": 17,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "obs-prod"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "obs-prod"
+          },
+          "rawSql": "SELECT count(DISTINCT org_id) FILTER (WHERE action IN ('conversation','chat','report')) AS value FROM obs.customer_activity WHERE $__timeFilter(occurred_at) AND (('__all' IN (${customer:sqlstring}) OR org_id IN (${customer:sqlstring})) AND (${audience:sqlstring}='all' OR org_id NOT IN (SELECT org_id FROM obs.customer_organisations WHERE lower(btrim(org_name))='dembrane')))",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "no data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Active projects",
+      "description": "Non-sample projects with a core action.",
+      "gridPos": {
+        "x": 4,
+        "y": 17,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "obs-prod"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "obs-prod"
+          },
+          "rawSql": "SELECT count(DISTINCT project_id) FILTER (WHERE action IN ('conversation','chat','report')) AS value FROM obs.customer_activity WHERE $__timeFilter(occurred_at) AND (('__all' IN (${customer:sqlstring}) OR org_id IN (${customer:sqlstring})) AND (${audience:sqlstring}='all' OR org_id NOT IN (SELECT org_id FROM obs.customer_organisations WHERE lower(btrim(org_name))='dembrane')))",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "no data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "Conversations added",
+      "description": "New non-cloned conversations, including uploads. Not a unique-participant count.",
+      "gridPos": {
+        "x": 8,
+        "y": 17,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "obs-prod"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "obs-prod"
+          },
+          "rawSql": "SELECT count(*) FILTER (WHERE action='conversation') AS value FROM obs.customer_activity WHERE $__timeFilter(occurred_at) AND (('__all' IN (${customer:sqlstring}) OR org_id IN (${customer:sqlstring})) AND (${audience:sqlstring}='all' OR org_id NOT IN (SELECT org_id FROM obs.customer_organisations WHERE lower(btrim(org_name))='dembrane')))",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "no data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 12,
+      "type": "stat",
+      "title": "Audio hours added",
+      "description": "Conversation durations attributed to their start time. Includes uploads; ongoing durations can grow.",
+      "gridPos": {
+        "x": 12,
+        "y": 17,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "obs-prod"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "obs-prod"
+          },
+          "rawSql": "SELECT round((coalesce(sum(audio_minutes),0)/60)::numeric,1) AS value FROM obs.customer_activity WHERE $__timeFilter(occurred_at) AND (('__all' IN (${customer:sqlstring}) OR org_id IN (${customer:sqlstring})) AND (${audience:sqlstring}='all' OR org_id NOT IN (SELECT org_id FROM obs.customer_organisations WHERE lower(btrim(org_name))='dembrane')))",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 1,
+          "noValue": "no data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 13,
+      "type": "stat",
+      "title": "Chat questions",
+      "description": "Human user messages only. Assistant responses are excluded.",
+      "gridPos": {
+        "x": 16,
+        "y": 17,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "obs-prod"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "obs-prod"
+          },
+          "rawSql": "SELECT count(*) FILTER (WHERE action='chat') AS value FROM obs.customer_activity WHERE $__timeFilter(occurred_at) AND (('__all' IN (${customer:sqlstring}) OR org_id IN (${customer:sqlstring})) AND (${audience:sqlstring}='all' OR org_id NOT IN (SELECT org_id FROM obs.customer_organisations WHERE lower(btrim(org_name))='dembrane')))",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "no data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 14,
+      "type": "stat",
+      "title": "Analysis outputs",
+      "description": "Published or archived report/popcorn rows by creation time. Versions count separately; errors do not count as outputs.",
+      "gridPos": {
+        "x": 20,
+        "y": 17,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "obs-prod"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "obs-prod"
+          },
+          "rawSql": "SELECT count(*) FILTER (WHERE action='report') AS value FROM obs.customer_activity WHERE $__timeFilter(occurred_at) AND (('__all' IN (${customer:sqlstring}) OR org_id IN (${customer:sqlstring})) AND (${audience:sqlstring}='all' OR org_id NOT IN (SELECT org_id FROM obs.customer_organisations WHERE lower(btrim(org_name))='dembrane')))",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "no data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 15,
+      "type": "table",
+      "title": "Customer use patterns",
+      "description": "Descriptive use patterns, not a churn score. Counts are product actions, not individuals or paid accounts.",
+      "gridPos": {
+        "x": 0,
+        "y": 21,
+        "w": 24,
+        "h": 10
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "obs-prod"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "obs-prod"
+          },
+          "rawSql": "WITH u AS (SELECT org_id,count(DISTINCT project_id) AS projects,count(DISTINCT (occurred_at AT TIME ZONE 'Europe/Amsterdam')::date) FILTER (WHERE action IN ('conversation','chat','report')) AS active_days,count(*) FILTER (WHERE action='conversation') AS conversations,round(coalesce(sum(audio_minutes),0)::numeric,1) AS audio_minutes,count(*) FILTER (WHERE action='chat') AS questions,count(*) FILTER (WHERE action='report') AS outputs,count(*) FILTER (WHERE action='report_error') AS output_errors,max(occurred_at) AS last_at FROM obs.customer_activity WHERE $__timeFilter(occurred_at) AND (('__all' IN (${customer:sqlstring}) OR org_id IN (${customer:sqlstring})) AND (${audience:sqlstring}='all' OR org_id NOT IN (SELECT org_id FROM obs.customer_organisations WHERE lower(btrim(org_name))='dembrane'))) GROUP BY org_id) SELECT o.org_id,o.org_name AS \"Organisation\",u.projects AS \"Projects\",u.active_days AS \"Active days\",u.conversations AS \"Conversations\",u.audio_minutes AS \"Audio minutes\",u.questions AS \"Questions\",u.outputs AS \"Outputs\",u.output_errors AS \"Output errors\",CASE WHEN u.conversations>0 AND u.questions+u.outputs>0 THEN 'Capture + analysis' WHEN u.conversations>0 THEN 'Capture only' WHEN u.questions+u.outputs>0 THEN 'Analysis of existing input' ELSE 'Setup / error only' END AS \"Use pattern\",u.last_at AS \"Last action\" FROM u JOIN obs.customer_organisations o USING(org_id) ORDER BY u.active_days DESC,u.conversations+u.questions+u.outputs DESC LIMIT 100",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          },
+          "noValue": "",
+          "decimals": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "org_id"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Organisation"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Focus this organisation",
+                    "url": "/d/v3-customers?orgId=1&var-customer=${__data.fields[\"org_id\"]}&${audience:queryparam}&from=${__from}&to=${__to}",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "Customer pulse: first use and return visits",
+      "description": "One organisation per Amsterdam day. First use means first retained core action, not signup or first-ever use of deleted content. First/last days may be partial.",
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "obs-prod"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "obs-prod"
+          },
+          "rawSql": "WITH days AS (SELECT generate_series((($__timeFrom()::timestamptz AT TIME ZONE 'Europe/Amsterdam')::date)::timestamp,(($__timeTo()::timestamptz AT TIME ZONE 'Europe/Amsterdam')::date)::timestamp,interval '1 day')::date AS day), active AS (SELECT org_id,(occurred_at AT TIME ZONE 'Europe/Amsterdam')::date AS day FROM obs.customer_activity WHERE $__timeFilter(occurred_at) AND action IN ('conversation','chat','report') AND (('__all' IN (${customer:sqlstring}) OR org_id IN (${customer:sqlstring})) AND (${audience:sqlstring}='all' OR org_id NOT IN (SELECT org_id FROM obs.customer_organisations WHERE lower(btrim(org_name))='dembrane'))) GROUP BY 1,2) SELECT greatest(days.day::timestamp AT TIME ZONE 'Europe/Amsterdam',$__timeFrom()::timestamptz) AS time,count(a.org_id) FILTER (WHERE (f.first_use_at AT TIME ZONE 'Europe/Amsterdam')::date=days.day) AS \"First retained use\",count(a.org_id) FILTER (WHERE (f.first_use_at AT TIME ZONE 'Europe/Amsterdam')::date<days.day) AS \"Returning organisations\" FROM days LEFT JOIN active a USING(day) LEFT JOIN obs.customer_first_use f USING(org_id) GROUP BY days.day ORDER BY 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "decimals": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 50,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 17,
+      "type": "timeseries",
+      "title": "Capture and analysis across customers",
+      "description": "Action counts are shown separately; no blended health score. Zero-filled calendar days, selected-time filtering.",
+      "gridPos": {
+        "x": 12,
+        "y": 31,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "obs-prod"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "obs-prod"
+          },
+          "rawSql": "WITH days AS (SELECT generate_series((($__timeFrom()::timestamptz AT TIME ZONE 'Europe/Amsterdam')::date)::timestamp,(($__timeTo()::timestamptz AT TIME ZONE 'Europe/Amsterdam')::date)::timestamp,interval '1 day')::date AS day), u AS (SELECT (occurred_at AT TIME ZONE 'Europe/Amsterdam')::date AS day,count(*) FILTER (WHERE action='conversation') AS conversations,count(*) FILTER (WHERE action='chat') AS questions,count(*) FILTER (WHERE action='report') AS outputs FROM obs.customer_activity WHERE $__timeFilter(occurred_at) AND (('__all' IN (${customer:sqlstring}) OR org_id IN (${customer:sqlstring})) AND (${audience:sqlstring}='all' OR org_id NOT IN (SELECT org_id FROM obs.customer_organisations WHERE lower(btrim(org_name))='dembrane'))) GROUP BY 1) SELECT greatest(days.day::timestamp AT TIME ZONE 'Europe/Amsterdam',$__timeFrom()::timestamptz) AS time,coalesce(u.conversations,0) AS \"Conversations\",coalesce(u.questions,0) AS \"Questions\",coalesce(u.outputs,0) AS \"Analysis outputs\" FROM days LEFT JOIN u USING(day) ORDER BY 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "decimals": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 50,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 18,
+      "type": "row",
+      "title": "Signals worth a closer look: fixed seven-day windows",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 38,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 19,
+      "type": "table",
+      "title": "Picking up: more core actions",
+      "description": "Rolling seven days compared with the preceding seven days. Absolute change avoids percentage spikes from a tiny baseline.",
+      "gridPos": {
+        "x": 0,
+        "y": 39,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "obs-prod"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "obs-prod"
+          },
+          "rawSql": "WITH u AS (SELECT org_id,count(*) FILTER (WHERE occurred_at>=now()-interval '7d') AS current_actions,count(*) FILTER (WHERE occurred_at<now()-interval '7d') AS previous_actions,max(occurred_at) AS last_at FROM obs.customer_activity WHERE occurred_at>=now()-interval '14d' AND action IN ('conversation','chat','report') AND (('__all' IN (${customer:sqlstring}) OR org_id IN (${customer:sqlstring})) AND (${audience:sqlstring}='all' OR org_id NOT IN (SELECT org_id FROM obs.customer_organisations WHERE lower(btrim(org_name))='dembrane'))) GROUP BY org_id) SELECT o.org_id,o.org_name AS \"Organisation\",current_actions AS \"This 7d\",previous_actions AS \"Previous 7d\",current_actions-previous_actions AS \"Change\",last_at AS \"Last action\" FROM u JOIN obs.customer_organisations o USING(org_id) WHERE current_actions>previous_actions ORDER BY current_actions-previous_actions DESC LIMIT 15",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          },
+          "noValue": "",
+          "decimals": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "org_id"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Organisation"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Focus this organisation",
+                    "url": "/d/v3-customers?orgId=1&var-customer=${__data.fields[\"org_id\"]}&${audience:queryparam}&from=${__from}&to=${__to}",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 20,
+      "type": "table",
+      "title": "Quieter: fewer core actions",
+      "description": "Less observed use is not proof of churn. Seasonality, completed workshops and internal/test use can explain it.",
+      "gridPos": {
+        "x": 12,
+        "y": 39,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "obs-prod"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "obs-prod"
+          },
+          "rawSql": "WITH u AS (SELECT org_id,count(*) FILTER (WHERE occurred_at>=now()-interval '7d') AS current_actions,count(*) FILTER (WHERE occurred_at<now()-interval '7d') AS previous_actions,max(occurred_at) AS last_at FROM obs.customer_activity WHERE occurred_at>=now()-interval '14d' AND action IN ('conversation','chat','report') AND (('__all' IN (${customer:sqlstring}) OR org_id IN (${customer:sqlstring})) AND (${audience:sqlstring}='all' OR org_id NOT IN (SELECT org_id FROM obs.customer_organisations WHERE lower(btrim(org_name))='dembrane'))) GROUP BY org_id) SELECT o.org_id,o.org_name AS \"Organisation\",current_actions AS \"This 7d\",previous_actions AS \"Previous 7d\",current_actions-previous_actions AS \"Change\",last_at AS \"Last action\" FROM u JOIN obs.customer_organisations o USING(org_id) WHERE previous_actions>current_actions ORDER BY previous_actions-current_actions DESC LIMIT 15",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          },
+          "noValue": "",
+          "decimals": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "org_id"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Organisation"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Focus this organisation",
+                    "url": "/d/v3-customers?orgId=1&var-customer=${__data.fields[\"org_id\"]}&${audience:queryparam}&from=${__from}&to=${__to}",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 21,
+      "type": "table",
+      "title": "Capture-only organisations: an adoption opportunity",
+      "description": "At least three inputs in seven days, no user chat/report output in that window. A conversation starter, not an automatic outreach instruction.",
+      "gridPos": {
+        "x": 0,
+        "y": 47,
+        "w": 12,
+        "h": 9
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "obs-prod"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "obs-prod"
+          },
+          "rawSql": "WITH u AS (SELECT org_id,count(*) FILTER (WHERE action='conversation') AS inputs,count(*) FILTER (WHERE action IN ('chat','report')) AS analyses,max(occurred_at) AS last_at FROM obs.customer_activity WHERE occurred_at>=now()-interval '7d' AND (('__all' IN (${customer:sqlstring}) OR org_id IN (${customer:sqlstring})) AND (${audience:sqlstring}='all' OR org_id NOT IN (SELECT org_id FROM obs.customer_organisations WHERE lower(btrim(org_name))='dembrane'))) GROUP BY org_id) SELECT o.org_id,o.org_name AS \"Organisation\",inputs AS \"Inputs (7d)\",last_at AS \"Last action\" FROM u JOIN obs.customer_organisations o USING(org_id) WHERE inputs>=3 AND analyses=0 ORDER BY inputs DESC LIMIT 20",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          },
+          "noValue": "",
+          "decimals": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "org_id"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Organisation"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Focus this organisation",
+                    "url": "/d/v3-customers?orgId=1&var-customer=${__data.fields[\"org_id\"]}&${audience:queryparam}&from=${__from}&to=${__to}",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 22,
+      "type": "table",
+      "title": "Recent organisations: first-use milestones (30d)",
+      "description": "Real milestones, not signup conversion estimates. User chat is a request, not a guarantee of a successful answer. Includes trial/internal organisations.",
+      "gridPos": {
+        "x": 12,
+        "y": 47,
+        "w": 12,
+        "h": 9
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "obs-prod"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "obs-prod"
+          },
+          "rawSql": "SELECT o.org_id,o.org_name AS \"Organisation\",o.created_at AS \"Organisation created\",(SELECT count(*) FROM obs.customer_projects d WHERE d.org_id=o.org_id) AS \"Own projects\",f.first_input_at AS \"First input\",f.first_analysis_at AS \"First chat / output\",CASE WHEN f.first_analysis_at IS NOT NULL THEN 'Analysis observed' WHEN f.first_input_at IS NOT NULL THEN 'Input observed' WHEN EXISTS(SELECT 1 FROM obs.customer_projects d WHERE d.org_id=o.org_id) THEN 'Project created' ELSE 'No own project yet' END AS \"Milestone\" FROM obs.customer_organisations o LEFT JOIN obs.customer_first_use f USING(org_id) WHERE o.created_at>=now()-interval '30d' AND (('__all' IN (${customer:sqlstring}) OR o.org_id IN (${customer:sqlstring})) AND (${audience:sqlstring}='all' OR lower(btrim(o.org_name))<>'dembrane')) ORDER BY o.created_at DESC LIMIT 40",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          },
+          "noValue": "",
+          "decimals": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "org_id"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Organisation"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Focus this organisation",
+                    "url": "/d/v3-customers?orgId=1&var-customer=${__data.fields[\"org_id\"]}&${audience:queryparam}&from=${__from}&to=${__to}",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 23,
+      "type": "row",
+      "title": "Coverage and limits: missing data is not healthy data",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 56,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 24,
+      "type": "stat",
+      "title": "Inputs without organisation attribution (200d)",
+      "description": "Eligible non-sample, non-cloned inputs with no valid organisation mapping. Not silently counted as a customer. Fixed 200-day window, all organisations.",
+      "gridPos": {
+        "x": 0,
+        "y": 57,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "obs-prod"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "obs-prod"
+          },
+          "rawSql": "SELECT unattributed_conversations_200d AS value FROM obs.customer_attribution_coverage",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "no data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 25,
+      "type": "text",
+      "title": "How to read this page",
+      "description": "",
+      "gridPos": {
+        "x": 6,
+        "y": 57,
+        "w": 18,
+        "h": 4
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "- Fresh audio is a **3-minute signal**, not a promise that a participant is still recording.\n- Pageviews, idle dashboard tabs and identifiable people are not measured here.\n- Organisation activity is not proof of payment, retention or customer satisfaction.\n- Samples, copied conversations and deleted content are excluded. Customer views cover up to **200 days** of retained source rows.\n- SQL/API errors stay visible. Empty attribution and quiet windows are not treated as a broken product.\n- Click an organisation name to focus the dashboard."
+      }
+    }
+  ]
+}

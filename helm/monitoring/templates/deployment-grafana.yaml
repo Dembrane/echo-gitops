@@ -20,10 +20,48 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "3000"
     spec:
+      {{- include "monitoring.nodeSelector" . | nindent 6 }}
       securityContext:
         fsGroup: 472
         runAsUser: 472
         runAsGroup: 472
+{{- if .Values.google.environments }}
+      # Installs the Cloud Logging plugin into Grafana's volume, once per version. It always
+      # ends with success and stops after two minutes: a download that fails or hangs leaves
+      # the log panels empty and never keeps Grafana from starting. The next start tries again.
+      # The image is Grafana's own, for its plugin installer: change both lines together.
+      initContainers:
+        - name: install-plugins
+          image: grafana/grafana:10.0.3
+          command:
+            - sh
+            - -c
+            - |
+              dir=/var/lib/grafana/plugins
+              if grep -q "\"version\": \"$PLUGIN_VERSION\"" "$dir/$PLUGIN_ID/plugin.json" 2>/dev/null; then
+                echo "$PLUGIN_ID $PLUGIN_VERSION is present"
+                exit 0
+              fi
+              mkdir -p "$dir"
+              timeout 120 grafana cli --pluginsDir "$dir" plugins install "$PLUGIN_ID" "$PLUGIN_VERSION" \
+                || echo "$PLUGIN_ID $PLUGIN_VERSION was not installed; Grafana starts without it"
+              exit 0
+          env:
+            - name: PLUGIN_ID
+              value: {{ .Values.google.loggingPlugin.id | quote }}
+            - name: PLUGIN_VERSION
+              value: {{ .Values.google.loggingPlugin.version | quote }}
+          volumeMounts:
+            - name: grafana-storage
+              mountPath: /var/lib/grafana
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "64Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+{{- end }}
       containers:
         - name: grafana
           image: grafana/grafana:10.0.3
@@ -62,6 +100,34 @@ spec:
               value: "30s"
             - name: GF_METRICS_ENABLED
               value: "true"
+{{- /* Every part of a product data source comes from the secret; a missing key leaves that
+       data source unreachable and Grafana itself untouched. */}}
+{{- range $env := .Values.obs.environments }}
+{{- range $part := list "HOST" "NAME" "USER" "PASSWORD" }}
+            - name: {{ printf "OBS_%s_DB_%s" (upper $env.name) $part }}
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-obs-db
+                  key: {{ printf "OBS_%s_DB_%s" (upper $env.name) $part }}
+                  optional: true
+{{- end }}
+{{- end }}
+{{- /* The Google login and one project per environment, all from the secret; optional,
+       so a missing secret leaves those data sources without data and Grafana untouched. */}}
+{{- if .Values.google.environments }}
+{{- $keys := list "GOOGLE_CLIENT_EMAIL" "GOOGLE_PRIVATE_KEY" "GOOGLE_TOKEN_URI" }}
+{{- range $name := .Values.google.environments }}
+{{- $keys = append $keys (printf "GOOGLE_PROJECT_%s" (upper $name)) }}
+{{- end }}
+{{- range $key := $keys }}
+            - name: {{ $key }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.google.secretName }}
+                  key: {{ $key }}
+                  optional: true
+{{- end }}
+{{- end }}
           volumeMounts:
             - name: grafana-storage
               mountPath: /var/lib/grafana
@@ -78,7 +144,46 @@ spec:
             limits:
               cpu: {{ .Values.grafana.resources.limits.cpu | quote }}
               memory: {{ .Values.grafana.resources.limits.memory | quote }}
+{{- if .Values.obs.cloudSqlProxy.enabled }}
+        # Staging's database has no path from this cluster but the Cloud SQL Auth proxy:
+        # Grafana reaches it on localhost, the proxy holds the Google identity. The instance
+        # name and the key come from the secret; the volume is optional so a missing secret
+        # fails this container alone, never the pod's creation.
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.2
+          args:
+            - --structured-logs
+            - --credentials-file=/secrets/credentials.json
+            - {{ printf "--port=%d" (int .Values.obs.cloudSqlProxy.port) | quote }}
+            - "$(CLOUD_SQL_INSTANCE)"
+          env:
+            - name: CLOUD_SQL_INSTANCE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.obs.cloudSqlProxy.secretName }}
+                  key: instance
+                  optional: true
+          securityContext:
+            runAsNonRoot: true
+          volumeMounts:
+            - name: cloud-sql-sa
+              mountPath: /secrets
+              readOnly: true
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+{{- end }}
       volumes:
+{{- if .Values.obs.cloudSqlProxy.enabled }}
+        - name: cloud-sql-sa
+          secret:
+            secretName: {{ .Values.obs.cloudSqlProxy.secretName }}
+            optional: true
+{{- end }}
         - name: grafana-storage
           persistentVolumeClaim:
             claimName: grafana-data
@@ -95,13 +200,31 @@ spec:
           configMap:
             name: grafana-dashboards-config
             items:
-              - key: kubernetes-dashboard.json
-                path: kubernetes-dashboard.json
-              - key: node-exporter-dashboard.json
-                path: node-exporter-dashboard.json
-              - key: nginx-ingress-dashboard.json
-                path: nginx-ingress-dashboard.json
-              - key: loki-logs-dashboard.json
-                path: loki-logs-dashboard.json
-              - key: health.json
-                path: health.json
+              - key: v3-overview.json
+                path: v3-overview.json
+              - key: v3-worker-jobs.json
+                path: v3-worker-jobs.json
+              - key: v3-product.json
+                path: v3-product.json
+              {{- range .Values.obs.environments }}
+              {{- if eq .name "prod" }}
+              - key: v3-customers.json
+                path: v3-customers.json
+              {{- end }}
+              {{- end }}
+              - key: v3-ai.json
+                path: v3-ai.json
+              - key: v3-errors.json
+                path: v3-errors.json
+{{- range .Values.obs.environments }}
+{{- if eq .name "sam" }}
+              - key: sam.json
+                path: sam.json
+              - key: sam-performance.json
+                path: sam-performance.json
+{{- end }}
+{{- end }}
+{{- if .Values.google.environments }}
+              - key: v3-staging-previews.json
+                path: v3-staging-previews.json
+{{- end }}

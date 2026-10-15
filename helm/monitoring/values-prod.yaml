@@ -2,18 +2,24 @@
 clusterIssuerName: "letsencrypt-prod"
 domain: "dembrane.com"  # Production domain
 
+# Prometheus, Loki, Grafana, Alertmanager and the two exporters run on the small node
+# pool, so the large nodes keep their memory for the application and its workers.
+monitoring:
+  nodePool: monitoring-devops-pool
+
 # Storage settings
 storage:
   storageClassName: "do-block-storage"
   prometheus:
-    size: "20Gi"
+    size: "40Gi"
   loki:
-    size: "20Gi"
+    size: "40Gi"
   grafana:
     size: "10Gi"
 
 # Prometheus settings
 prometheus:
+  retentionTime: "200d"
   extraArgs:
     - --query.max-concurrency=40
     - --web.max-connections=1024
@@ -23,9 +29,10 @@ prometheus:
     requests:
       cpu: "500m"
       memory: "1Gi"
+    # Below the 4 GB node it runs on; its highest use in two days was 1.3Gi.
     limits:
       cpu: "1000m"
-      memory: "4Gi"
+      memory: "2Gi"
 
 # Grafana settings
 grafana:
@@ -41,6 +48,8 @@ grafana:
 
 # Loki settings
 loki:
+  retentionPeriod: "4800h"  # 200 days, more than six calendar months
+  maxQueryLength: "25h"    # 24-hour dashboards plus lookback-window headroom
   resources:
     requests:
       cpu: "500m"
@@ -66,6 +75,8 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  # Prometheus is read through Grafana and from inside the cluster; true adds its own host.
+  prometheusHost: false
   basicAuth:
     enabled: false 
 
@@ -76,9 +87,51 @@ httpChecks:
   targets:
     - name: api
       url: https://api.dembrane.com/api/health
-    - name: directus
-      url: https://directus.dembrane.com/server/health
+    - name: ready
+      url: https://api.dembrane.com/ready
+    - name: dashboard
+      url: https://dashboard.dembrane.com/
+    - name: portal
+      url: https://portal.dembrane.com/
+    # Answers 503 when no worker has checked in for 90 seconds (alert WorkersSilent).
+    - name: worker
+      url: https://api.dembrane.com/ready/worker
 
 # Dashboards (env-specific variables injected into configmap-grafana-dashboards)
 dashboards:
-  namespace: "echo-prod"
+  namespace: "dembrane-web-prod"
+# Product dashboards: each environment's obs views, read as the read-only role of
+# sql/grafana-obs-role.sql. Production is read at its own database with TLS. Staging (Google
+# Cloud SQL) is read through the Cloud SQL Auth proxy sidecar on localhost, so its
+# OBS_STAGING_DB_HOST is 127.0.0.1:5433 and it needs no TLS of its own. Hosts, names, users
+# and passwords live in the secret grafana-obs-db (see values.yaml). The first in the list
+# is what a dashboard opens with.
+obs:
+  environments:
+    - name: prod
+      sslmode: require
+    - name: staging
+      sslmode: disable
+    # sam, the team's agent: a database of its own on staging's instance, filled from sam's
+    # records by a loader. The AI dashboard lists it; the product dashboard leaves it out.
+    - name: sam
+      sslmode: disable
+  # Needs the secret grafana-cloud-sql-sa in the monitoring namespace. The proxy is a
+  # container of the Grafana pod: if it cannot start, the pod is not ready and Grafana
+  # is unreachable, so set this to false first when Grafana does not come up.
+  cloudSqlProxy:
+    enabled: true
+    port: 5433
+    secretName: grafana-cloud-sql-sa
+
+# Staging and the PR previews run on Google Cloud Run: their logs and service metrics are
+# read from Google with a read-only login (see values.yaml). Needs the secret
+# grafana-google-sources in the monitoring namespace.
+google:
+  environments:
+    - staging
+    - previews
+  secretName: grafana-google-sources
+  loggingPlugin:
+    id: googlecloud-logging-datasource
+    version: "1.6.3"

@@ -1,0 +1,71 @@
+# Where alerts go and how the Slack message reads. The message follows the rules for every
+# message a program posts in Slack: a header with one icon, the thing and what happened to
+# it; then what happened, who feels it and the first step; then the full link on a line of
+# its own. No rule name, no severity word. A critical alert tags the channel and repeats
+# every 30 minutes while it lasts; a notice is posted once without a tag.
+global:
+  resolve_timeout: 5m
+  slack_api_url_file: /etc/alertmanager/secrets/slack-webhook-url
+route:
+  group_by: ['alertname', 'component', 'deployment', 'svc', 'queue', 'persistentvolumeclaim']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 2h
+  # An alert without a route below is not posted.
+  receiver: 'blackhole'
+  routes:
+    # Always fires; shows in the Alertmanager API that the pipeline is alive.
+    - matchers:
+        - alertname = "Watchdog"
+      receiver: 'blackhole'
+    - matchers:
+        - severity = "critical"
+      receiver: 'slack-prod'
+      repeat_interval: 30m
+    - matchers:
+        - severity = "notice"
+      receiver: 'slack-prod'
+      repeat_interval: 12h
+    # Warnings are not posted; the weekly digest counts them.
+    - matchers:
+        - severity = "warning"
+      receiver: 'blackhole'
+inhibit_rules:
+  # One storage cause, one message: a near-full disk supersedes its notice.
+  - source_matchers:
+      - alertname = "MonitoringStorageCritical"
+    target_matchers:
+      - alertname =~ "MonitoringStorageLow|MonitoringStorageFillingSoon"
+    equal: ['persistentvolumeclaim']
+  # One message per cause: a stop for memory is also a restart.
+  - source_matchers:
+      - alertname = "OutOfMemory"
+    target_matchers:
+      - alertname = "ContainerRestarting"
+    equal: ['component']
+  # "Too few instances" says nothing new while "down" is open for the same service.
+  - source_matchers:
+      - alertname =~ "WorkersDown|ServiceDown"
+    target_matchers:
+      - alertname = "ServiceShort"
+    equal: ['deployment']
+receivers:
+  - name: 'blackhole'
+  - name: 'slack-prod'
+    slack_configs:
+      # The webhook decides the channel; this line only names it for the reader.
+      - channel: '#alerts-prod'
+        send_resolved: true
+        color: '{{ if eq .Status "resolved" }}good{{ else if eq .CommonLabels.severity "critical" }}danger{{ else }}warning{{ end }}'
+        title: '{{ if eq .Status "resolved" }}:white_check_mark: Over: {{ else if eq .CommonLabels.severity "critical" }}:red_circle: {{ else }}:large_yellow_circle: {{ end }}{{ (index .Alerts 0).Annotations.title }}'
+        text: |-
+          {{ if eq .Status "resolved" }}It lasted {{ ((index .Alerts 0).EndsAt.Sub (index .Alerts 0).StartsAt).Round 60000000000 }}.{{ else }}{{ range $i, $a := .Alerts }}{{ if $i }}
+
+          *Also:* {{ $a.Annotations.title }}
+          {{ end }}*What happened:* {{ $a.Annotations.summary }}
+          *Who feels it:* {{ $a.Annotations.impact }}
+          *First step:* {{ $a.Annotations.action }}
+          {{ $a.Annotations.link }}{{ end }}{{ if eq .CommonLabels.severity "critical" }}
+          <!channel>{{ end }}{{ end }}
+        mrkdwn_in:
+          - text

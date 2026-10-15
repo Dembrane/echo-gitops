@@ -1,0 +1,2376 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 0,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "iconColor": "blue",
+        "name": "sam deploys",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [
+            "sam-deploy"
+          ],
+          "type": "tags"
+        }
+      }
+    ]
+  },
+  "description": "Why a request to sam takes as long as it does: how many model turns it makes, how long each one is, what the tools cost, and the timeline of one session. Measured latency exists from 2026-10-12. Names and numbers only.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "sam: people and cost",
+      "tooltip": "",
+      "type": "link",
+      "url": "/d/sam"
+    }
+  ],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "panels": [],
+      "title": "A request from a person, today (Amsterdam day)",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Sessions a person started today that have per-call latency data.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "none yet",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select count(*) as value from (with m as (select session_id, sum(ms)/1000.0 as model_s, count(*) as calls, count(*) filter (where ms > 10000) as slow_calls\n  from obs.sam_model_calls where model_group = 'main' and measured and ms is not null group by 1),\nt as (select session_id, sum(ms)/1000.0 as tool_s, count(*) as tools from obs.sam_tool_calls where agent = 'sam' group by 1)\nselect s.*, m.model_s, m.calls, m.slow_calls, coalesce(t.tool_s, 0) as tool_s, coalesce(t.tools, 0) as tools\nfrom obs.sam_sessions s join m using (session_id) left join t using (session_id)) s where trigger = 'person' and exit_state <> 'cut' and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "refId": "A"
+        }
+      ],
+      "title": "Requests",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Wall time from start to the end of the session, median over today's requests.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "none yet",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select percentile_cont(0.5) within group (order by duration_s) as value from (with m as (select session_id, sum(ms)/1000.0 as model_s, count(*) as calls, count(*) filter (where ms > 10000) as slow_calls\n  from obs.sam_model_calls where model_group = 'main' and measured and ms is not null group by 1),\nt as (select session_id, sum(ms)/1000.0 as tool_s, count(*) as tools from obs.sam_tool_calls where agent = 'sam' group by 1)\nselect s.*, m.model_s, m.calls, m.slow_calls, coalesce(t.tool_s, 0) as tool_s, coalesce(t.tools, 0) as tools\nfrom obs.sam_sessions s join m using (session_id) left join t using (session_id)) s where trigger = 'person' and exit_state <> 'cut' and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "refId": "A"
+        }
+      ],
+      "title": "Done, median",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Wall time, 90th percentile.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "none yet",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select percentile_cont(0.9) within group (order by duration_s) as value from (with m as (select session_id, sum(ms)/1000.0 as model_s, count(*) as calls, count(*) filter (where ms > 10000) as slow_calls\n  from obs.sam_model_calls where model_group = 'main' and measured and ms is not null group by 1),\nt as (select session_id, sum(ms)/1000.0 as tool_s, count(*) as tools from obs.sam_tool_calls where agent = 'sam' group by 1)\nselect s.*, m.model_s, m.calls, m.slow_calls, coalesce(t.tool_s, 0) as tool_s, coalesce(t.tools, 0) as tools\nfrom obs.sam_sessions s join m using (session_id) left join t using (session_id)) s where trigger = 'person' and exit_state <> 'cut' and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "refId": "A"
+        }
+      ],
+      "title": "Done, slowest tenth",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Model calls per request. Each turn is one round trip to Gemini; the count is the main lever on wall time.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "none yet",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 1
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select percentile_cont(0.5) within group (order by calls) as value from (with m as (select session_id, sum(ms)/1000.0 as model_s, count(*) as calls, count(*) filter (where ms > 10000) as slow_calls\n  from obs.sam_model_calls where model_group = 'main' and measured and ms is not null group by 1),\nt as (select session_id, sum(ms)/1000.0 as tool_s, count(*) as tools from obs.sam_tool_calls where agent = 'sam' group by 1)\nselect s.*, m.model_s, m.calls, m.slow_calls, coalesce(t.tool_s, 0) as tool_s, coalesce(t.tools, 0) as tools\nfrom obs.sam_sessions s join m using (session_id) left join t using (session_id)) s where trigger = 'person' and exit_state <> 'cut' and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "refId": "A"
+        }
+      ],
+      "title": "Model turns, median",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Tool calls divided by model turns. 1.0 means every tool call costs a full round trip; batching lifts this.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "noValue": "none yet",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 1
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select sum(tools)::numeric / nullif(sum(calls), 0) as value from (with m as (select session_id, sum(ms)/1000.0 as model_s, count(*) as calls, count(*) filter (where ms > 10000) as slow_calls\n  from obs.sam_model_calls where model_group = 'main' and measured and ms is not null group by 1),\nt as (select session_id, sum(ms)/1000.0 as tool_s, count(*) as tools from obs.sam_tool_calls where agent = 'sam' group by 1)\nselect s.*, m.model_s, m.calls, m.slow_calls, coalesce(t.tool_s, 0) as tool_s, coalesce(t.tools, 0) as tools\nfrom obs.sam_sessions s join m using (session_id) left join t using (session_id)) s where trigger = 'person' and exit_state <> 'cut' and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "refId": "A"
+        }
+      ],
+      "title": "Tools per turn",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Seconds until the first reply or question in the thread.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "none yet",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 1
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select percentile_cont(0.5) within group (order by first_reply_s) as value from (with m as (select session_id, sum(ms)/1000.0 as model_s, count(*) as calls, count(*) filter (where ms > 10000) as slow_calls\n  from obs.sam_model_calls where model_group = 'main' and measured and ms is not null group by 1),\nt as (select session_id, sum(ms)/1000.0 as tool_s, count(*) as tools from obs.sam_tool_calls where agent = 'sam' group by 1)\nselect s.*, m.model_s, m.calls, m.slow_calls, coalesce(t.tool_s, 0) as tool_s, coalesce(t.tools, 0) as tools\nfrom obs.sam_sessions s join m using (session_id) left join t using (session_id)) s where trigger = 'person' and exit_state <> 'cut' and replied and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "refId": "A"
+        }
+      ],
+      "title": "First answer, median",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Share of request wall time spent inside model calls, summed over today's requests.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "noValue": "none yet",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 5
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select 100.0 * sum(model_s) / nullif(sum(duration_s), 0) as value from (with m as (select session_id, sum(ms)/1000.0 as model_s, count(*) as calls, count(*) filter (where ms > 10000) as slow_calls\n  from obs.sam_model_calls where model_group = 'main' and measured and ms is not null group by 1),\nt as (select session_id, sum(ms)/1000.0 as tool_s, count(*) as tools from obs.sam_tool_calls where agent = 'sam' group by 1)\nselect s.*, m.model_s, m.calls, m.slow_calls, coalesce(t.tool_s, 0) as tool_s, coalesce(t.tools, 0) as tools\nfrom obs.sam_sessions s join m using (session_id) left join t using (session_id)) s where trigger = 'person' and exit_state <> 'cut' and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "refId": "A"
+        }
+      ],
+      "title": "Waiting on the model",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Share of wall time inside tool calls (bash, reads, subagents), summed serially.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "noValue": "none yet",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 5
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select 100.0 * sum(tool_s) / nullif(sum(duration_s), 0) as value from (with m as (select session_id, sum(ms)/1000.0 as model_s, count(*) as calls, count(*) filter (where ms > 10000) as slow_calls\n  from obs.sam_model_calls where model_group = 'main' and measured and ms is not null group by 1),\nt as (select session_id, sum(ms)/1000.0 as tool_s, count(*) as tools from obs.sam_tool_calls where agent = 'sam' group by 1)\nselect s.*, m.model_s, m.calls, m.slow_calls, coalesce(t.tool_s, 0) as tool_s, coalesce(t.tools, 0) as tools\nfrom obs.sam_sessions s join m using (session_id) left join t using (session_id)) s where trigger = 'person' and exit_state <> 'cut' and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "refId": "A"
+        }
+      ],
+      "title": "Waiting on tools",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "One model call, 50th percentile, main agent, today.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "noValue": "none yet",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 5
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select percentile_cont(0.5) within group (order by ms) / 1000.0 as value from obs.sam_model_calls where model_group = 'main' and measured and ms is not null and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "refId": "A"
+        }
+      ],
+      "title": "Call latency, median",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "One model call, 90th percentile.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "noValue": "none yet",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 5
+      },
+      "id": 11,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select percentile_cont(0.9) within group (order by ms) / 1000.0 as value from obs.sam_model_calls where model_group = 'main' and measured and ms is not null and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "refId": "A"
+        }
+      ],
+      "title": "Call latency, slowest tenth",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Model calls slower than ten seconds today, and the share of all model time they took.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "none yet",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 5
+      },
+      "id": 12,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select count(*) filter (where ms > 10000) as \"calls\", round(100.0 * sum(ms) filter (where ms > 10000) / nullif(sum(ms), 0)) as \"% of model time\" from obs.sam_model_calls where model_group = 'main' and measured and ms is not null and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "refId": "A"
+        }
+      ],
+      "title": "Calls over 10 s",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Cached share of input tokens over today's main-agent calls.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "noValue": "none yet",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 5
+      },
+      "id": 13,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 14,
+          "valueSize": 26
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select 100.0 * sum(cached_tokens) / nullif(sum(input_tokens), 0) as value from obs.sam_model_calls where model_group = 'main' and measured and ms is not null and day = (now() at time zone 'Europe/Amsterdam')::date",
+          "refId": "A"
+        }
+      ],
+      "title": "Input from cache",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 14,
+      "panels": [],
+      "title": "Per request over the selected time, one point per Amsterdam day",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Start to end of a person's request.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "min": 0,
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 10
+      },
+      "id": 15,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, percentile_cont(0.5) within group (order by duration_s) as median, percentile_cont(0.9) within group (order by duration_s) as \"slowest tenth\" from (with m as (select session_id, sum(ms)/1000.0 as model_s, count(*) as calls, count(*) filter (where ms > 10000) as slow_calls\n  from obs.sam_model_calls where model_group = 'main' and measured and ms is not null group by 1),\nt as (select session_id, sum(ms)/1000.0 as tool_s, count(*) as tools from obs.sam_tool_calls where agent = 'sam' group by 1)\nselect s.*, m.model_s, m.calls, m.slow_calls, coalesce(t.tool_s, 0) as tool_s, coalesce(t.tools, 0) as tools\nfrom obs.sam_sessions s join m using (session_id) left join t using (session_id)) s where $__timeFilter(started_at) and trigger = 'person' and exit_state <> 'cut' group by day order by 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Wall time per request: median and slowest tenth",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Model calls per request. Fewer turns is the first optimisation to measure here.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "min": 0,
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "id": 16,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, percentile_cont(0.5) within group (order by calls) as median, percentile_cont(0.9) within group (order by calls) as \"slowest tenth\" from (with m as (select session_id, sum(ms)/1000.0 as model_s, count(*) as calls, count(*) filter (where ms > 10000) as slow_calls\n  from obs.sam_model_calls where model_group = 'main' and measured and ms is not null group by 1),\nt as (select session_id, sum(ms)/1000.0 as tool_s, count(*) as tools from obs.sam_tool_calls where agent = 'sam' group by 1)\nselect s.*, m.model_s, m.calls, m.slow_calls, coalesce(t.tool_s, 0) as tool_s, coalesce(t.tools, 0) as tools\nfrom obs.sam_sessions s join m using (session_id) left join t using (session_id)) s where $__timeFilter(started_at) and trigger = 'person' and exit_state <> 'cut' group by day order by 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Model turns per request: median and slowest tenth",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Share of request wall time inside model calls, inside tool calls, and elsewhere (queueing, the daemon, Slack). Summed over the day's requests.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "max": 100,
+          "min": 0,
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 17,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, round((100.0 * sum(model_s) / nullif(sum(duration_s), 0))::numeric, 1) as model, round((100.0 * sum(tool_s) / nullif(sum(duration_s), 0))::numeric, 1) as tools, round((100.0 * greatest(sum(duration_s) - sum(model_s) - sum(tool_s), 0) / nullif(sum(duration_s), 0))::numeric, 1) as other from (with m as (select session_id, sum(ms)/1000.0 as model_s, count(*) as calls, count(*) filter (where ms > 10000) as slow_calls\n  from obs.sam_model_calls where model_group = 'main' and measured and ms is not null group by 1),\nt as (select session_id, sum(ms)/1000.0 as tool_s, count(*) as tools from obs.sam_tool_calls where agent = 'sam' group by 1)\nselect s.*, m.model_s, m.calls, m.slow_calls, coalesce(t.tool_s, 0) as tool_s, coalesce(t.tools, 0) as tools\nfrom obs.sam_sessions s join m using (session_id) left join t using (session_id)) s where $__timeFilter(started_at) and trigger = 'person' and exit_state <> 'cut' group by day order by 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Where the wall time goes (%)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Tool calls per model call, all sessions of the day. 1.0 is one tool per round trip; above it, sam batched.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "min": 0,
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 18,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, round((sum(tools)::numeric / nullif(sum(calls), 0))::numeric, 2) as \"tools per turn\" from (with m as (select session_id, sum(ms)/1000.0 as model_s, count(*) as calls, count(*) filter (where ms > 10000) as slow_calls\n  from obs.sam_model_calls where model_group = 'main' and measured and ms is not null group by 1),\nt as (select session_id, sum(ms)/1000.0 as tool_s, count(*) as tools from obs.sam_tool_calls where agent = 'sam' group by 1)\nselect s.*, m.model_s, m.calls, m.slow_calls, coalesce(t.tool_s, 0) as tool_s, coalesce(t.tools, 0) as tools\nfrom obs.sam_sessions s join m using (session_id) left join t using (session_id)) s where $__timeFilter(started_at) group by day order by 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Tools per model turn",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 19,
+      "panels": [],
+      "title": "One model call (main agent, measured calls only, from 2026-10-12)",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Seconds per model call, by day.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "min": 0,
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 27
+      },
+      "id": 20,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, percentile_cont(0.5) within group (order by ms) / 1000.0 as median, percentile_cont(0.9) within group (order by ms) / 1000.0 as \"slowest tenth\", percentile_cont(0.99) within group (order by ms) / 1000.0 as \"slowest hundredth\" from obs.sam_model_calls where $__timeFilter(started_at) and model_group = 'main' and measured and ms is not null group by day order by 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Call latency: median, slowest tenth, slowest hundredth",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Share of all model seconds spent in calls slower than 10 s. The tail, not the median, is what a person feels.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "max": 100,
+          "min": 0,
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 27
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, round((100.0 * sum(ms) filter (where ms > 10000) / nullif(sum(ms), 0))::numeric, 1) as \"in calls over 10 s\", round((100.0 * sum(ms) filter (where ms > 10000 and output_tokens < 300) / nullif(sum(ms), 0))::numeric, 1) as \"over 10 s with under 300 output tokens\" from obs.sam_model_calls where $__timeFilter(started_at) and model_group = 'main' and measured and ms is not null group by day order by 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Model time in slow calls (%)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Output tokens of the call (reasoning tokens are not loaded yet, they move with output). Selected time.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "minWidth": 50
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "median"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "slowest tenth"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "% of model time"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 35
+      },
+      "id": 22,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select case when output_tokens < 50 then '1: under 50' when output_tokens < 200 then '2: 50 to 200' when output_tokens < 1000 then '3: 200 to 1000' else '4: 1000 and more' end as \"output tokens\", count(*) as calls, round((percentile_cont(0.5) within group (order by ms) / 1000.0)::numeric, 1) as median, round((percentile_cont(0.9) within group (order by ms) / 1000.0)::numeric, 1) as \"slowest tenth\", round(100.0 * sum(ms) / (select sum(ms) from obs.sam_model_calls where $__timeFilter(started_at) and model_group = 'main' and measured and ms is not null)) as \"% of model time\" from obs.sam_model_calls where $__timeFilter(started_at) and model_group = 'main' and measured and ms is not null group by 1 order by 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Latency by output tokens",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Input tokens of the call, cached part included. Selected time.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "minWidth": 50
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "median"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "slowest tenth"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cached"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 35
+      },
+      "id": 23,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select case when input_tokens < 60000 then '1: under 60k' when input_tokens < 100000 then '2: 60k to 100k' when input_tokens < 150000 then '3: 100k to 150k' when input_tokens < 200000 then '4: 150k to 200k' else '5: 200k and more' end as \"context\", count(*) as calls, round((percentile_cont(0.5) within group (order by ms) / 1000.0)::numeric, 1) as median, round((percentile_cont(0.9) within group (order by ms) / 1000.0)::numeric, 1) as \"slowest tenth\", round(100.0 * avg(cached_tokens::numeric / nullif(input_tokens, 0))) as \"cached\" from obs.sam_model_calls where $__timeFilter(started_at) and model_group = 'main' and measured and ms is not null group by 1 order by 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Latency by context size",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "One bucket per amount of thinking in a call. Thinking depth is the strongest driver of call latency: the more a call thinks, the longer it takes. Calls from 2026-10-12.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "minWidth": 50
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "median"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "slowest tenth"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "% of model time"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 42
+      },
+      "id": 36,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select case when thoughts_tokens < 100 then '1: under 100' when thoughts_tokens < 500 then '2: 100 to 500' when thoughts_tokens < 2000 then '3: 500 to 2000' else '4: 2000 and more' end as \"thinking tokens\", count(*) as calls, round((percentile_cont(0.5) within group (order by ms) / 1000.0)::numeric, 1) as median, round((percentile_cont(0.9) within group (order by ms) / 1000.0)::numeric, 1) as \"slowest tenth\", round(100.0 * sum(ms) / (select sum(ms) from obs.sam_model_calls where $__timeFilter(started_at) and model_group = 'main' and measured and ms is not null and thoughts_tokens is not null)) as \"% of model time\" from obs.sam_model_calls where $__timeFilter(started_at) and model_group = 'main' and measured and ms is not null and thoughts_tokens is not null group by 1 order by 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Latency by thinking tokens",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Daily cached share of input tokens, and the number of calls over 50k input that read nothing from cache.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "max": 100,
+          "min": 0,
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 49
+      },
+      "id": 24,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, round((100.0 * sum(cached_tokens) / nullif(sum(input_tokens), 0))::numeric, 1) as \"cached share\" from obs.sam_model_calls where $__timeFilter(started_at) and model_group = 'main' and measured and ms is not null group by day order by 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Cache: input read from cache (%) and calls that missed",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Median input tokens of the first model call of each session, by day. That call carries only the system prompt (identity, capabilities, recipes, tool declarations) and the message, so it tracks prompt growth.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "min": 0,
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 49
+      },
+      "id": 25,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, round(percentile_cont(0.5) within group (order by first_in)) as \"first call input\" from (select session_id, day, (array_agg(input_tokens order by started_at))[1] as first_in from obs.sam_model_calls where $__timeFilter(started_at) and model_group = 'main' group by 1, 2) f group by day order by 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Fixed prompt size: input tokens of a session's first call",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Main-agent calls with over 50k input tokens and zero cached tokens.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "min": 0,
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 57
+      },
+      "id": 26,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, count(*) filter (where input_tokens > 50000 and cached_tokens = 0) as \"misses\" from obs.sam_model_calls where $__timeFilter(started_at) and model_group = 'main' and measured and ms is not null group by day order by 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Cache misses per day",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 65
+      },
+      "id": 27,
+      "panels": [],
+      "title": "Tools",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Main agent only.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "min": 0,
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 66
+      },
+      "id": 28,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, tool as metric, count(*) as value from obs.sam_tool_calls where $__timeFilter(ts) and agent = 'sam' group by day, tool order by 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Tool calls per day, by tool",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Share of bash calls that finished under 1.5 s. Each one still costs a full model round trip; a high share means many tiny serial steps.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "max": 100,
+          "min": 0,
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 66
+      },
+      "id": 29,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "select day::timestamp at time zone 'Europe/Amsterdam' as time, round((100.0 * count(*) filter (where ms < 1500) / nullif(count(*), 0))::numeric, 1) as \"bash under 1.5 s\" from obs.sam_tool_calls where $__timeFilter(ts) and agent = 'sam' and tool = 'bash' group by day order by 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Quick bash calls (%)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Selected time, main agent. total: seconds inside this tool, summed serially.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "minWidth": 50
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "median"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "slowest tenth"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "slowest"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "total"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 74
+      },
+      "id": 30,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select tool, count(*) as calls, round((percentile_cont(0.5) within group (order by ms) / 1000.0)::numeric, 2) as median, round((percentile_cont(0.9) within group (order by ms) / 1000.0)::numeric, 2) as \"slowest tenth\", round(max(ms) / 1000.0) as slowest, round(sum(ms) / 1000.0) as total, count(*) filter (where failure is not null) as failed from obs.sam_tool_calls where $__timeFilter(ts) and agent = 'sam' group by 1 order by total desc",
+          "refId": "A"
+        }
+      ],
+      "title": "Tool latency, by tool",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Selected time, every agent. Click the session to open its timeline below.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "minWidth": 50
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "took"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "bytes"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "session"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "open this session",
+                    "url": "/d/sam-performance?var-session=${__value.raw}&${__url_time_range}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 74
+      },
+      "id": 31,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select to_char(ts at time zone 'Europe/Amsterdam', 'MM-DD HH24:MI') as at, tool, agent, round(ms / 1000.0) as took, output_bytes as bytes, failure, session_id as session from obs.sam_tool_calls where $__timeFilter(ts) and ms > 20000 order by ts desc limit 30",
+          "refId": "A"
+        }
+      ],
+      "title": "Slow tool calls, over 20 s",
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 83
+      },
+      "id": 32,
+      "panels": [],
+      "title": "One session: pick it at the top, or click a session id in a table",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Person-triggered, by wall time. model: seconds inside model calls. tools: seconds inside tool calls. largest: biggest context. Click the id to load its timeline.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "minWidth": 50
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "wall"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "model"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "tools"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cached"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "session"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "open this session",
+                    "url": "/d/sam-performance?var-session=${__value.raw}&${__url_time_range}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 84
+      },
+      "id": 33,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select to_char(started_at at time zone 'Europe/Amsterdam', 'MM-DD HH24:MI') as started, coalesce(channel, channel_id) as channel, round(duration_s) as wall, calls as turns, round(model_s) as model, round(tool_s) as tools, tools as \"tool calls\", slow_calls as \"slow calls\", max_context_tokens as largest, cached_pct as cached, session_id as session from (with m as (select session_id, sum(ms)/1000.0 as model_s, count(*) as calls, count(*) filter (where ms > 10000) as slow_calls\n  from obs.sam_model_calls where model_group = 'main' and measured and ms is not null group by 1),\nt as (select session_id, sum(ms)/1000.0 as tool_s, count(*) as tools from obs.sam_tool_calls where agent = 'sam' group by 1)\nselect s.*, m.model_s, m.calls, m.slow_calls, coalesce(t.tool_s, 0) as tool_s, coalesce(t.tools, 0) as tools\nfrom obs.sam_sessions s join m using (session_id) left join t using (session_id)) s where $__timeFilter(started_at) and trigger = 'person' and exit_state <> 'cut' order by duration_s desc limit 20",
+          "refId": "A"
+        }
+      ],
+      "title": "Slowest requests in the selected time",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Every model call (bars) and tool call of the chosen session in order. A bar is the model's latency for that turn.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "min": 0,
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 93
+      },
+      "id": 34,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "select started_at as time, 'model call' as metric, ms / 1000.0 as value from obs.sam_model_calls where session_id = '$session' and ms is not null union all select ts, 'tool: ' || tool, ms / 1000.0 from obs.sam_tool_calls where session_id = '$session' order by 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Session $session: seconds per step",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Model calls and tool calls in order. gap: seconds since the previous step ended, which is daemon, Slack or queue time when it is large.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "minWidth": 50
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "took"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gap"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 101
+      },
+      "id": 35,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "with ev as (select started_at as at, 'model' as kind, coalesce(finish_reason, '') as detail, ms, input_tokens as input, cached_tokens as cached, output_tokens as output from obs.sam_model_calls where session_id = '$session' union all select ts, 'tool', tool || coalesce(' (' || failure || ')', ''), ms, null, null, output_bytes from obs.sam_tool_calls where session_id = '$session') select to_char(at at time zone 'Europe/Amsterdam', 'HH24:MI:SS') as at, kind, detail, round((ms / 1000.0)::numeric, 1) as took, round((extract(epoch from (at - lag(at) over (order by at))) - lag(ms) over (order by at) / 1000.0)::numeric, 1) as gap, input, cached, output from ev order by at",
+          "refId": "A"
+        }
+      ],
+      "title": "Session $session: timeline",
+      "type": "table"
+    }
+  ],
+  "refresh": "5m",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [
+    "dembrane-sam"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "dembrane sam",
+          "value": "dembrane sam"
+        },
+        "hide": 2,
+        "includeAll": false,
+        "label": "Environment",
+        "multi": false,
+        "name": "ds",
+        "query": "postgres",
+        "refresh": 1,
+        "regex": "/^dembrane sam$/",
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "",
+          "value": ""
+        },
+        "datasource": {
+          "type": "postgres",
+          "uid": "${ds}"
+        },
+        "definition": "select session_id from obs.sam_sessions where $__timeFilter(started_at) order by duration_s desc nulls last limit 200",
+        "description": "Slowest sessions of the selected time first. Click a session id in any table to set it.",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Session",
+        "multi": false,
+        "name": "session",
+        "options": [],
+        "query": "select session_id from obs.sam_sessions where $__timeFilter(started_at) order by duration_s desc nulls last limit 200",
+        "refresh": 2,
+        "regex": "",
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "Europe/Amsterdam",
+  "title": "dembrane: sam performance",
+  "uid": "sam-performance",
+  "version": 1,
+  "weekStart": "monday"
+}

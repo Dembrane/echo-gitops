@@ -17,9 +17,11 @@ spec:
       labels:
         app: prometheus
       annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap-prometheus.yaml") . | sha256sum }}
         prometheus.io/scrape: "true"
         prometheus.io/port: "9090"
     spec:
+      {{- include "monitoring.nodeSelector" . | nindent 6 }}
       serviceAccountName: prometheus
       securityContext:
         fsGroup: 65534
@@ -32,7 +34,7 @@ spec:
           args:
             - '--config.file=/etc/prometheus/prometheus.yml'
             - '--storage.tsdb.path=/prometheus'
-            - '--storage.tsdb.retention.time=7d'
+            - {{ printf "--storage.tsdb.retention.time=%s" (.Values.prometheus.retentionTime | default "7d") | quote }}
             - '--web.console.libraries=/usr/share/prometheus/console_libraries'
             - '--web.console.templates=/usr/share/prometheus/consoles'
             {{- with .Values.prometheus.extraArgs }}
@@ -83,4 +85,4 @@ spec:
                 path: app-alerts.yml
         - name: prometheus-storage
           persistentVolumeClaim:
-            claimName: prometheus-data 
+            claimName: prometheus-data

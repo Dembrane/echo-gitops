@@ -1,0 +1,216 @@
+# dembrane v3, EU production on Scaleway (Kapsule, fr-par), namespace dembrane-web-prod,
+# Argo CD Application argo/dembrane-web-eu-prod.yaml.
+#
+# A full environment of its own. It does not layer on values-prod.yaml, so a change made for
+# the DigitalOcean production never reaches the EU by accident, and nothing here can leave a
+# DigitalOcean, Google or other non-EU setting behind. Every setting that production has and
+# the EU must not have is listed under "Left out on purpose" below.
+#
+# Sized for three nodes of 2 vCPU and 8 GB. Requests add up to about 2.2 CPU and 3.5 GiB, so
+# the monitoring stack (about 1.2 CPU and 3.5 GiB, helm/monitoring/values-eu-prod.yaml) and the
+# system pods still fit with room to roll a deployment.
+#
+# PLACEHOLDERS to fill before the first sync (search for CHANGE_ME):
+#   global.registry   the Scaleway Container Registry namespace
+#   global.imageTag   a Dembrane/echo main commit sha whose images were copied to that registry
+#   FILES_S3_BUCKET / STORAGE_S3_BUCKET   the Scaleway Object Storage bucket
+#
+# PENDING THE ECHO CHANGE. These keys are added to Dembrane/echo in a parallel change. The names
+# below are the ones that change uses today, except the three marked "name not final".
+#   LLM_PROVIDER, LLM_BASE_URL, LLM_COMPAT_TEXT_FAST, LLM_COMPAT_MULTI_MODAL_FAST,
+#   LLM_COMPAT_MULTI_MODAL_PRO, LLM_COMPAT_EMBEDDING_MODEL, LLM_TRANSCRIPTION_MODEL,
+#   LLM_SEARCH_GROUNDING (fact-check), MAIL_PROVIDER, SCALEWAY_MAIL_PROJECT_ID,
+#   SCALEWAY_MAIL_REGION, and the secret keys LLM_API_KEY and SCALEWAY_MAIL_SECRET_KEY.
+#   ANALYTICS_ENABLED       name not final (browser analytics switch)
+#   STORAGE_PUBLIC_ORIGIN   name not final (bucket origin the web security policy accepts)
+# Until the images contain that change, an unknown key is ignored and the app still tries
+# Google: do not sync before the image tag carries it.
+#
+# Secrets: never in this file. The Secret dembrane-web-eu-secrets is read as production reads
+# its own; the keys are in secrets/dembrane-web-eu-secrets.keys.md.
+
+global:
+  # CHANGE_ME: a Dembrane/echo main commit sha. The images must exist at
+  # <registry>/dembrane-web-{api,worker,media,web,migrate}:<sha> (docs/eu-images.md).
+  imageTag: "CHANGE_ME_IMAGE_TAG"
+  # CHANGE_ME: the Scaleway Container Registry namespace.
+  registry: rg.fr-par.scw.cloud/CHANGE_ME_NAMESPACE
+  imagePrefix: dembrane-web-
+  # Docker-registry Secret for a private registry namespace, made in dembrane-web-prod on the
+  # EU cluster (secrets/dembrane-web-eu-secrets.keys.md, "The registry pull secret").
+  imagePullSecrets:
+    - scw-registry-secret
+
+appEnv: prod
+
+secretName: dembrane-web-eu-secrets
+
+# Each key becomes an env var of the same name on the API and the worker; a missing key leaves
+# the feature off. The two Scaleway keys are required in practice: without LLM_API_KEY no model
+# answers, without SCALEWAY_MAIL_SECRET_KEY an email is logged and not sent (no sign-up).
+# Not listed, so never read: AUTH_GOOGLE_*, SENDGRID_API_KEY, MOLLIE_API_KEY, the support,
+# Slack, account-event and sam keys.
+optionalSecretKeys:
+  - LLM_API_KEY
+  - SCALEWAY_MAIL_SECRET_KEY
+
+secretFiles:
+  # null: no Google service account key, so no GCP_SA_JSON file and no GOOGLE_APPLICATION_CREDENTIALS.
+  gcpServiceAccountKey: null
+  # Scaleway Managed Database's CA certificate, as production does for its own database.
+  databaseCaKey: DATABASE_CA_CERT
+
+env:
+  # Hosts. The base environment (APP_ENV=prod) names the DigitalOcean production hosts, so every
+  # one is set here. DOCS_URL is left at its default: a link to the public docs site, no
+  # cookie and no data go there.
+  API_PUBLIC_URL: https://api.eu.dembrane.com
+  DASHBOARD_URL: https://dashboard.eu.dembrane.com
+  PORTAL_URL: https://portal.eu.dembrane.com
+  # Sign-in cookies. A cookie on .dembrane.com is sent to *.eu.dembrane.com too, so the EU
+  # takes its own domain and its own cookie name: it sets nothing for production and reads
+  # nothing production set (the name differs, so a production cookie is not a session here).
+  AUTH_COOKIE_DOMAIN: eu.dembrane.com
+  AUTH_COOKIE_PREFIX: dembrane-eu
+
+  # Object storage: Scaleway Object Storage, fr-par. Keys come from the secret.
+  FILES_S3_ENDPOINT: https://s3.fr-par.scw.cloud
+  FILES_S3_BUCKET: CHANGE_ME_BUCKET
+  FILES_S3_REGION: fr-par
+  STORAGE_S3_ENDPOINT: https://s3.fr-par.scw.cloud
+  STORAGE_S3_BUCKET: CHANGE_ME_BUCKET
+  STORAGE_S3_REGION: fr-par
+  # Browsers upload to and play from the bucket directly; the web security policy must accept
+  # this origin. Also add the dashboard and portal hosts to the bucket's CORS rules.
+  STORAGE_PUBLIC_ORIGIN: https://s3.fr-par.scw.cloud
+
+  # Postgres connection budget (Scaleway Managed PostgreSQL, direct connection, not a pooler).
+  # Per API pod pool + 4 = 9; per worker pool + queue pool + 4 = 13; migrate 3.
+  # At api max 4 and worker 2: 36 + 26 + 3 = 65.
+  DATABASE_POOL_MAX: "5"
+  DATABASE_QUEUE_POOL_MAX: "4"
+
+  # Models: Scaleway Generative APIs, all in the EU.
+  LLM_PROVIDER: openai-compatible
+  LLM_BASE_URL: https://api.scaleway.ai/v1
+  LLM_COMPAT_TEXT_FAST: glm-5.3
+  LLM_COMPAT_MULTI_MODAL_FAST: glm-5.3
+  LLM_COMPAT_MULTI_MODAL_PRO: glm-5.3
+  LLM_COMPAT_EMBEDDING_MODEL: qwen3-embedding-8b
+  # Same vector size as the Vertex embeddings, so the schema is unchanged.
+  EMBEDDING_DIMENSIONS: "768"
+  LLM_TRANSCRIPTION_MODEL: whisper-large-v3
+  # Fact-check grounds claims with Google Search: off.
+  LLM_SEARCH_GROUNDING: "false"
+
+  # Email: Scaleway Transactional Email. EMAIL_FROM must be an address on the sending domain
+  # verified in that Scaleway project.
+  MAIL_PROVIDER: scaleway
+  SCALEWAY_MAIL_REGION: fr-par
+  SCALEWAY_MAIL_PROJECT_ID: CHANGE_ME_SCALEWAY_PROJECT_ID
+  EMAIL_FROM: do-not-reply@eu.dembrane.com
+
+  # Browser analytics (PostHog) and its session replay: off.
+  ANALYTICS_ENABLED: "false"
+
+  # Features that call outside services or belong to the team's own tooling: off.
+  ENABLE_WEBHOOKS: "false"
+  BILLING_CUSTOMER_JOBS: "off"
+  ACCOUNTS_OFFER_MESSAGES: "false"
+  # Where the QR on a demo leads; the default is production's portal.
+  ACCOUNTS_DEMO_FEEDBACK_URL: https://portal.eu.dembrane.com/
+
+  # media is reachable only inside the cluster (NetworkPolicy), so calls go without a token.
+  MEDIA_AUTH: none
+
+  # Left out on purpose (null = absent; production sets each of these). Nothing here is read:
+  #   LLM_VERTEX_PROJECT, LLM_VERTEX_LOCATION  Google Vertex AI
+  #   SUPPORT_WEBHOOK_URL                      Google Cloud Function proxy to sam
+  #   SAM_INBOX_URL, SAM_INBOX_FROM            sam's inbox (SAM_INBOX_SECRET is not in the secret)
+  #   ACCOUNTS_EVENTS_URL                      account events to sam
+  #   MOLLIE_WEBHOOK_URL                       Mollie payments (MOLLIE_API_KEY is not in the secret)
+  LLM_VERTEX_PROJECT: null
+  LLM_VERTEX_LOCATION: null
+  SUPPORT_WEBHOOK_URL: null
+  SAM_INBOX_URL: null
+  SAM_INBOX_FROM: null
+  ACCOUNTS_EVENTS_URL: null
+  MOLLIE_WEBHOOK_URL: null
+
+api:
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 4
+    cpuUtilization: 70
+  resources:
+    requests: { cpu: 250m, memory: 512Mi }
+    limits: { cpu: "1", memory: 1Gi }
+
+worker:
+  # The one worker type: queues and every schedule. Two, one per node.
+  replicas: 2
+  resources:
+    requests: { cpu: 500m, memory: 512Mi }
+    limits: { cpu: "1", memory: 3Gi }
+  # Every node of the EU cluster is the same size, so no node pool is named.
+  nodeSelector: {}
+  spreadAcrossNodes: true
+
+media:
+  hpa:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+    cpuUtilization: 60
+  resources:
+    requests: { cpu: 500m, memory: 1Gi }
+    limits: { cpu: "2", memory: 3Gi }
+
+web:
+  # The web servers read these for runtime-config.js and the security policy; without them
+  # they take production's hostnames.
+  env:
+    API_PUBLIC_URL: https://api.eu.dembrane.com
+    DASHBOARD_URL: https://dashboard.eu.dembrane.com
+    PORTAL_URL: https://portal.eu.dembrane.com
+    STORAGE_PUBLIC_ORIGIN: https://s3.fr-par.scw.cloud
+    ANALYTICS_ENABLED: "false"
+  roles:
+    dashboard:
+      replicas: 2
+      hpa: { enabled: false }
+      resources:
+        requests: { cpu: 50m, memory: 128Mi }
+        limits: { cpu: "1", memory: 512Mi }
+    portal:
+      replicas: 2
+      hpa: { enabled: false }
+      resources:
+        requests: { cpu: 50m, memory: 128Mi }
+        limits: { cpu: "1", memory: 512Mi }
+
+migrate:
+  # A fresh database: no old stack reads the old tables, so contract migrations run. The migrate
+  # step has not been run on an empty database yet (it copies identities from Directus tables
+  # the baseline creates): try it on a scratch database before the first sync.
+  holdContract: false
+  appDbRole: echo_app
+  activeDeadlineSeconds: 3600
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { cpu: "1", memory: 1Gi }
+
+ingress:
+  enabled: true
+  className: nginx
+  # The ClusterIssuer is not part of this chart (production's comes from helm/echo): the EU
+  # cluster needs one named letsencrypt-prod, HTTP-01, before the first sync.
+  clusterIssuer: letsencrypt-prod
+  hosts:
+    api: api.eu.dembrane.com
+    dashboard: dashboard.eu.dembrane.com
+    portal: portal.eu.dembrane.com
+  # directus.dembrane.com served links from the old stack; the EU has no old links.
+  legacyDirectus:
+    enabled: false
