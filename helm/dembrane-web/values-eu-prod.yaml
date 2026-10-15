@@ -20,7 +20,7 @@
 global:
   # A Dembrane/echo commit sha. The images must exist at
   # <registry>/dembrane-web-{api,worker,media,web,migrate}:<sha> (docs/eu-images.md).
-  imageTag: "8f145b5ec8f13c2a65501dd83567175f97e62756"
+  imageTag: "eb2b90f932db909fc368fa78ba43f22485069d70"
   registry: rg.nl-ams.scw.cloud/dembrane-eu-prod
   imagePrefix: dembrane-web-
   # Docker-registry Secret for a private registry namespace, made in dembrane-web-prod on the
@@ -91,6 +91,9 @@ env:
   LLM_TRANSCRIPTION_MODEL: whisper-large-v3
   # glm-5.3 on Scaleway refuses a call that asks for more answer tokens than this.
   LLM_MAX_OUTPUT_TOKENS: "16384"
+  # glm-5.3 reasons at length by default, which cost minutes and answer tokens; calls that
+  # turn thinking off still send none.
+  LLM_REASONING_EFFORT: low
   # Fact-check grounds claims with Google Search: off.
   LLM_SEARCH_GROUNDING: "false"
 
