@@ -1,4 +1,4 @@
-# dembrane v3, EU production on Scaleway (Kapsule, fr-par), namespace dembrane-web-prod,
+# dembrane v3, EU production on Scaleway (Kapsule, nl-ams), namespace dembrane-web-prod,
 # Argo CD Application argo/dembrane-web-eu-prod.yaml.
 #
 # A full environment of its own. It does not layer on values-prod.yaml, so a change made for
@@ -34,7 +34,7 @@ global:
   # <registry>/dembrane-web-{api,worker,media,web,migrate}:<sha> (docs/eu-images.md).
   imageTag: "CHANGE_ME_IMAGE_TAG"
   # CHANGE_ME: the Scaleway Container Registry namespace.
-  registry: rg.fr-par.scw.cloud/CHANGE_ME_NAMESPACE
+  registry: rg.nl-ams.scw.cloud/CHANGE_ME_NAMESPACE
   imagePrefix: dembrane-web-
   # Docker-registry Secret for a private registry namespace, made in dembrane-web-prod on the
   # EU cluster (secrets/dembrane-web-eu-secrets.keys.md, "The registry pull secret").
@@ -73,16 +73,16 @@ env:
   AUTH_COOKIE_DOMAIN: eu.dembrane.com
   AUTH_COOKIE_PREFIX: dembrane-eu
 
-  # Object storage: Scaleway Object Storage, fr-par. Keys come from the secret.
-  FILES_S3_ENDPOINT: https://s3.fr-par.scw.cloud
+  # Object storage: Scaleway Object Storage, nl-ams. Keys come from the secret.
+  FILES_S3_ENDPOINT: https://s3.nl-ams.scw.cloud
   FILES_S3_BUCKET: CHANGE_ME_BUCKET
-  FILES_S3_REGION: fr-par
-  STORAGE_S3_ENDPOINT: https://s3.fr-par.scw.cloud
+  FILES_S3_REGION: nl-ams
+  STORAGE_S3_ENDPOINT: https://s3.nl-ams.scw.cloud
   STORAGE_S3_BUCKET: CHANGE_ME_BUCKET
-  STORAGE_S3_REGION: fr-par
+  STORAGE_S3_REGION: nl-ams
   # Browsers upload to and play from the bucket directly; the web security policy must accept
   # this origin. Also add the dashboard and portal hosts to the bucket's CORS rules.
-  WEB_STORAGE_ORIGINS: https://*.s3.fr-par.scw.cloud
+  WEB_STORAGE_ORIGINS: https://*.s3.nl-ams.scw.cloud
 
   # Postgres connection budget (Scaleway Managed PostgreSQL, direct connection, not a pooler).
   # Per API pod pool + 4 = 9; per worker pool + queue pool + 4 = 13; migrate 3.
@@ -174,7 +174,7 @@ web:
     API_PUBLIC_URL: https://api.eu.dembrane.com
     DASHBOARD_URL: https://dashboard.eu.dembrane.com
     PORTAL_URL: https://portal.eu.dembrane.com
-    WEB_STORAGE_ORIGINS: https://*.s3.fr-par.scw.cloud
+    WEB_STORAGE_ORIGINS: https://*.s3.nl-ams.scw.cloud
     WEB_ANALYTICS: "false"
   roles:
     dashboard:
