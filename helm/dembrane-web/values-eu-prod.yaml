@@ -20,7 +20,7 @@
 global:
   # A Dembrane/echo commit sha. The images must exist at
   # <registry>/dembrane-web-{api,worker,media,web,migrate}:<sha> (docs/eu-images.md).
-  imageTag: "2093348518163c6b57428040e046cc4b19878ce6"
+  imageTag: "0dd2cc70e12cde834ea44bbf5d8f712afc75d562"
   registry: rg.nl-ams.scw.cloud/dembrane-eu-prod
   imagePrefix: dembrane-web-
   # Docker-registry Secret for a private registry namespace, made in dembrane-web-prod on the
@@ -89,6 +89,8 @@ env:
   # Same vector size as the Vertex embeddings, so the schema is unchanged.
   EMBEDDING_DIMENSIONS: "768"
   LLM_TRANSCRIPTION_MODEL: whisper-large-v3
+  # glm-5.3 on Scaleway refuses a call that asks for more answer tokens than this.
+  LLM_MAX_OUTPUT_TOKENS: "16384"
   # Fact-check grounds claims with Google Search: off.
   LLM_SEARCH_GROUNDING: "false"
 
