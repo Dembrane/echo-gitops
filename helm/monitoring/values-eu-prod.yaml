@@ -1,0 +1,118 @@
+# Monitoring for the EU production cluster on Scaleway: the same stack, rules and v3
+# dashboards as values-prod.yaml, and nothing that leaves the cluster or the EU.
+# Argo CD Application argo/echo-monitoring-eu-prod.yaml.
+#
+# Sized with helm/dembrane-web/values-eu-prod.yaml for three nodes of 2 vCPU and 8 GB: the
+# stack asks for about 1.2 CPU and 3.5 GiB in total, one Promtail and one node-exporter per node.
+# A full file of its own, not layered on values-prod.yaml.
+
+clusterIssuerName: "letsencrypt-prod"
+# grafana.eu.dembrane.com. The ingress builds prometheus.<domain> too, but ingress.prometheusHost
+# is off: Prometheus is read through Grafana and from inside the cluster.
+domain: "eu.dembrane.com"
+
+# No node pool is named: every node of the cluster is the same size.
+monitoring:
+  nodePool: null
+
+storage:
+  # Scaleway Block Storage (SSD), the Kapsule default class.
+  storageClassName: "scw-bssd"
+  prometheus:
+    size: "10Gi"
+  loki:
+    size: "10Gi"
+  grafana:
+    size: "5Gi"
+
+prometheus:
+  # 30 days on a 10 GiB disk; the rule MonitoringStorageFillingSoon warns before it fills.
+  retentionTime: "30d"
+  extraArgs:
+    - --query.max-concurrency=20
+    - --query.timeout=2m
+  resources:
+    requests: { cpu: "300m", memory: "768Mi" }
+    limits: { cpu: "1000m", memory: "1536Mi" }
+
+grafana:
+  # Replaced by the secret monitoring-secrets (key grafana-admin-password), as in production.
+  adminPassword: "admin"
+  resources:
+    requests: { cpu: "100m", memory: "256Mi" }
+    limits: { cpu: "500m", memory: "768Mi" }
+
+loki:
+  retentionPeriod: "720h" # 30 days
+  maxQueryLength: "25h"
+  resources:
+    requests: { cpu: "200m", memory: "512Mi" }
+    limits: { cpu: "500m", memory: "1Gi" }
+
+promtail:
+  resources:
+    requests: { cpu: "100m", memory: "128Mi" }
+    limits: { cpu: "200m", memory: "256Mi" }
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  # No public Prometheus host.
+  prometheusHost: false
+  basicAuth:
+    enabled: false
+
+httpChecks:
+  interval: 30s
+  timeout: 5s
+  targets:
+    - name: api
+      url: https://api.eu.dembrane.com/api/health
+    - name: ready
+      url: https://api.eu.dembrane.com/ready
+    - name: dashboard
+      url: https://dashboard.eu.dembrane.com/
+    - name: portal
+      url: https://portal.eu.dembrane.com/
+    # Answers 503 when no worker has checked in for 90 seconds (alert WorkersSilent).
+    - name: worker
+      url: https://api.eu.dembrane.com/ready/worker
+
+# PLACEHOLDER: alerts go nowhere yet. They are kept in Alertmanager and shown in Grafana, and
+# none is posted. When a channel is chosen, set this back to slack (or add a receiver file).
+alerting:
+  receiver: none
+
+# The weekly digest of warnings posts to Slack: off until a channel is chosen.
+warningDigest:
+  enabled: false
+
+dashboards:
+  namespace: "dembrane-web-prod"
+
+# The product dashboards read the EU database's obs views as the read-only role of
+# sql/grafana-obs-role.sql. The dashboards address a data source with the uid obs-prod, so the
+# environment keeps the name prod: here it is the EU database, in a Grafana of its own. The
+# secret grafana-obs-db (monitoring namespace) holds OBS_PROD_DB_HOST, OBS_PROD_DB_NAME,
+# OBS_PROD_DB_USER and OBS_PROD_DB_PASSWORD. The staging and sam data sources of production's
+# Grafana do not exist here: panels that use them stay empty.
+obs:
+  environments:
+    - name: prod
+      sslmode: require
+  # Google Cloud SQL proxy: production reaches staging through it. Not here.
+  cloudSqlProxy:
+    enabled: false
+    port: 5433
+    secretName: grafana-cloud-sql-sa
+
+# Google Cloud Logging and Monitoring sources for staging and previews: none here.
+google:
+  environments: []
+  secretName: grafana-google-sources
+  loggingPlugin:
+    id: googlecloud-logging-datasource
+    version: "1.6.3"

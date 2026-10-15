@@ -1,0 +1,23 @@
+# Monitoring for the EU production cluster (Scaleway). Registered by hand on that cluster.
+# Automated sync is off for now, like dembrane-web-eu-prod.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: echo-monitoring-eu-prod
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/dembrane/echo-gitops.git
+    targetRevision: scaleway
+    path: helm/monitoring
+    helm:
+      valueFiles:
+        - values-eu-prod.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    # automated: { prune: true, selfHeal: true }   # not before the guard rails
+    syncOptions:
+      - CreateNamespace=true

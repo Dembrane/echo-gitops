@@ -1,0 +1,27 @@
+# dembrane v3 in the EU production cluster (Scaleway). Registered by hand on that cluster
+# (kubectl apply -f argo/dembrane-web-eu-prod.yaml), so this file does nothing until then.
+#
+# Automated sync is OFF: a sync runs the migrate hook against the EU database, so every sync is
+# started by a person until the guard rails are in place. Image tags are set in
+# helm/dembrane-web/values-eu-prod.yaml (docs/eu-images.md).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dembrane-web-eu-prod
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/dembrane/echo-gitops.git'
+    targetRevision: scaleway
+    path: helm/dembrane-web
+    helm:
+      valueFiles:
+        - values-eu-prod.yaml
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: dembrane-web-prod
+  syncPolicy:
+    # automated: { prune: true, selfHeal: true }   # not before the guard rails
+    syncOptions:
+      - CreateNamespace=true

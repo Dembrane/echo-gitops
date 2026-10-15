@@ -1,0 +1,297 @@
+# promtool test rules helm/monitoring/rules/app-alerts.test.yml
+rule_files:
+  - app-alerts.yml
+evaluation_interval: 1m
+
+tests:
+  # Four workers, each stopped for memory about every two minutes.
+  - interval: 1m
+    input_series:
+      - series: 'kube_pod_container_status_restarts_total{namespace="dembrane-web-prod", pod="dembrane-web-worker-aaa-1", container="worker"}'
+        values: '0 0 1 1 2 2 3 3 4 4 5 5 6 6 7 7'
+      - series: 'kube_pod_container_status_restarts_total{namespace="dembrane-web-prod", pod="dembrane-web-worker-aaa-2", container="worker"}'
+        values: '0 0 0 1 1 2 2 3 3 4 4 5 5 6 6 7'
+      - series: 'kube_pod_container_status_last_terminated_reason{namespace="dembrane-web-prod", pod="dembrane-web-worker-aaa-1", container="worker", reason="OOMKilled"}'
+        values: '_ _ 1 1 1 1 1 1 1 1 1 1 1 1 1 1'
+      - series: 'kube_pod_container_status_last_terminated_reason{namespace="dembrane-web-prod", pod="dembrane-web-worker-aaa-2", container="worker", reason="OOMKilled"}'
+        values: '_ _ _ 1 1 1 1 1 1 1 1 1 1 1 1 1'
+      - series: 'kube_deployment_spec_replicas{namespace="dembrane-web-prod", deployment="dembrane-web-worker"}'
+        values: '4+0x15'
+      - series: 'kube_deployment_status_replicas_available{namespace="dembrane-web-prod", deployment="dembrane-web-worker"}'
+        values: '4 4 3 2 1 0 1 0 0 1 0 0 1 0 0 0'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: OutOfMemory
+        exp_alerts: []
+      # The first stop is enough.
+      - eval_time: 3m
+        alertname: OutOfMemory
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              component: worker
+            exp_annotations:
+              title: "Production worker ran out of memory"
+              summary: "It was stopped 2 times in the last 10 minutes for using more memory than its limit."
+              impact: "The jobs it was running start again on another worker. If every worker stops this way, nothing is transcribed, summarised or emailed until one stays up; recording still works and the audio is stored."
+              action: "Raise its memory limit in values-prod.yaml on the prod-v3 branch and sync, or find what grew: the dashboard shows memory for each part of the app."
+              link: "https://grafana.dembrane.com/d/v3-errors"
+      - eval_time: 5m
+        alertname: ContainerRestarting
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              component: worker
+            exp_annotations:
+              title: "Production worker keeps restarting"
+              summary: "It restarted 4 times in the last 10 minutes."
+              impact: "Jobs in progress start again each time. If no worker stays up, nothing is transcribed, summarised or emailed; recording still works and the audio is stored."
+              action: "Read why it stops: the log of its previous run and the last state of its pod."
+              link: "https://grafana.dembrane.com/d/v3-errors"
+      # Up for a moment between two restarts does not hide it: the average decides.
+      - eval_time: 6m
+        alertname: WorkersDown
+        exp_alerts: []
+      - eval_time: 12m
+        alertname: WorkersDown
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              component: worker
+              deployment: dembrane-web-worker
+            exp_annotations:
+              title: "Production workers are down"
+              summary: "On average 0.8 of 4 workers were up in the last 10 minutes."
+              impact: "Transcription, summaries, reports, analysis and emails are slow or stopped. Recording still works and the audio is stored; the work waits in the queue and runs when the workers are back."
+              action: "Find why they stop: the last state of a worker pod names the reason. Out of memory means its memory limit is too low."
+              link: "https://grafana.dembrane.com/d/v3-errors"
+
+  # The transcription queue stops moving while the workers still report.
+  - interval: 1m
+    input_series:
+      - series: 'dembrane_queue_oldest_ready_seconds{queue="conversations.chunk", pod="dembrane-web-prod/dembrane-web-worker-aaa-1"}'
+        values: '0 0 30 90 150 210 270 330 390'
+      - series: 'dembrane_queue_ready{queue="conversations.chunk", pod="dembrane-web-prod/dembrane-web-worker-aaa-1"}'
+        values: '0 0 4 9 14 20 26 31 37'
+      - series: 'dembrane_queue_oldest_ready_seconds{queue="conversations.summarize", pod="dembrane-web-prod/dembrane-web-worker-aaa-1"}'
+        values: '0 0 0 0 0 0 0 0 0'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: TranscriptionWaiting
+        exp_alerts: []
+      - eval_time: 7m
+        alertname: TranscriptionWaiting
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              component: worker
+            exp_annotations:
+              title: "Production transcription is waiting"
+              summary: "31 pieces of audio wait to be transcribed, the oldest for 5m 30s."
+              impact: "People who record now see no transcript appear. Nothing is lost: the audio is stored and is transcribed in order once the queue moves."
+              action: "Check that the workers are up and not restarting, then look for failed jobs in the worker log."
+              link: "https://grafana.dembrane.com/d/v3-errors"
+      - eval_time: 8m
+        alertname: JobsWaiting
+        exp_alerts: []
+
+  # A release: pods are replaced, nothing restarts, one instance short for a few minutes.
+  - interval: 1m
+    input_series:
+      - series: 'kube_deployment_spec_replicas{namespace="dembrane-web-prod", deployment="dembrane-web-worker"}'
+        values: '4+0x14'
+      - series: 'kube_deployment_status_replicas_available{namespace="dembrane-web-prod", deployment="dembrane-web-worker"}'
+        values: '4 3 3 3 4 4 4 4 4 4 4 4 4 4 4'
+      - series: 'kube_deployment_spec_replicas{namespace="dembrane-web-prod", deployment="dembrane-web-api"}'
+        values: '3+0x14'
+      - series: 'kube_deployment_status_replicas_available{namespace="dembrane-web-prod", deployment="dembrane-web-api"}'
+        values: '3 2 2 3 3 3 3 3 3 3 3 3 3 3 3'
+      - series: 'probe_success{job="blackbox_http", svc="worker", instance="https://api.dembrane.com/ready/worker"}'
+        values: '1 1 0 0 1 1 1 1 1 1 1 1 1 1 1'
+      - series: 'probe_success{job="blackbox_http", svc="portal", instance="https://portal.dembrane.com/"}'
+        values: '1+0x14'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: WorkersDown
+        exp_alerts: []
+      - eval_time: 5m
+        alertname: WorkersSilent
+        exp_alerts: []
+      - eval_time: 12m
+        alertname: ServiceShort
+        exp_alerts: []
+      - eval_time: 12m
+        alertname: ServiceDown
+        exp_alerts: []
+      - eval_time: 12m
+        alertname: SiteUnreachable
+        exp_alerts: []
+
+  # The portal stops answering from outside and no API instance is left.
+  - interval: 1m
+    input_series:
+      - series: 'probe_success{job="blackbox_http", svc="portal", instance="https://portal.dembrane.com/"}'
+        values: '1 0 0 0 0'
+      - series: 'probe_success{job="blackbox_http", svc="worker", instance="https://api.dembrane.com/ready/worker"}'
+        values: '1 0 0 0 0'
+      - series: 'kube_deployment_status_replicas_available{namespace="dembrane-web-prod", deployment="dembrane-web-api"}'
+        values: '3 0 0 0 0'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: SiteUnreachable
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              job: blackbox_http
+              svc: portal
+              instance: https://portal.dembrane.com/
+            exp_annotations:
+              title: "Production recording page does not answer"
+              summary: "It has not answered from outside for 2 minutes."
+              impact: "Participants cannot open the recording page."
+              action: "Open the address yourself. If it fails for you too: the ingress, the certificate and DNS. If only the API fails: its pods and the database."
+              link: "https://portal.dembrane.com/"
+      - eval_time: 4m
+        alertname: WorkersSilent
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              component: worker
+              job: blackbox_http
+              svc: worker
+              instance: https://api.dembrane.com/ready/worker
+            exp_annotations:
+              title: "Production workers are silent"
+              summary: "No worker has checked in with the API for 3 minutes."
+              impact: "Scheduled and background work is not running: transcription, summaries, reports and emails wait. Recording still works and the audio is stored."
+              action: "Look at the worker pods and their log. A worker that cannot start says why in one line."
+              link: "https://grafana.dembrane.com/d/v3-errors"
+      - eval_time: 3m
+        alertname: ServiceDown
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              deployment: dembrane-web-api
+              namespace: dembrane-web-prod
+            exp_annotations:
+              title: "Production API is down"
+              summary: "No instance of it has been running for 2 minutes."
+              impact: "The app and the recording page do not work: nobody can sign in, open a project or record."
+              action: "Look at its pods: a failed start, a missing image or a full node shows in their state."
+              link: "https://grafana.dembrane.com/d/v3-errors"
+
+  # Nobody is affected yet: memory close to the limit, a slow queue, one instance short.
+  - interval: 1m
+    input_series:
+      - series: 'container_memory_working_set_bytes{namespace="dembrane-web-prod", pod="dembrane-web-worker-aaa-1", container="worker", image="x"}'
+        values: '2800000000+0x20'
+      - series: 'kube_pod_container_resource_limits{namespace="dembrane-web-prod", pod="dembrane-web-worker-aaa-1", container="worker", resource="memory"}'
+        values: '3221225472+0x20'
+      - series: 'dembrane_queue_oldest_ready_seconds{queue="conversations.summarize", pod="dembrane-web-prod/dembrane-web-worker-aaa-1"}'
+        values: '0 960+60x19'
+      - series: 'kube_deployment_spec_replicas{namespace="dembrane-web-prod", deployment="dembrane-web-media"}'
+        values: '2+0x20'
+      - series: 'kube_deployment_status_replicas_available{namespace="dembrane-web-prod", deployment="dembrane-web-media"}'
+        values: '1+0x20'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: MemoryNearLimit
+        exp_alerts:
+          - exp_labels:
+              severity: notice
+              component: worker
+            exp_annotations:
+              title: "Production worker is close to its memory limit"
+              summary: "It used 86.92% of its limit in the last 15 minutes."
+              impact: "Nobody is affected yet. Above the limit it is stopped and restarts, and what it was doing fails or starts again."
+              action: "Raise its memory limit in values-prod.yaml on the prod-v3 branch before it is reached, or find what grew."
+              link: "https://grafana.dembrane.com/d/v3-errors"
+      - eval_time: 7m
+        alertname: JobsWaiting
+        exp_alerts:
+          - exp_labels:
+              severity: notice
+              component: worker
+              queue: conversations.summarize
+            exp_annotations:
+              title: "Production background work is late"
+              summary: "In one queue the oldest job has waited 22m 0s."
+              impact: "Summaries, reports, emails or analysis arrive late, depending on the queue. Recording and transcription are not affected."
+              action: "See which queue it is on the dashboard, then look for a failing job in the worker log before adding workers."
+              link: "https://grafana.dembrane.com/d/v3-errors"
+      - eval_time: 11m
+        alertname: ServiceShort
+        exp_alerts:
+          - exp_labels:
+              severity: notice
+              deployment: dembrane-web-media
+            exp_annotations:
+              title: "Production audio conversion runs short"
+              summary: "It has run with one instance too few for 10 minutes."
+              impact: "Nobody is affected while the others cope; there is less room for a busy moment and none for another failure."
+              action: "Look at its pods: one that cannot be placed needs a node, one that restarts has its reason in its last state."
+              link: "https://grafana.dembrane.com/d/v3-errors"
+
+  # kube-state-metrics was replaced: for five minutes each object is reported twice.
+  - interval: 1m
+    input_series:
+      - series: 'kube_pod_container_status_restarts_total{namespace="dembrane-web-prod", pod="dembrane-web-worker-aaa-1", container="worker", instance="old"}'
+        values: '0 0 1 1 2 2 3 3'
+      - series: 'kube_pod_container_status_restarts_total{namespace="dembrane-web-prod", pod="dembrane-web-worker-aaa-1", container="worker", instance="new"}'
+        values: '0 0 1 1 2 2 3 3'
+      - series: 'kube_pod_container_status_last_terminated_reason{namespace="dembrane-web-prod", pod="dembrane-web-worker-aaa-1", container="worker", reason="OOMKilled", instance="old"}'
+        values: '_ _ 1 1 1 1 1 1'
+      - series: 'kube_pod_container_status_last_terminated_reason{namespace="dembrane-web-prod", pod="dembrane-web-worker-aaa-1", container="worker", reason="OOMKilled", instance="new"}'
+        values: '_ _ 1 1 1 1 1 1'
+      - series: 'kube_pod_container_resource_limits{namespace="dembrane-web-prod", pod="dembrane-web-worker-aaa-1", container="worker", resource="memory", instance="old"}'
+        values: '3221225472+0x7'
+      - series: 'kube_pod_container_resource_limits{namespace="dembrane-web-prod", pod="dembrane-web-worker-aaa-1", container="worker", resource="memory", instance="new"}'
+        values: '3221225472+0x7'
+      - series: 'kube_deployment_spec_replicas{namespace="dembrane-web-prod", deployment="dembrane-web-media", instance="old"}'
+        values: '2+0x12'
+      - series: 'kube_deployment_spec_replicas{namespace="dembrane-web-prod", deployment="dembrane-web-media", instance="new"}'
+        values: '2+0x12'
+      - series: 'kube_deployment_status_replicas_available{namespace="dembrane-web-prod", deployment="dembrane-web-media", instance="old"}'
+        values: '1+0x12'
+      - series: 'kube_deployment_status_replicas_available{namespace="dembrane-web-prod", deployment="dembrane-web-media", instance="new"}'
+        values: '1+0x12'
+      - series: 'container_memory_working_set_bytes{namespace="dembrane-web-prod", pod="dembrane-web-worker-aaa-1", container="worker", image="x"}'
+        values: '2800000000+0x7'
+    alert_rule_test:
+      # Counted once, and the joins still work.
+      - eval_time: 7m
+        alertname: OutOfMemory
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              component: worker
+            exp_annotations:
+              title: "Production worker ran out of memory"
+              summary: "It was stopped 3 times in the last 10 minutes for using more memory than its limit."
+              impact: "The jobs it was running start again on another worker. If every worker stops this way, nothing is transcribed, summarised or emailed until one stays up; recording still works and the audio is stored."
+              action: "Raise its memory limit in values-prod.yaml on the prod-v3 branch and sync, or find what grew: the dashboard shows memory for each part of the app."
+              link: "https://grafana.dembrane.com/d/v3-errors"
+      - eval_time: 1m
+        alertname: MemoryNearLimit
+        exp_alerts:
+          - exp_labels:
+              severity: notice
+              component: worker
+            exp_annotations:
+              title: "Production worker is close to its memory limit"
+              summary: "It used 86.92% of its limit in the last 15 minutes."
+              impact: "Nobody is affected yet. Above the limit it is stopped and restarts, and what it was doing fails or starts again."
+              action: "Raise its memory limit in values-prod.yaml on the prod-v3 branch before it is reached, or find what grew."
+              link: "https://grafana.dembrane.com/d/v3-errors"
+      - eval_time: 11m
+        alertname: ServiceShort
+        exp_alerts:
+          - exp_labels:
+              severity: notice
+              deployment: dembrane-web-media
+            exp_annotations:
+              title: "Production audio conversion runs short"
+              summary: "It has run with one instance too few for 10 minutes."
+              impact: "Nobody is affected while the others cope; there is less room for a busy moment and none for another failure."
+              action: "Look at its pods: one that cannot be placed needs a node, one that restarts has its reason in its last state."
+              link: "https://grafana.dembrane.com/d/v3-errors"

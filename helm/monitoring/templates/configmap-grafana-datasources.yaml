@@ -18,4 +18,57 @@ data:
         access: proxy
         url: http://loki:3100
         isDefault: false
-        uid: loki 
+        uid: loki
+{{- /*
+  The product dashboards (v3 product, v3 AI) read the obs views of each environment's
+  Postgres as a read-only role that sees nothing else (sql/grafana-obs-role.sql). One
+  dashboard serves every environment: its "Environment" dropdown lists the data sources
+  named "dembrane <env>". Where each database is, and the login, come from the secret
+  grafana-obs-db (deployment-grafana.yaml); values only say which environments exist.
+  Grafana resolves $__env{...} when it reads this file.
+*/}}
+{{- range .Values.obs.environments }}
+      - name: {{ printf "dembrane %s" .name | quote }}
+        type: postgres
+        access: proxy
+        uid: {{ printf "obs-%s" .name | quote }}
+        url: {{ printf "$__env{OBS_%s_DB_HOST}" (upper .name) | quote }}
+        user: {{ printf "$__env{OBS_%s_DB_USER}" (upper .name) | quote }}
+        isDefault: false
+        jsonData:
+          database: {{ printf "$__env{OBS_%s_DB_NAME}" (upper .name) | quote }}
+          sslmode: {{ .sslmode | default "require" | quote }}
+          postgresVersion: 1600
+          maxOpenConns: 2
+          maxIdleConns: 1
+          connMaxLifetime: 600
+          timescaledb: false
+        secureJsonData:
+          password: {{ printf "$__env{OBS_%s_DB_PASSWORD}" (upper .name) | quote }}
+        editable: false
+{{- end }}
+{{- /*
+  Environments on Google Cloud Run: their service metrics come from Cloud Monitoring (a
+  data source Grafana ships with) and their logs from Cloud Logging (a plugin, installed by
+  the init container in deployment-grafana.yaml). The uids are fixed, gcm-<name> and
+  gcl-<name>, because the dashboard "staging and previews" builds them from its Environment
+  dropdown. Project and login come from the secret (values.yaml), so no file names a
+  project; the dashboard reads it from the metrics (GRAFANA_DASHBOARDS.md).
+*/}}
+{{- range $name := .Values.google.environments }}
+{{- range $kind := list (dict "word" "metrics" "type" "stackdriver" "uid" "gcm") (dict "word" "logs" "type" $.Values.google.loggingPlugin.id "uid" "gcl") }}
+      - name: {{ printf "google %s %s" $kind.word $name | quote }}
+        type: {{ $kind.type }}
+        access: proxy
+        uid: {{ printf "%s-%s" $kind.uid $name | quote }}
+        isDefault: false
+        jsonData:
+          authenticationType: jwt
+          tokenUri: "$__env{GOOGLE_TOKEN_URI}"
+          clientEmail: "$__env{GOOGLE_CLIENT_EMAIL}"
+          defaultProject: {{ printf "$__env{GOOGLE_PROJECT_%s}" (upper $name) | quote }}
+        secureJsonData:
+          privateKey: "$__env{GOOGLE_PRIVATE_KEY}"
+        editable: false
+{{- end }}
+{{- end }}

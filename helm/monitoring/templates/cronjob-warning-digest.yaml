@@ -1,3 +1,4 @@
+{{- if ne (toString ((.Values.warningDigest).enabled)) "false" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -183,3 +184,4 @@ spec:
             - name: secrets
               secret:
                 secretName: monitoring-secrets
+{{- end }}

@@ -64,6 +64,8 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  # Prometheus is read through Grafana and from inside the cluster; true adds its own host.
+  prometheusHost: false
   basicAuth:
     enabled: false
 
@@ -73,9 +75,13 @@ httpChecks:
   timeout: 5s
   targets:
     - name: api
-      url: https://api.echo-next.dembrane.com/api/health
-    - name: directus
-      url: https://directus.echo-next.dembrane.com/server/health
+      url: https://api.echo-next.dembrane.com/health
+    - name: ready
+      url: https://api.echo-next.dembrane.com/ready
+    - name: dashboard
+      url: https://dashboard.echo-next.dembrane.com/
+    - name: portal
+      url: https://portal.echo-next.dembrane.com/
 
 # Alerting settings
 alerting:
@@ -85,4 +91,38 @@ alerting:
 
 # Dashboards (env-specific variables injected into configmap-grafana-dashboards)
 dashboards:
-  namespace: "echo-dev"
+  namespace: "dembrane-web-dummy"
+# Product dashboards: one Postgres data source per environment, on that database's obs
+# views, as a read-only role. Where the database is and the login come from the secret
+# grafana-obs-db in the monitoring namespace: keys OBS_<NAME>_DB_HOST (host:port),
+# OBS_<NAME>_DB_NAME, OBS_<NAME>_DB_USER and OBS_<NAME>_DB_PASSWORD, names upper-cased.
+# The test cluster provisions none: its drafts were added through the Grafana API and it
+# is being retired; production holds the prod and staging sources (values-prod.yaml).
+obs:
+  environments: []
+  # Staging's database (Google Cloud SQL) is reached through the Cloud SQL Auth proxy as a
+  # sidecar of Grafana. Off until the secret grafana-cloud-sql-sa exists (keys
+  # credentials.json and instance); turning it on before that would keep Grafana from
+  # starting, and the deployment recreates its one pod.
+  cloudSqlProxy:
+    enabled: false
+    port: 5433
+    secretName: grafana-cloud-sql-sa
+
+# Environments that run on Google Cloud Run keep their logs and service metrics in Google
+# Cloud Logging and Cloud Monitoring. Each name here gets two read-only data sources,
+# "google metrics <name>" and "google logs <name>", and turns on the dashboard "staging and
+# previews" (a new name also goes into that dashboard's Environment dropdown). The Google
+# project of each name and the login come from the secret named below, in the monitoring
+# namespace: GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY, GOOGLE_TOKEN_URI and
+# GOOGLE_PROJECT_<NAME>, names upper-cased. A missing secret or a refused key leaves these
+# data sources without data; Grafana starts.
+google:
+  environments: []
+  secretName: grafana-google-sources
+  # The Cloud Logging data source is a plugin. An init container installs this version into
+  # Grafana's volume once and never fails the pod: without the plugin only the log panels
+  # are empty. 1.6.3 is the last version for Grafana 10; move both together.
+  loggingPlugin:
+    id: googlecloud-logging-datasource
+    version: "1.6.3"

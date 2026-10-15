@@ -1,0 +1,7 @@
+# An environment whose alert channel is not chosen yet: every alert is kept in Alertmanager
+# (visible in its API and in Grafana) and none is posted anywhere. Replace this with a real
+# receiver and set alerting.receiver back to slack, or add a new file for the chosen channel.
+route:
+  receiver: 'blackhole'
+receivers:
+  - name: 'blackhole'

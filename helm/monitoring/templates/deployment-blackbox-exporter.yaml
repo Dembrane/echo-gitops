@@ -15,6 +15,7 @@ spec:
       labels:
         app: blackbox-exporter
     spec:
+      {{- include "monitoring.nodeSelector" . | nindent 6 }}
       containers:
         - name: blackbox-exporter
           image: prom/blackbox-exporter:v0.25.0
