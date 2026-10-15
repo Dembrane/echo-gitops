@@ -1,0 +1,23 @@
+# Monitoring for the EU cluster (Scaleway), from the same chart and branch as production's
+# monitoring. Registered on that cluster with kubectl apply; Argo CD there syncs it by itself.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: echo-monitoring-eu-prod
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/dembrane/echo-gitops.git
+    targetRevision: main
+    path: helm/monitoring
+    helm:
+      valueFiles:
+        - values-eu-prod.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions:
+      - CreateNamespace=true

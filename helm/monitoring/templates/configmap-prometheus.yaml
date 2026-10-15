@@ -263,4 +263,4 @@ data:
 
   # Kept as a plain file so promtool can check and test it (rules/app-alerts.test.yml).
   app-alerts.yml: |
-{{ .Files.Get "rules/app-alerts.yml" | indent 4 }}
+{{ .Files.Get "rules/app-alerts.yml" | replace "https://grafana.dembrane.com/" (printf "https://grafana.%s/" .Values.domain) | indent 4 }}

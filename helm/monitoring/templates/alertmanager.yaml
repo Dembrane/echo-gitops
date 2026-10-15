@@ -1,3 +1,6 @@
+{{- /* alerting.titlePrefix names the environment in each Slack title (EU: ...) when two
+clusters post to one channel; production leaves it empty. */ -}}
+{{- $alertmanager := .Files.Get "alertmanager/alertmanager.yml" | replace "__TITLE_PREFIX__" ((.Values.alerting).titlePrefix | default "") -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -6,7 +9,7 @@ metadata:
 data:
   # A plain file, so amtool can check it and its braces need no escaping.
   alertmanager.yml: |
-{{ .Files.Get "alertmanager/alertmanager.yml" | indent 4 }}
+{{ $alertmanager | indent 4 }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -25,7 +28,7 @@ spec:
       labels:
         app: alertmanager
       annotations:
-        checksum/config: {{ .Files.Get "alertmanager/alertmanager.yml" | sha256sum }}
+        checksum/config: {{ $alertmanager | sha256sum }}
     spec:
       {{- include "monitoring.nodeSelector" . | nindent 6 }}
       containers:
