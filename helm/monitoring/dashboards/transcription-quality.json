@@ -1,0 +1,388 @@
+{
+  "uid": "transcription-quality",
+  "title": "Transcription quality",
+  "description": "How close Whisper (live, final, with retries, with the text pass) gets to final Gemini, per dataset and over time. Numbers only.",
+  "tags": [
+    "dembrane-sam"
+  ],
+  "schemaVersion": 38,
+  "version": 1,
+  "editable": true,
+  "graphTooltip": 1,
+  "fiscalYearStartMonth": 0,
+  "liveNow": false,
+  "style": "dark",
+  "timezone": "Europe/Amsterdam",
+  "weekStart": "monday",
+  "refresh": "",
+  "time": {
+    "from": "now-90d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "annotations": {
+    "list": []
+  },
+  "links": [],
+  "templating": {
+    "list": [
+      {
+        "type": "datasource",
+        "name": "ds",
+        "label": "Environment",
+        "query": "postgres",
+        "regex": "/^dembrane sam$/",
+        "current": {
+          "text": "dembrane sam",
+          "value": "dembrane sam",
+          "selected": true
+        },
+        "hide": 2,
+        "includeAll": false,
+        "multi": false,
+        "refresh": 1
+      },
+      {
+        "type": "query",
+        "name": "dataset",
+        "label": "Dataset",
+        "datasource": {
+          "type": "postgres",
+          "uid": "${ds}"
+        },
+        "query": "select distinct dataset from obs.transcription_eval order by 1",
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "sort": 1,
+        "current": {}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Distance to the reference, by arm",
+      "description": "Share of reference words the arm gets wrong (substitutions, deletions, insertions). The reference is final Gemini on the whole audio, or the human text for read speech. Lower is better.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select ran_at as time, arm as metric, wer_to_reference * 100 as value from obs.transcription_eval where $__timeFilter(ran_at) and dataset = '$dataset' and rec = '*'  and wer_to_reference is not null order by 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "asc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "always",
+            "pointSize": 7,
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Distance at the 30 second joins",
+      "description": "The same, in 5 seconds around each place where the recorder's 30 second pieces meet.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select ran_at as time, arm as metric, join_wer * 100 as value from obs.transcription_eval where $__timeFilter(ran_at) and dataset = '$dataset' and rec = '*'  and join_wer is not null order by 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "asc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "always",
+            "pointSize": 7,
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Pieces cut without a pause, per audio hour",
+      "description": "Final pieces that ended without a pause in reach, so a word could be cut. Fixed finder: a pause is 0.3 s under -35 dB. Adaptive: a pause is 0.3 s under a threshold learned from the recording.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select ran_at as time, arm as metric, hard_cuts_per_hour as value from obs.transcription_eval where $__timeFilter(ran_at) and dataset = '$dataset' and rec = '*' and hard_cuts is not null and hard_cuts_per_hour is not null order by 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "asc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "always",
+            "pointSize": 7,
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Cost per audio hour",
+      "description": "EUR per hour of audio: Whisper per minute, the GLM text pass per token, Gemini per token.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select ran_at as time, arm as metric, cost_per_hour_eur as value from obs.transcription_eval where $__timeFilter(ran_at) and dataset = '$dataset' and rec = '*'  and cost_per_hour_eur is not null order by 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "asc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyEUR",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "always",
+            "pointSize": 7,
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "table",
+      "title": "Retries of doubtful stretches",
+      "description": "Stretches Whisper itself doubted (mean log probability under -1, or compression ratio over 2.4), what the retries did, and seconds sent again, newest run per arm.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select arm, to_char(ran_at at time zone 'Europe/Amsterdam','MM-DD HH24:MI') as run, retry_spans as stretches, retry_attempts as attempts, retry_improved as improved, retry_kept as \"first kept\", retry_failed as failed from obs.transcription_eval t where dataset = '$dataset' and rec = '*' and arm like '%retry%' and ran_at = (select max(ran_at) from obs.transcription_eval where dataset = t.dataset and arm = t.arm and rec = '*') order by arm",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "type": "table",
+      "title": "Latest run, per recording",
+      "description": "Distance to the reference per recording, newest run. Noise floor is the 10th percentile level of the recording in dB: higher means a noisier room.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 23
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select rec, round(avg(noise_floor_db)::numeric,1) as \"noise floor dB\", round((max(wer_to_reference) filter (where arm='live_whisper')*100)::numeric,1) as \"live whisper %\", round((max(wer_to_reference) filter (where arm='final_whisper_fixed_finder')*100)::numeric,1) as \"final, fixed finder %\", round((max(wer_to_reference) filter (where arm='final_whisper')*100)::numeric,1) as \"final whisper %\", round((max(wer_to_reference) filter (where arm='final_whisper_retry_glm')*100)::numeric,1) as \"whisper + retry + glm %\", max(hard_cuts) filter (where arm='final_whisper_fixed_finder') as \"hard cuts fixed\", max(hard_cuts) filter (where arm='final_whisper') as \"hard cuts adaptive\" from obs.transcription_eval where dataset = '$dataset' and rec <> '*' and run_id = (select run_id from obs.transcription_eval where dataset = '$dataset' order by ran_at desc limit 1) group by rec order by 2 desc",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": []
+      }
+    }
+  ]
+}
