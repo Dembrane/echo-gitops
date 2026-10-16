@@ -224,6 +224,10 @@ spec:
                 path: sam-performance.json
 {{- end }}
 {{- end }}
+{{- if (.Values.dashboards).euSupport }}
+              - key: eu-support.json
+                path: eu-support.json
+{{- end }}
 {{- if .Values.google.environments }}
               - key: v3-staging-previews.json
                 path: v3-staging-previews.json
