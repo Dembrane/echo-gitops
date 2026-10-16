@@ -1,0 +1,104 @@
+{{- if .Values.ingress.enabled }}
+{{- $i := .Values.ingress }}
+# api, dashboard and portal through the cluster's ingress-nginx, certificates from the existing
+# ClusterIssuer (owned by the old stack's chart, helm/echo). One certificate per host, so the
+# API's issues while the dashboard's and portal's DNS still points at Vercel.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dembrane-web
+  labels:
+    {{- include "dw.labels" (dict "root" . "component" "ingress") | nindent 4 }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ $i.clusterIssuer | quote }}
+    # Uploads and long requests: live event streams, merged audio, assistant runs.
+    nginx.ingress.kubernetes.io/proxy-body-size: "500m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    {{- with $i.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ $i.className | quote }}
+  tls:
+    {{- range $role := list "api" "dashboard" "portal" }}
+    - secretName: {{ printf "dembrane-web-%s-tls" $role }}
+      hosts:
+        - {{ required (printf "ingress.hosts.%s is required" $role) (get $i.hosts $role) | quote }}
+    {{- end }}
+  rules:
+    {{- range $role := list "api" "dashboard" "portal" }}
+    - host: {{ get $i.hosts $role | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ printf "dembrane-web-%s" $role }}
+                port:
+                  name: http
+    {{- end }}
+{{- end }}
+{{- if .Values.ingress.legacyDirectus.enabled }}
+{{- $d := .Values.ingress.legacyDirectus }}
+---
+# The old Directus host, for asset links already sent: /assets/<id> is served by the API at
+# /api/assets/<id> (the staging and GCP plan did the same with a URL rewrite).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dembrane-web-legacy-directus-assets
+  labels:
+    {{- include "dw.labels" (dict "root" . "component" "ingress") | nindent 4 }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.clusterIssuer | quote }}
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /api/assets/$1
+    nginx.ingress.kubernetes.io/upstream-vhost: {{ .Values.ingress.hosts.api | quote }}
+spec:
+  ingressClassName: {{ .Values.ingress.className | quote }}
+  tls:
+    - secretName: dembrane-web-legacy-directus-tls
+      hosts:
+        - {{ required "ingress.legacyDirectus.host is required" $d.host | quote }}
+  rules:
+    - host: {{ $d.host | quote }}
+      http:
+        paths:
+          - path: /assets/(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: dembrane-web-api
+                port:
+                  name: http
+---
+# Everything else on the old Directus host goes to the dashboard's sign-in page.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dembrane-web-legacy-directus-redirect
+  labels:
+    {{- include "dw.labels" (dict "root" . "component" "ingress") | nindent 4 }}
+  annotations:
+    nginx.ingress.kubernetes.io/permanent-redirect: {{ required "ingress.legacyDirectus.redirectTo is required" $d.redirectTo | quote }}
+spec:
+  ingressClassName: {{ .Values.ingress.className | quote }}
+  tls:
+    - secretName: dembrane-web-legacy-directus-tls
+      hosts:
+        - {{ $d.host | quote }}
+  rules:
+    - host: {{ $d.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dembrane-web-dashboard
+                port:
+                  name: http
+{{- end }}
