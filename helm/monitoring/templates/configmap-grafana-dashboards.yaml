@@ -45,6 +45,9 @@ data:
   # Why a request to sam takes as long as it does: model turns, call latency, tool time, one session's timeline.
   sam-performance.json: |
 {{ $.Files.Get "dashboards/sam-performance.json" | trim | indent 4 }}
+  # How close Whisper gets to final Gemini on recordings with known noise, per arm and over time. Numbers only.
+  transcription-quality.json: |
+{{ $.Files.Get "dashboards/transcription-quality.json" | trim | indent 4 }}
 {{- end }}
 {{- end }}
 {{- /* The EU's support requests, read inside the EU: sam only gets a pointer to a row. */}}
