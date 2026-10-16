@@ -35,11 +35,13 @@ secretName: dembrane-web-eu-secrets
 # Each key becomes an env var of the same name on the API and the worker; a missing key leaves
 # the feature off. The two Scaleway keys are required in practice: without LLM_API_KEY no model
 # answers, without SCALEWAY_MAIL_SECRET_KEY an email is logged and not sent (no sign-up).
-# Not listed, so never read: AUTH_GOOGLE_*, SENDGRID_API_KEY, MOLLIE_API_KEY, the support,
-# Slack, account-event and sam keys.
+# SAM_INBOX_SECRET signs the support pointers sam gets (sam's sender api.eu.dembrane.com).
+# Not listed, so never read: AUTH_GOOGLE_*, SENDGRID_API_KEY, MOLLIE_API_KEY, the support
+# webhook, Slack and account-event keys.
 optionalSecretKeys:
   - LLM_API_KEY
   - SCALEWAY_MAIL_SECRET_KEY
+  - SAM_INBOX_SECRET
 
 secretFiles:
   # null: no Google service account key, so no GCP_SA_JSON file and no GOOGLE_APPLICATION_CREDENTIALS.
@@ -120,15 +122,20 @@ env:
   # Left out on purpose (null = absent; production sets each of these). Nothing here is read:
   #   LLM_VERTEX_PROJECT, LLM_VERTEX_LOCATION  Google Vertex AI
   #   SUPPORT_WEBHOOK_URL                      Google Cloud Function proxy to sam
-  #   SAM_INBOX_URL, SAM_INBOX_FROM            sam's inbox (SAM_INBOX_SECRET is not in the secret)
   #   ACCOUNTS_EVENTS_URL                      account events to sam
   #   MOLLIE_WEBHOOK_URL                       Mollie payments (MOLLIE_API_KEY is not in the secret)
   LLM_VERTEX_PROJECT: null
   LLM_VERTEX_LOCATION: null
   SUPPORT_WEBHOOK_URL: null
-  SAM_INBOX_URL: null
-  SAM_INBOX_FROM: null
   ACCOUNTS_EVENTS_URL: null
+  # Support requests reach the team through sam as pointers only: id, source, time and a link
+  # to the request in the EU Grafana. The message and page context stay in the EU database.
+  # SAM_INBOX_SCOPE=support keeps account events, bookings and the rest off the inbox.
+  SAM_INBOX_URL: https://europe-west1-dembrane-sameer-cli.cloudfunctions.net/sam-inbox-proxy/inbox
+  SAM_INBOX_FROM: api.eu.dembrane.com
+  SAM_INBOX_SCOPE: support
+  SUPPORT_FORWARD_CONTENT: pointer
+  SUPPORT_READ_URL: https://grafana.eu.dembrane.com/d/eu-support/eu-support-requests?var-id={id}
   MOLLIE_WEBHOOK_URL: null
 
 api:
