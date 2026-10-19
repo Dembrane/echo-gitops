@@ -58,13 +58,13 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "**Which pipeline is better, by how much, at what cost.** Numbers are words wrong per 100 words, compared with text written by people, averaged over five test sets. Lower is better. Each stack shows the pipeline it will run."
+        "content": "**Which pipeline is better, by how much, at what cost.** Score: word error rate (WER), the share of words a pipeline gets wrong, misses or adds, against text written by people; averaged over five public test sets. Lower is better. Each stack shows the pipeline it will run."
       }
     },
     {
       "id": 2,
       "type": "stat",
-      "title": "EU runs: wrong per 100",
+      "title": "EU: WER",
       "description": "What the EU stack (Scaleway Whisper) will run once the final transcript ships. Average over the five test sets with text written by people.",
       "datasource": {
         "type": "postgres",
@@ -83,7 +83,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select v as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and pipeline = 'Whisper, redone + second listen + clean-up' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text)) t",
+          "rawSql": "select v as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and pipeline = 'Whisper large v3 + GLM merge' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text)) t",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
@@ -109,7 +109,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
+          "unit": "percent",
           "decimals": 1,
           "noValue": "no data yet",
           "color": {
@@ -123,7 +123,7 @@
     {
       "id": 3,
       "type": "stat",
-      "title": "EU runs: EUR/hour",
+      "title": "EU: EUR per audio hour",
       "description": "Of that pipeline.",
       "datasource": {
         "type": "postgres",
@@ -142,7 +142,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select eur as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and pipeline = 'Whisper, redone + second listen + clean-up' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text)) t",
+          "rawSql": "select eur as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and pipeline = 'Whisper large v3 + GLM merge' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text)) t",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
@@ -182,7 +182,7 @@
     {
       "id": 4,
       "type": "stat",
-      "title": "EU runs",
+      "title": "EU pipeline",
       "description": "The pipeline this stack ships.",
       "datasource": {
         "type": "postgres",
@@ -201,7 +201,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select pipeline as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and pipeline = 'Whisper, redone + second listen + clean-up' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text)) t",
+          "rawSql": "select pipeline as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and pipeline = 'Whisper large v3 + GLM merge' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text)) t",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
@@ -241,7 +241,7 @@
     {
       "id": 5,
       "type": "stat",
-      "title": "GCP runs: wrong per 100",
+      "title": "GCP: WER",
       "description": "What the GCP stack (Gemini) will run once the final transcript ships. Average over the five test sets with text written by people.",
       "datasource": {
         "type": "postgres",
@@ -260,7 +260,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select v as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and pipeline = 'Gemini, redone after the conversation' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text)) t",
+          "rawSql": "select v as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and pipeline = 'Gemini 3.8 live + merge' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text)) t",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
@@ -286,7 +286,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
+          "unit": "percent",
           "decimals": 1,
           "noValue": "no data yet",
           "color": {
@@ -300,7 +300,7 @@
     {
       "id": 6,
       "type": "stat",
-      "title": "GCP runs: EUR/hour",
+      "title": "GCP: EUR per audio hour",
       "description": "Of that pipeline.",
       "datasource": {
         "type": "postgres",
@@ -319,7 +319,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select eur as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and pipeline = 'Gemini, redone after the conversation' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text)) t",
+          "rawSql": "select eur as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and pipeline = 'Gemini 3.8 live + merge' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text)) t",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
@@ -359,7 +359,7 @@
     {
       "id": 7,
       "type": "stat",
-      "title": "GCP runs",
+      "title": "GCP pipeline",
       "description": "The pipeline this stack ships.",
       "datasource": {
         "type": "postgres",
@@ -378,7 +378,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select pipeline as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and pipeline = 'Gemini, redone after the conversation' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text)) t",
+          "rawSql": "select pipeline as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and pipeline = 'Gemini 3.8 live + merge' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text)) t",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
@@ -428,13 +428,13 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "**1. Whisper, live only**: where the EU stack started.\n\nWhisper writes the text in 30 second pieces while people talk, and that is the final text. Cheapest, and the least accurate.\n\n**2. Whisper, redone + second listen + clean-up**: the EU stack now.\n\nWhen the conversation ends, the whole recording is written again in one-minute pieces cut at pauses. Stretches where Whisper looks lost (wrong language, speech with few words, silence where someone talked) are listened to a second time, and a text model fixes the spelling of names and terms. Costs about twice the live text, and about the same as Gemini.\n\n**3. Gemini, redone after the conversation**: the GCP stack.\n\nGemini writes the text while people talk and again for the whole recording at the end. A second listen would not help: a second reading barely changes it.\n\nThe chart shows words wrong per 100 against text written by people. Price per audio hour and every other variant are in the table below."
+        "content": "**1. Whisper large v3 live**: where the EU stack started. Whisper writes the text in 30 second pieces while people talk.\n\n**2. Whisper large v3 + GLM merge**: the EU stack now. After the conversation Whisper transcribes the whole recording again in one-minute pieces cut at pauses, listens again where it looks lost (wrong language, too few words, silence where someone talked), and GLM fixes names and terms inside each sentence.\n\n**3. Gemini 3.8 live + merge**: the GCP stack. Gemini writes the live text, then transcribes the whole recording again after the conversation. A retry does not pay for Gemini.\n\nThe chart shows WER (%) against text written by people. Price per audio hour and every other variant are in the table below."
       }
     },
     {
       "id": 9,
       "type": "barchart",
-      "title": "Words wrong per 100 on each test set, the three pipelines",
+      "title": "WER (%) per test set, the three pipelines",
       "description": "Lower is better. Text checked by people is the reference.",
       "datasource": {
         "type": "postgres",
@@ -453,7 +453,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select dataset_label as \"Test set\",\nmax(case when pipeline = 'Whisper, live only' then wer_to_reference * 100 end) as \"Whisper, live only\",\nmax(case when pipeline = 'Whisper, redone + second listen + clean-up' then wer_to_reference * 100 end) as \"Whisper, redone + second listen + clean-up\",\nmax(case when pipeline = 'Gemini, redone after the conversation' then wer_to_reference * 100 end) as \"Gemini, redone after the conversation\"\nfrom obs.transcription_latest where human_text and pipeline is not null group by dataset_label order by 1",
+          "rawSql": "select dataset_label as \"Test set\",\nmax(case when pipeline = 'Whisper large v3 live' then wer_to_reference * 100 end) as \"Whisper large v3 live\",\nmax(case when pipeline = 'Whisper large v3 + GLM merge' then wer_to_reference * 100 end) as \"Whisper large v3 + GLM merge\",\nmax(case when pipeline = 'Gemini 3.8 live + merge' then wer_to_reference * 100 end) as \"Gemini 3.8 live + merge\"\nfrom obs.transcription_latest where human_text and pipeline is not null group by dataset_label order by 1",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
@@ -491,7 +491,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Whisper, live only"
+              "options": "Whisper large v3 live"
             },
             "properties": [
               {
@@ -506,7 +506,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Whisper, redone + second listen + clean-up"
+              "options": "Whisper large v3 + GLM merge"
             },
             "properties": [
               {
@@ -521,7 +521,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Gemini, redone after the conversation"
+              "options": "Gemini 3.8 live + merge"
             },
             "properties": [
               {
@@ -539,7 +539,7 @@
     {
       "id": 10,
       "type": "table",
-      "title": "Every pipeline, checked against text written by people: words wrong per 100",
+      "title": "Every pipeline against text written by people: WER (%)",
       "datasource": {
         "type": "postgres",
         "uid": "${ds}"
@@ -858,12 +858,12 @@
     {
       "id": 11,
       "type": "table",
-      "title": "No human text here: how far each pipeline lands from Gemini's own reading (not comparable with the table above)",
+      "title": "No human text here: WER (%) against Gemini's own reading (not comparable with the table above)",
       "datasource": {
         "type": "postgres",
         "uid": "${ds}"
       },
-      "description": "These recordings have no text written by people, so the reference is Gemini reading the whole recording. A low number means close to Gemini, not correct. The city sessions and the tech event were measured with an earlier version of the second listen and cannot be repeated.",
+      "description": "These recordings have no text written by people, so the reference is Gemini reading the whole recording. A low number means close to Gemini, not correct. The city sessions and the tech event were measured with an earlier version of the retry and cannot be repeated.",
       "gridPos": {
         "h": 11,
         "w": 24,
@@ -1045,7 +1045,7 @@
     {
       "id": 12,
       "type": "timeseries",
-      "title": "What each stack runs, over time: words wrong per 100",
+      "title": "What each stack runs, over time: WER (%)",
       "datasource": {
         "type": "postgres",
         "uid": "${ds}"
@@ -1064,7 +1064,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select ran_at as time, pipeline as metric, avg(wer_to_reference) * 100 as value from obs.transcription_eval where human_text and rec = '*' and $__timeFilter(ran_at) and pipeline in ('Whisper, redone + second listen + clean-up', 'Gemini, redone after the conversation') group by run_id, ran_at, pipeline having count(distinct dataset) >= 5 order by 1",
+          "rawSql": "select ran_at as time, pipeline as metric, avg(wer_to_reference) * 100 as value from obs.transcription_eval where human_text and rec = '*' and $__timeFilter(ran_at) and pipeline in ('Whisper large v3 + GLM merge', 'Gemini 3.8 live + merge') group by run_id, ran_at, pipeline having count(distinct dataset) >= 5 order by 1",
           "format": "time_series",
           "rawQuery": true,
           "editorMode": "code"
@@ -1101,7 +1101,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Whisper, live only"
+              "options": "Whisper large v3 live"
             },
             "properties": [
               {
@@ -1116,7 +1116,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Whisper, redone + second listen + clean-up"
+              "options": "Whisper large v3 + GLM merge"
             },
             "properties": [
               {
@@ -1131,7 +1131,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Gemini, redone after the conversation"
+              "options": "Gemini 3.8 live + merge"
             },
             "properties": [
               {
