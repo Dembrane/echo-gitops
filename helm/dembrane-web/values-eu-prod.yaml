@@ -91,6 +91,8 @@ env:
   # Same vector size as the Vertex embeddings, so the schema is unchanged.
   EMBEDDING_DIMENSIONS: "768"
   LLM_TRANSCRIPTION_MODEL: whisper-large-v3
+  # Whisper hears each piece's language; the second listen then names the project's.
+  LLM_TRANSCRIPTION_LANGUAGE: auto
   # glm-5.3 on Scaleway refuses a call that asks for more answer tokens than this.
   LLM_MAX_OUTPUT_TOKENS: "16384"
   # glm-5.3 reasons at length by default, which cost minutes and answer tokens; calls that
