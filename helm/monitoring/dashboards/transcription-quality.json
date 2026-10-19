@@ -1,12 +1,12 @@
 {
   "uid": "transcription-quality",
   "title": "Transcription quality",
-  "description": "How close Whisper (live, final, with retries, with the text pass) gets to final Gemini, per dataset and over time. Numbers only.",
+  "description": "Which transcription pipeline is better, by how much, at what cost: the EU stack (Whisper) and the GCP stack (Gemini) on the same recordings. Numbers only.",
   "tags": [
     "dembrane-sam"
   ],
   "schemaVersion": 38,
-  "version": 1,
+  "version": 2,
   "editable": true,
   "graphTooltip": 1,
   "fiscalYearStartMonth": 0,
@@ -16,7 +16,7 @@
   "weekStart": "monday",
   "refresh": "",
   "time": {
-    "from": "now-90d",
+    "from": "now-30d",
     "to": "now"
   },
   "timepicker": {},
@@ -41,100 +41,40 @@
         "includeAll": false,
         "multi": false,
         "refresh": 1
-      },
-      {
-        "type": "query",
-        "name": "dataset",
-        "label": "Dataset",
-        "datasource": {
-          "type": "postgres",
-          "uid": "${ds}"
-        },
-        "query": "select distinct dataset from obs.transcription_eval order by 1",
-        "refresh": 2,
-        "includeAll": false,
-        "multi": false,
-        "sort": 1,
-        "current": {}
       }
     ]
   },
   "panels": [
     {
       "id": 1,
-      "type": "timeseries",
-      "title": "Distance to the reference, by arm",
-      "description": "Share of reference words the arm gets wrong (substitutions, deletions, insertions). The reference is final Gemini on the whole audio, or the human text for read speech. Lower is better.",
-      "datasource": {
-        "type": "postgres",
-        "uid": "${ds}"
-      },
+      "type": "text",
+      "title": "",
+      "datasource": null,
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 2,
+        "w": 24,
         "x": 0,
         "y": 0
       },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "postgres",
-            "uid": "${ds}"
-          },
-          "rawSql": "select ran_at as time, arm as metric, wer_to_reference * 100 as value from obs.transcription_eval where $__timeFilter(ran_at) and dataset = '$dataset' and rec = '*'  and wer_to_reference is not null order by 1",
-          "format": "time_series",
-          "rawQuery": true,
-          "editorMode": "code"
-        }
-      ],
       "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "asc"
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 0,
-            "showPoints": "always",
-            "pointSize": 7,
-            "spanNulls": true
-          }
-        },
-        "overrides": []
+        "mode": "markdown",
+        "content": "**Which pipeline is better, by how much, at what cost.** Numbers are words wrong per 100 words, compared with text written by people, averaged over five test sets. Lower is better. Each stack shows its best pipeline."
       }
     },
     {
       "id": 2,
-      "type": "timeseries",
-      "title": "Distance at the 30 second joins",
-      "description": "The same, in 5 seconds around each place where the recorder's 30 second pieces meet.",
+      "type": "stat",
+      "title": "EU: wrong per 100",
+      "description": "Scaleway Whisper stack. Average over the five test sets with human-checked text, lowest of its pipelines.",
       "datasource": {
         "type": "postgres",
         "uid": "${ds}"
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 0
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 2
       },
       "targets": [
         {
@@ -143,40 +83,38 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select ran_at as time, arm as metric, join_wer * 100 as value from obs.transcription_eval where $__timeFilter(ran_at) and dataset = '$dataset' and rec = '*'  and join_wer is not null order by 1",
-          "format": "time_series",
+          "rawSql": "select v as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and stack = 'EU (Whisper)' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text) order by 2 limit 1) t",
+          "format": "table",
           "rawQuery": true,
           "editorMode": "code"
         }
       ],
       "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
+        "reduceOptions": {
+          "values": false,
           "calcs": [
             "lastNotNull"
-          ]
+          ],
+          "fields": "/.*/"
         },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "asc"
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "text": {
+          "titleSize": 13,
+          "valueSize": 30
         }
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "percent",
-          "min": 0,
+          "unit": "none",
+          "decimals": 1,
+          "noValue": "no data yet",
           "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 0,
-            "showPoints": "always",
-            "pointSize": 7,
-            "spanNulls": true
+            "mode": "fixed",
+            "fixedColor": "text"
           }
         },
         "overrides": []
@@ -184,18 +122,18 @@
     },
     {
       "id": 3,
-      "type": "timeseries",
-      "title": "Pieces cut without a pause, per audio hour",
-      "description": "Final pieces that ended without a pause in reach, so a word could be cut. Fixed finder: a pause is 0.3 s under -35 dB. Adaptive: a pause is 0.3 s under a threshold learned from the recording.",
+      "type": "stat",
+      "title": "EU: EUR/hour",
+      "description": "Of that best pipeline.",
       "datasource": {
         "type": "postgres",
         "uid": "${ds}"
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 8
+        "h": 4,
+        "w": 3,
+        "x": 4,
+        "y": 2
       },
       "targets": [
         {
@@ -204,40 +142,38 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select ran_at as time, arm as metric, hard_cuts_per_hour as value from obs.transcription_eval where $__timeFilter(ran_at) and dataset = '$dataset' and rec = '*' and hard_cuts is not null and hard_cuts_per_hour is not null order by 1",
-          "format": "time_series",
+          "rawSql": "select eur as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and stack = 'EU (Whisper)' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text) order by 2 limit 1) t",
+          "format": "table",
           "rawQuery": true,
           "editorMode": "code"
         }
       ],
       "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
+        "reduceOptions": {
+          "values": false,
           "calcs": [
             "lastNotNull"
-          ]
+          ],
+          "fields": "/.*/"
         },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "asc"
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "text": {
+          "titleSize": 13,
+          "valueSize": 30
         }
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
-          "min": 0,
+          "unit": "currencyEUR",
+          "decimals": 2,
+          "noValue": "no data yet",
           "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 0,
-            "showPoints": "always",
-            "pointSize": 7,
-            "spanNulls": true
+            "mode": "fixed",
+            "fixedColor": "text"
           }
         },
         "overrides": []
@@ -245,18 +181,18 @@
     },
     {
       "id": 4,
-      "type": "timeseries",
-      "title": "Cost per audio hour",
-      "description": "EUR per hour of audio: Whisper per minute, the GLM text pass per token, Gemini per token.",
+      "type": "stat",
+      "title": "EU: best pipeline",
+      "description": "The pipeline that scored best.",
       "datasource": {
         "type": "postgres",
         "uid": "${ds}"
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 8
+        "h": 4,
+        "w": 5,
+        "x": 7,
+        "y": 2
       },
       "targets": [
         {
@@ -265,40 +201,38 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select ran_at as time, arm as metric, cost_per_hour_eur as value from obs.transcription_eval where $__timeFilter(ran_at) and dataset = '$dataset' and rec = '*'  and cost_per_hour_eur is not null order by 1",
-          "format": "time_series",
+          "rawSql": "select pipeline as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and stack = 'EU (Whisper)' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text) order by 2 limit 1) t",
+          "format": "table",
           "rawQuery": true,
           "editorMode": "code"
         }
       ],
       "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
+        "reduceOptions": {
+          "values": false,
           "calcs": [
             "lastNotNull"
-          ]
+          ],
+          "fields": "/.*/"
         },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "asc"
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "text": {
+          "titleSize": 13,
+          "valueSize": 18
         }
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "currencyEUR",
-          "min": 0,
+          "unit": "none",
+          "decimals": 1,
+          "noValue": "no data yet",
           "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 0,
-            "showPoints": "always",
-            "pointSize": 7,
-            "spanNulls": true
+            "mode": "fixed",
+            "fixedColor": "text"
           }
         },
         "overrides": []
@@ -306,18 +240,18 @@
     },
     {
       "id": 5,
-      "type": "table",
-      "title": "Retries of doubtful stretches",
-      "description": "Stretches Whisper itself doubted (mean log probability under -1, or compression ratio over 2.4), what the retries did, and seconds sent again, newest run per arm.",
+      "type": "stat",
+      "title": "GCP: wrong per 100",
+      "description": "Google Gemini stack. Average over the five test sets with human-checked text, lowest of its pipelines.",
       "datasource": {
         "type": "postgres",
         "uid": "${ds}"
       },
       "gridPos": {
-        "h": 7,
-        "w": 24,
-        "x": 0,
-        "y": 16
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 2
       },
       "targets": [
         {
@@ -326,19 +260,38 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select arm, to_char(ran_at at time zone 'Europe/Amsterdam','MM-DD HH24:MI') as run, retry_spans as stretches, retry_attempts as attempts, retry_improved as improved, retry_kept as \"first kept\", retry_failed as failed from obs.transcription_eval t where dataset = '$dataset' and rec = '*' and arm like '%retry%' and ran_at = (select max(ran_at) from obs.transcription_eval where dataset = t.dataset and arm = t.arm and rec = '*') order by arm",
+          "rawSql": "select v as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and stack = 'GCP (Gemini)' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text) order by 2 limit 1) t",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
         }
       ],
       "options": {
-        "showHeader": true
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/"
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "text": {
+          "titleSize": 13,
+          "valueSize": 30
+        }
       },
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "align": "auto"
+          "unit": "none",
+          "decimals": 1,
+          "noValue": "no data yet",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
           }
         },
         "overrides": []
@@ -346,18 +299,18 @@
     },
     {
       "id": 6,
-      "type": "table",
-      "title": "Latest run, per recording",
-      "description": "Distance to the reference per recording, newest run. Noise floor is the 10th percentile level of the recording in dB: higher means a noisier room.",
+      "type": "stat",
+      "title": "GCP: EUR/hour",
+      "description": "Of that best pipeline.",
       "datasource": {
         "type": "postgres",
         "uid": "${ds}"
       },
       "gridPos": {
-        "h": 9,
-        "w": 24,
-        "x": 0,
-        "y": 23
+        "h": 4,
+        "w": 3,
+        "x": 16,
+        "y": 2
       },
       "targets": [
         {
@@ -366,19 +319,736 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select rec, round(avg(noise_floor_db)::numeric,1) as \"noise floor dB\", round((max(wer_to_reference) filter (where arm='live_whisper')*100)::numeric,1) as \"live whisper %\", round((max(wer_to_reference) filter (where arm='final_whisper_fixed_finder')*100)::numeric,1) as \"final, fixed finder %\", round((max(wer_to_reference) filter (where arm='final_whisper')*100)::numeric,1) as \"final whisper %\", round((max(wer_to_reference) filter (where arm='final_whisper_retry_glm')*100)::numeric,1) as \"whisper + retry + glm %\", max(hard_cuts) filter (where arm='final_whisper_fixed_finder') as \"hard cuts fixed\", max(hard_cuts) filter (where arm='final_whisper') as \"hard cuts adaptive\" from obs.transcription_eval where dataset = '$dataset' and rec <> '*' and run_id = (select run_id from obs.transcription_eval where dataset = '$dataset' order by ran_at desc limit 1) group by rec order by 2 desc",
+          "rawSql": "select eur as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and stack = 'GCP (Gemini)' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text) order by 2 limit 1) t",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
         }
       ],
       "options": {
-        "showHeader": true
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/"
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "text": {
+          "titleSize": 13,
+          "valueSize": 30
+        }
       },
       "fieldConfig": {
         "defaults": {
+          "unit": "currencyEUR",
+          "decimals": 2,
+          "noValue": "no data yet",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "GCP: best pipeline",
+      "description": "The pipeline that scored best.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 19,
+        "y": 2
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select pipeline as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and stack = 'GCP (Gemini)' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text) order by 2 limit 1) t",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/"
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "text": {
+          "titleSize": 13,
+          "valueSize": 18
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 1,
+          "noValue": "no data yet",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 8,
+      "type": "text",
+      "title": "The three pipelines to compare",
+      "datasource": null,
+      "gridPos": {
+        "h": 13,
+        "w": 9,
+        "x": 0,
+        "y": 6
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**1. Whisper, live only**: where the EU stack started.\n\nWhisper writes the text in 30 second pieces while people talk, and that is the final text. Cheapest, and the least accurate.\n\n**2. Whisper, redone + second listen + clean-up**: the EU stack now.\n\nWhen the conversation ends, the whole recording is written again in one-minute pieces cut at pauses. Stretches where Whisper looks lost (wrong language, speech with few words, silence where someone talked) are listened to a second time, and a text model fixes the spelling of names and terms. Costs about twice the live text, and about the same as Gemini.\n\n**3. Gemini, redone after the conversation**: the GCP stack.\n\nGemini writes the text while people talk and again for the whole recording at the end. A second listen would not help: a second reading barely changes it.\n\nThe chart shows words wrong per 100 against text written by people. Price per audio hour and every other variant are in the table below."
+      }
+    },
+    {
+      "id": 9,
+      "type": "barchart",
+      "title": "Words wrong per 100 on each test set, the three pipelines",
+      "description": "Lower is better. Text checked by people is the reference.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 15,
+        "x": 9,
+        "y": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select dataset_label as \"Test set\",\nmax(case when pipeline = 'Whisper, live only' then wer_to_reference * 100 end) as \"Whisper, live only\",\nmax(case when pipeline = 'Whisper, redone + second listen + clean-up' then wer_to_reference * 100 end) as \"Whisper, redone + second listen + clean-up\",\nmax(case when pipeline = 'Gemini, redone after the conversation' then wer_to_reference * 100 end) as \"Gemini, redone after the conversation\"\nfrom obs.transcription_latest where human_text and pipeline is not null group by dataset_label order by 1",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "xField": "Test set",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "barWidth": 0.8,
+        "groupWidth": 0.75,
+        "showValue": "auto",
+        "tooltip": {
+          "mode": "multi"
+        },
+        "xTickLabelRotation": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 1,
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
-            "align": "auto"
+            "fillOpacity": 85
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 10,
+      "type": "table",
+      "title": "Every pipeline, checked against text written by people: words wrong per 100",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Lower is better. Each column is one test set: read speech (Dutch and English), the same read in a loud room, FLEURS (Dutch read sentences), VoxPopuli (Dutch parliament speeches), AMI (English meetings recorded by a far microphone). Average counts every test set once. The two stacks share the same recordings and the same scale.",
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 19
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select stack as \"Stack\", pipeline as \"Pipeline\",\nround((max(wer_to_reference) filter (where dataset_label = 'Read speech') * 100)::numeric, 1)::float8 as \"Read speech\",\nround((max(wer_to_reference) filter (where dataset_label = 'Read, loud room') * 100)::numeric, 1)::float8 as \"Read, loud room\",\nround((max(wer_to_reference) filter (where dataset_label = 'FLEURS (Dutch)') * 100)::numeric, 1)::float8 as \"FLEURS (Dutch)\",\nround((max(wer_to_reference) filter (where dataset_label = 'VoxPopuli (Dutch)') * 100)::numeric, 1)::float8 as \"VoxPopuli (Dutch)\",\nround((max(wer_to_reference) filter (where dataset_label = 'AMI meetings') * 100)::numeric, 1)::float8 as \"AMI meetings\",\nround((avg(wer_to_reference) * 100)::numeric, 1)::float8 as \"Average\",\nround(avg(cost_per_hour_eur)::numeric, 2)::float8 as \"EUR per audio hour\"\nfrom obs.transcription_latest where human_text and pipeline is not null group by stack, pipeline having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text) order by stack desc, avg(wer_to_reference)",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "md"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Read speech"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 15
+                    },
+                    {
+                      "color": "orange",
+                      "value": 25
+                    },
+                    {
+                      "color": "red",
+                      "value": 40
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Read, loud room"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 15
+                    },
+                    {
+                      "color": "orange",
+                      "value": 25
+                    },
+                    {
+                      "color": "red",
+                      "value": 40
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "FLEURS (Dutch)"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 15
+                    },
+                    {
+                      "color": "orange",
+                      "value": 25
+                    },
+                    {
+                      "color": "red",
+                      "value": 40
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "VoxPopuli (Dutch)"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 15
+                    },
+                    {
+                      "color": "orange",
+                      "value": 25
+                    },
+                    {
+                      "color": "red",
+                      "value": 40
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "AMI meetings"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 15
+                    },
+                    {
+                      "color": "orange",
+                      "value": 25
+                    },
+                    {
+                      "color": "red",
+                      "value": 40
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Pipeline"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 330
+              },
+              {
+                "id": "custom.align",
+                "value": "left"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Stack"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "EUR per audio hour"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyEUR"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Average"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-text"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 11,
+      "type": "table",
+      "title": "No human text here: how far each pipeline lands from Gemini's own reading (not comparable with the table above)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "These recordings have no text written by people, so the reference is Gemini reading the whole recording. A low number means close to Gemini, not correct. The city sessions and the tech event were measured with an earlier version of the second listen and cannot be repeated.",
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 31
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select pipeline as \"Pipeline\",\nround((max(wer_to_reference) filter (where dataset_label = 'Our product meetings') * 100)::numeric, 1)::float8 as \"Our product meetings\",\nround((max(wer_to_reference) filter (where dataset_label = 'City sessions, Dutch') * 100)::numeric, 1)::float8 as \"City sessions, Dutch\",\nround((max(wer_to_reference) filter (where dataset_label = 'Tech event, English') * 100)::numeric, 1)::float8 as \"Tech event, English\"\nfrom obs.transcription_latest where not human_text and pipeline is not null and arm <> 'final_gemini' group by pipeline order by 2",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "md"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Pipeline"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 330
+              },
+              {
+                "id": "custom.align",
+                "value": "left"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Our product meetings"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 15
+                    },
+                    {
+                      "color": "orange",
+                      "value": 25
+                    },
+                    {
+                      "color": "red",
+                      "value": 40
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "City sessions, Dutch"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 15
+                    },
+                    {
+                      "color": "orange",
+                      "value": 25
+                    },
+                    {
+                      "color": "red",
+                      "value": 40
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Tech event, English"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 15
+                    },
+                    {
+                      "color": "orange",
+                      "value": 25
+                    },
+                    {
+                      "color": "red",
+                      "value": 40
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Best pipeline of each stack over time: words wrong per 100",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${ds}"
+      },
+      "description": "Each point is one full evaluation run on the five test sets.",
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 42
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${ds}"
+          },
+          "rawSql": "select ran_at as time, stack as metric, min(v) as value from (select run_id, ran_at, stack, pipeline, avg(wer_to_reference) * 100 as v from obs.transcription_eval where human_text and rec = '*' and pipeline is not null and $__timeFilter(ran_at) group by 1, 2, 3, 4 having count(distinct dataset) >= 5) t group by 1, 2 order by 1",
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 1,
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "showPoints": "always",
+            "pointSize": 8,
+            "fillOpacity": 0,
+            "spanNulls": true
           }
         },
         "overrides": []
