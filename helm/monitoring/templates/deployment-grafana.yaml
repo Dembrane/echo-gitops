@@ -222,6 +222,8 @@ spec:
                 path: sam.json
               - key: sam-performance.json
                 path: sam-performance.json
+              - key: transcription-quality.json
+                path: transcription-quality.json
 {{- end }}
 {{- end }}
 {{- if (.Values.dashboards).euSupport }}
