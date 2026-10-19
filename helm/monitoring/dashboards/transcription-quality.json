@@ -58,14 +58,14 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "**Which pipeline is better, by how much, at what cost.** Numbers are words wrong per 100 words, compared with text written by people, averaged over five test sets. Lower is better. Each stack shows its best pipeline."
+        "content": "**Which pipeline is better, by how much, at what cost.** Numbers are words wrong per 100 words, compared with text written by people, averaged over five test sets. Lower is better. Each stack shows the pipeline it will run."
       }
     },
     {
       "id": 2,
       "type": "stat",
-      "title": "EU: wrong per 100",
-      "description": "Scaleway Whisper stack. Average over the five test sets with human-checked text, lowest of its pipelines.",
+      "title": "EU runs: wrong per 100",
+      "description": "What the EU stack (Scaleway Whisper) will run once the final transcript ships. Average over the five test sets with text written by people.",
       "datasource": {
         "type": "postgres",
         "uid": "${ds}"
@@ -83,7 +83,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select v as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and stack = 'EU (Whisper)' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text) order by 2 limit 1) t",
+          "rawSql": "select v as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and pipeline = 'Whisper, redone + second listen + clean-up' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text)) t",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
@@ -114,7 +114,7 @@
           "noValue": "no data yet",
           "color": {
             "mode": "fixed",
-            "fixedColor": "text"
+            "fixedColor": "#ff9830"
           }
         },
         "overrides": []
@@ -123,8 +123,8 @@
     {
       "id": 3,
       "type": "stat",
-      "title": "EU: EUR/hour",
-      "description": "Of that best pipeline.",
+      "title": "EU runs: EUR/hour",
+      "description": "Of that pipeline.",
       "datasource": {
         "type": "postgres",
         "uid": "${ds}"
@@ -142,7 +142,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select eur as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and stack = 'EU (Whisper)' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text) order by 2 limit 1) t",
+          "rawSql": "select eur as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and pipeline = 'Whisper, redone + second listen + clean-up' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text)) t",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
@@ -173,7 +173,7 @@
           "noValue": "no data yet",
           "color": {
             "mode": "fixed",
-            "fixedColor": "text"
+            "fixedColor": "#ff9830"
           }
         },
         "overrides": []
@@ -182,8 +182,8 @@
     {
       "id": 4,
       "type": "stat",
-      "title": "EU: best pipeline",
-      "description": "The pipeline that scored best.",
+      "title": "EU runs",
+      "description": "The pipeline this stack ships.",
       "datasource": {
         "type": "postgres",
         "uid": "${ds}"
@@ -201,7 +201,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select pipeline as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and stack = 'EU (Whisper)' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text) order by 2 limit 1) t",
+          "rawSql": "select pipeline as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and pipeline = 'Whisper, redone + second listen + clean-up' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text)) t",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
@@ -232,7 +232,7 @@
           "noValue": "no data yet",
           "color": {
             "mode": "fixed",
-            "fixedColor": "text"
+            "fixedColor": "#ff9830"
           }
         },
         "overrides": []
@@ -241,8 +241,8 @@
     {
       "id": 5,
       "type": "stat",
-      "title": "GCP: wrong per 100",
-      "description": "Google Gemini stack. Average over the five test sets with human-checked text, lowest of its pipelines.",
+      "title": "GCP runs: wrong per 100",
+      "description": "What the GCP stack (Gemini) will run once the final transcript ships. Average over the five test sets with text written by people.",
       "datasource": {
         "type": "postgres",
         "uid": "${ds}"
@@ -260,7 +260,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select v as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and stack = 'GCP (Gemini)' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text) order by 2 limit 1) t",
+          "rawSql": "select v as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and pipeline = 'Gemini, redone after the conversation' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text)) t",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
@@ -291,7 +291,7 @@
           "noValue": "no data yet",
           "color": {
             "mode": "fixed",
-            "fixedColor": "text"
+            "fixedColor": "#5794f2"
           }
         },
         "overrides": []
@@ -300,8 +300,8 @@
     {
       "id": 6,
       "type": "stat",
-      "title": "GCP: EUR/hour",
-      "description": "Of that best pipeline.",
+      "title": "GCP runs: EUR/hour",
+      "description": "Of that pipeline.",
       "datasource": {
         "type": "postgres",
         "uid": "${ds}"
@@ -319,7 +319,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select eur as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and stack = 'GCP (Gemini)' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text) order by 2 limit 1) t",
+          "rawSql": "select eur as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and pipeline = 'Gemini, redone after the conversation' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text)) t",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
@@ -350,7 +350,7 @@
           "noValue": "no data yet",
           "color": {
             "mode": "fixed",
-            "fixedColor": "text"
+            "fixedColor": "#5794f2"
           }
         },
         "overrides": []
@@ -359,8 +359,8 @@
     {
       "id": 7,
       "type": "stat",
-      "title": "GCP: best pipeline",
-      "description": "The pipeline that scored best.",
+      "title": "GCP runs",
+      "description": "The pipeline this stack ships.",
       "datasource": {
         "type": "postgres",
         "uid": "${ds}"
@@ -378,7 +378,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select pipeline as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and stack = 'GCP (Gemini)' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text) order by 2 limit 1) t",
+          "rawSql": "select pipeline as value from (select pipeline, avg(wer_to_reference) * 100 as v, avg(cost_per_hour_eur) as eur from obs.transcription_latest where human_text and pipeline is not null and pipeline = 'Gemini, redone after the conversation' group by 1 having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text)) t",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
@@ -409,7 +409,7 @@
           "noValue": "no data yet",
           "color": {
             "mode": "fixed",
-            "fixedColor": "text"
+            "fixedColor": "#5794f2"
           }
         },
         "overrides": []
@@ -487,7 +487,53 @@
             "fillOpacity": 85
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Whisper, live only"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8f98a3"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Whisper, redone + second listen + clean-up"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#ff9830"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Gemini, redone after the conversation"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#5794f2"
+                }
+              }
+            ]
+          }
+        ]
       }
     },
     {
@@ -999,7 +1045,7 @@
     {
       "id": 12,
       "type": "timeseries",
-      "title": "Best pipeline of each stack over time: words wrong per 100",
+      "title": "What each stack runs, over time: words wrong per 100",
       "datasource": {
         "type": "postgres",
         "uid": "${ds}"
@@ -1018,7 +1064,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select ran_at as time, stack as metric, min(v) as value from (select run_id, ran_at, stack, pipeline, avg(wer_to_reference) * 100 as v from obs.transcription_eval where human_text and rec = '*' and pipeline is not null and $__timeFilter(ran_at) group by 1, 2, 3, 4 having count(distinct dataset) >= 5) t group by 1, 2 order by 1",
+          "rawSql": "select ran_at as time, pipeline as metric, avg(wer_to_reference) * 100 as value from obs.transcription_eval where human_text and rec = '*' and $__timeFilter(ran_at) and pipeline in ('Whisper, redone + second listen + clean-up', 'Gemini, redone after the conversation') group by run_id, ran_at, pipeline having count(distinct dataset) >= 5 order by 1",
           "format": "time_series",
           "rawQuery": true,
           "editorMode": "code"
@@ -1051,7 +1097,53 @@
             "spanNulls": true
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Whisper, live only"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8f98a3"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Whisper, redone + second listen + clean-up"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#ff9830"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Gemini, redone after the conversation"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#5794f2"
+                }
+              }
+            ]
+          }
+        ]
       }
     }
   ]
