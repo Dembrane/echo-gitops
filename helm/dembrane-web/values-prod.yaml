@@ -48,6 +48,9 @@ env:
   # project and key, whose quota production already runs on. prod.ts names dembrane-web-prod,
   # where no key exists yet; move there with a key of its own.
   LLM_VERTEX_PROJECT: dembrane-echo
+  # The whole transcription pipeline by name, defined in echo (packages/llm/src/profiles.ts):
+  # Gemini's live text, nothing after the conversation.
+  TRANSCRIPTION_PROFILE: dembrane-26-10-gemini
   MOLLIE_WEBHOOK_URL: https://api.dembrane.com/api/v2/billing/mollie/webhook
   SUPPORT_WEBHOOK_URL: https://europe-west1-dembrane-sameer-cli.cloudfunctions.net/echo-support-webhook-proxy
   # sam's inbox takes support requests and account events, signed with SAM_INBOX_SECRET. While
