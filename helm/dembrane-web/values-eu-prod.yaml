@@ -94,6 +94,10 @@ env:
   # Whisper live, Whisper again over a finished recording, an upload kept from its first
   # reading, GLM cleaning up.
   TRANSCRIPTION_PROFILE: dembrane-26-10-whisper-eu
+  # Audio seconds per minute this worker sends to Whisper. The organisation's limit is 3600
+  # since its identity was verified; one worker takes 3300 and leaves room for a calibration run.
+  # With a second worker, split it between them.
+  LLM_WHISPER_SECONDS_PER_MINUTE: "3300"
   # glm-5.3 on Scaleway refuses a call that asks for more answer tokens than this.
   LLM_MAX_OUTPUT_TOKENS: "16384"
   # glm-5.3 reasons at length by default, which cost minutes and answer tokens; calls that
