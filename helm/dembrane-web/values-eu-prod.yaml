@@ -90,9 +90,10 @@ env:
   LLM_COMPAT_EMBEDDING_MODEL: qwen3-embedding-8b
   # Same vector size as the Vertex embeddings, so the schema is unchanged.
   EMBEDDING_DIMENSIONS: "768"
-  LLM_TRANSCRIPTION_MODEL: whisper-large-v3
-  # Whisper hears each piece's language; the second listen then names the project's.
-  LLM_TRANSCRIPTION_LANGUAGE: auto
+  # The whole transcription pipeline by name, defined in echo (packages/llm/src/profiles.ts):
+  # Whisper live, Whisper again over a finished recording, an upload kept from its first
+  # reading, GLM cleaning up.
+  TRANSCRIPTION_PROFILE: dembrane-26-10-whisper-eu
   # glm-5.3 on Scaleway refuses a call that asks for more answer tokens than this.
   LLM_MAX_OUTPUT_TOKENS: "16384"
   # glm-5.3 reasons at length by default, which cost minutes and answer tokens; calls that
