@@ -6,7 +6,7 @@
     "dembrane-sam"
   ],
   "schemaVersion": 38,
-  "version": 4,
+  "version": 5,
   "editable": true,
   "graphTooltip": 1,
   "fiscalYearStartMonth": 0,
@@ -26,6 +26,47 @@
   "links": [],
   "templating": {
     "list": [
+      {
+        "type": "custom",
+        "name": "pipeline",
+        "label": "Pipelines",
+        "multi": true,
+        "includeAll": false,
+        "query": "dembrane-26-10-gemini,Gemini 3.8 Flash + full audio pass,Whisper v3 large (live only),dembrane-26-10-whisper-eu",
+        "options": [
+          {
+            "text": "dembrane-26-10-gemini",
+            "value": "dembrane-26-10-gemini",
+            "selected": true
+          },
+          {
+            "text": "Gemini 3.8 Flash + full audio pass",
+            "value": "Gemini 3.8 Flash + full audio pass",
+            "selected": false
+          },
+          {
+            "text": "Whisper v3 large (live only)",
+            "value": "Whisper v3 large (live only)",
+            "selected": false
+          },
+          {
+            "text": "dembrane-26-10-whisper-eu",
+            "value": "dembrane-26-10-whisper-eu",
+            "selected": true
+          }
+        ],
+        "current": {
+          "text": [
+            "dembrane-26-10-whisper-eu",
+            "dembrane-26-10-gemini"
+          ],
+          "value": [
+            "dembrane-26-10-whisper-eu",
+            "dembrane-26-10-gemini"
+          ],
+          "selected": true
+        }
+      },
       {
         "type": "datasource",
         "name": "ds",
@@ -351,10 +392,28 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select dataset_label as \"Test set\",\nmax(case when pipeline = 'dembrane-26-10-gemini' then wer_to_reference * 100 end) as \"dembrane-26-10-gemini\",\nmax(case when pipeline = 'Gemini 3.8 Flash + full audio pass' then wer_to_reference * 100 end) as \"Gemini 3.8 Flash + full audio pass\",\nmax(case when pipeline = 'Whisper v3 large, live only' then wer_to_reference * 100 end) as \"Whisper v3 large, live only\",\nmax(case when pipeline = 'dembrane-26-10-whisper-eu' then wer_to_reference * 100 end) as \"dembrane-26-10-whisper-eu\"\nfrom obs.transcription_latest where human_text and pipeline is not null group by dataset_label order by 1",
+          "rawSql": "select dataset_label as \"Test set\", pipeline as \"Pipeline\", wer_to_reference * 100 as \"WER\"\nfrom obs.transcription_latest where human_text and pipeline in (${pipeline:sqlstring}) order by 1, 2",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "Pipeline",
+            "rowField": "Test set",
+            "valueField": "WER"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "Test set\\Pipeline": "Test set"
+            }
+          }
         }
       ],
       "options": {
@@ -420,7 +479,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Whisper v3 large, live only"
+              "options": "Whisper v3 large (live only)"
             },
             "properties": [
               {
@@ -472,7 +531,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select pipeline as \"Pipeline\", max(pipeline_note) as \"What it does\",\nround((max(wer_to_reference) filter (where dataset_label = 'Read speech') * 100)::numeric, 1)::float8 as \"Read speech\",\nround((max(wer_to_reference) filter (where dataset_label = 'Read, loud room') * 100)::numeric, 1)::float8 as \"Read, loud room\",\nround((max(wer_to_reference) filter (where dataset_label = 'FLEURS (Dutch)') * 100)::numeric, 1)::float8 as \"FLEURS (Dutch)\",\nround((max(wer_to_reference) filter (where dataset_label = 'VoxPopuli (Dutch)') * 100)::numeric, 1)::float8 as \"VoxPopuli (Dutch)\",\nround((max(wer_to_reference) filter (where dataset_label = 'AMI meetings') * 100)::numeric, 1)::float8 as \"AMI meetings\",\nround((avg(wer_to_reference) * 100)::numeric, 1)::float8 as \"Average\",\nround(avg(cost_per_hour_eur)::numeric, 2)::float8 as \"\u20ac per audio hour\"\nfrom obs.transcription_latest where human_text and pipeline is not null group by stack, pipeline having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text) order by stack desc, avg(wer_to_reference)",
+          "rawSql": "select pipeline as \"Pipeline\", max(pipeline_note) as \"What it does\",\nround((max(wer_to_reference) filter (where dataset_label = 'Read speech') * 100)::numeric, 1)::float8 as \"Read speech\",\nround((max(wer_to_reference) filter (where dataset_label = 'Read, loud room') * 100)::numeric, 1)::float8 as \"Read, loud room\",\nround((max(wer_to_reference) filter (where dataset_label = 'FLEURS (Dutch)') * 100)::numeric, 1)::float8 as \"FLEURS (Dutch)\",\nround((max(wer_to_reference) filter (where dataset_label = 'VoxPopuli (Dutch)') * 100)::numeric, 1)::float8 as \"VoxPopuli (Dutch)\",\nround((max(wer_to_reference) filter (where dataset_label = 'AMI meetings') * 100)::numeric, 1)::float8 as \"AMI meetings\",\nround((avg(wer_to_reference) * 100)::numeric, 1)::float8 as \"Average\",\nround(avg(cost_per_hour_eur)::numeric, 2)::float8 as \"\u20ac per audio hour\"\nfrom obs.transcription_latest where human_text and pipeline in (${pipeline:sqlstring}) group by stack, pipeline having count(*) = (select count(distinct dataset) from obs.transcription_latest where human_text) order by stack desc, avg(wer_to_reference)",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
@@ -698,7 +757,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select dataset_label as \"Test set\", max(recordings) as \"Recordings\", round((sum(audio_seconds) / 3600)::numeric, 1)::float8 / count(distinct arm) as \"Hours\" from obs.transcription_latest where human_text and pipeline is not null group by dataset_label order by 1",
+          "rawSql": "select dataset_label as \"Test set\", max(recordings) as \"Recordings\", round((sum(audio_seconds) / 3600)::numeric, 1)::float8 / count(distinct arm) as \"Hours\" from obs.transcription_latest where human_text and pipeline in (${pipeline:sqlstring}) group by dataset_label order by 1",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
@@ -748,7 +807,7 @@
             "type": "postgres",
             "uid": "${ds}"
           },
-          "rawSql": "select pipeline as \"Pipeline\",\nround((max(wer_to_reference) filter (where dataset_label = 'Our product meetings') * 100)::numeric, 1)::float8 as \"Our product meetings\",\nround((max(wer_to_reference) filter (where dataset_label = 'City sessions, Dutch') * 100)::numeric, 1)::float8 as \"City sessions, Dutch\",\nround((max(wer_to_reference) filter (where dataset_label = 'Tech event, English') * 100)::numeric, 1)::float8 as \"Tech event, English\"\nfrom obs.transcription_latest where not human_text and pipeline is not null and arm <> 'final_gemini' group by pipeline order by 2",
+          "rawSql": "select pipeline as \"Pipeline\",\nround((max(wer_to_reference) filter (where dataset_label = 'Our product meetings') * 100)::numeric, 1)::float8 as \"Our product meetings\",\nround((max(wer_to_reference) filter (where dataset_label = 'City sessions, Dutch') * 100)::numeric, 1)::float8 as \"City sessions, Dutch\",\nround((max(wer_to_reference) filter (where dataset_label = 'Tech event, English') * 100)::numeric, 1)::float8 as \"Tech event, English\"\nfrom obs.transcription_latest where not human_text and pipeline in (${pipeline:sqlstring}) and arm <> 'final_gemini' group by pipeline order by 2",
           "format": "table",
           "rawQuery": true,
           "editorMode": "code"
