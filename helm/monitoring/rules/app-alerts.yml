@@ -237,13 +237,15 @@ groups:
           link: '{{ $labels.instance }}'
 
       # The check accepts any certificate (so a broken one still counts as answering), which
-      # is why the expiry date is read here. A probe that fails before the handshake reports 0
-      # and is left out. The notice stops at 3 days, where the critical alert takes over.
+      # is why the expiry date is read here. A failed probe leaves a gap in the series, so the
+      # last value of 15 minutes is used and one failed probe does not end the alert. A probe
+      # that fails before the handshake reports 0 and is left out. The notice stops at 3 days,
+      # where the critical alert takes over.
       - alert: CertificateExpiresSoon
         expr: |
-          (probe_ssl_earliest_cert_expiry{job="blackbox_http", svc=~"api|dashboard|portal"} > 0) - time() < 14 * 86400
+          (last_over_time(probe_ssl_earliest_cert_expiry{job="blackbox_http", svc=~"api|dashboard|portal"}[15m]) > 0) - time() < 14 * 86400
           and
-          (probe_ssl_earliest_cert_expiry{job="blackbox_http", svc=~"api|dashboard|portal"} > 0) - time() >= 3 * 86400
+          (last_over_time(probe_ssl_earliest_cert_expiry{job="blackbox_http", svc=~"api|dashboard|portal"}[15m]) > 0) - time() >= 3 * 86400
         for: 1h
         labels:
           severity: notice
@@ -256,7 +258,7 @@ groups:
 
       - alert: CertificateAboutToExpire
         expr: |
-          (probe_ssl_earliest_cert_expiry{job="blackbox_http", svc=~"api|dashboard|portal"} > 0) - time() < 3 * 86400
+          (last_over_time(probe_ssl_earliest_cert_expiry{job="blackbox_http", svc=~"api|dashboard|portal"}[15m]) > 0) - time() < 3 * 86400
         for: 5m
         labels:
           severity: critical

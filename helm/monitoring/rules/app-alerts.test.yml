@@ -386,3 +386,42 @@ tests:
       - eval_time: 10m
         alertname: CertificateExpiresSoon
         exp_alerts: []
+
+  # One failed probe leaves a gap in the series, longer than the five minutes Prometheus
+  # carries a value: the alerts keep firing through it and the notice does not start its
+  # hour again.
+  - interval: 1m
+    input_series:
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox_http", svc="portal", instance="https://portal.dembrane.com/"}'
+        values: '864000+0x40 _ _ _ _ _ _ _ _ 864000+0x40'
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox_http", svc="api", instance="https://api.dembrane.com/api/health"}'
+        values: '172800+0x10 _ _ _ _ _ _ _ _ 172800+0x70'
+    alert_rule_test:
+      - eval_time: 65m
+        alertname: CertificateExpiresSoon
+        exp_alerts:
+          - exp_labels:
+              severity: notice
+              job: blackbox_http
+              svc: portal
+              instance: https://portal.dembrane.com/
+            exp_annotations:
+              title: "Production recording page certificate expires soon"
+              summary: "Its certificate expires in 9d 22h 55m 0s."
+              impact: "Nobody is affected yet. After it expires, people see a browser warning and cannot open the recording page."
+              action: "Check that the certificate was renewed and that the ingress serves the new one. Renewal normally happens weeks before, so this means it is stuck."
+              link: "https://grafana.dembrane.com/d/v3-errors"
+      - eval_time: 17m
+        alertname: CertificateAboutToExpire
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              job: blackbox_http
+              svc: api
+              instance: https://api.dembrane.com/api/health
+            exp_annotations:
+              title: "Production API certificate is about to expire"
+              summary: "Its certificate expires in 1d 23h 43m 0s."
+              impact: "Once it expires, people see a browser warning and cannot open the app."
+              action: "Check that the certificate was renewed and that the ingress serves the new one. Renew it by hand if it is stuck."
+              link: "https://grafana.dembrane.com/d/v3-errors"
