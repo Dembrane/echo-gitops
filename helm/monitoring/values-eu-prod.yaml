@@ -36,8 +36,6 @@ prometheus:
     limits: { cpu: "1000m", memory: "1536Mi" }
 
 grafana:
-  # Replaced by the secret monitoring-secrets (key grafana-admin-password), as in production.
-  adminPassword: "admin"
   resources:
     requests: { cpu: "100m", memory: "256Mi" }
     limits: { cpu: "500m", memory: "768Mi" }
