@@ -236,6 +236,37 @@ groups:
           action: 'Open the address yourself. If it fails for you too: the ingress, the certificate and DNS. If only the API fails: its pods and the database.'
           link: '{{ $labels.instance }}'
 
+      # The check accepts any certificate (so a broken one still counts as answering), which
+      # is why the expiry date is read here. A probe that fails before the handshake reports 0
+      # and is left out. The notice stops at 3 days, where the critical alert takes over.
+      - alert: CertificateExpiresSoon
+        expr: |
+          (probe_ssl_earliest_cert_expiry{job="blackbox_http", svc=~"api|dashboard|portal"} > 0) - time() < 14 * 86400
+          and
+          (probe_ssl_earliest_cert_expiry{job="blackbox_http", svc=~"api|dashboard|portal"} > 0) - time() >= 3 * 86400
+        for: 1h
+        labels:
+          severity: notice
+        annotations:
+          title: 'Production {{ if eq $labels.svc "portal" }}recording page{{ else if eq $labels.svc "dashboard" }}app{{ else }}API{{ end }} certificate expires soon'
+          summary: 'Its certificate expires in {{ $value | humanizeDuration }}.'
+          impact: 'Nobody is affected yet. After it expires, people see a browser warning and cannot open the {{ if eq $labels.svc "portal" }}recording page{{ else }}app{{ end }}.'
+          action: 'Check that the certificate was renewed and that the ingress serves the new one. Renewal normally happens weeks before, so this means it is stuck.'
+          link: 'https://grafana.dembrane.com/d/v3-errors'
+
+      - alert: CertificateAboutToExpire
+        expr: |
+          (probe_ssl_earliest_cert_expiry{job="blackbox_http", svc=~"api|dashboard|portal"} > 0) - time() < 3 * 86400
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          title: 'Production {{ if eq $labels.svc "portal" }}recording page{{ else if eq $labels.svc "dashboard" }}app{{ else }}API{{ end }} certificate {{ if gt $value 0.0 }}is about to expire{{ else }}has expired{{ end }}'
+          summary: '{{ if gt $value 0.0 }}Its certificate expires in {{ $value | humanizeDuration }}.{{ else }}Its certificate is past its end date.{{ end }}'
+          impact: '{{ if gt $value 0.0 }}Once it expires, people{{ else }}People{{ end }} see a browser warning and cannot open the {{ if eq $labels.svc "portal" }}recording page{{ else }}app{{ end }}.'
+          action: 'Check that the certificate was renewed and that the ingress serves the new one. Renew it by hand if it is stuck.'
+          link: 'https://grafana.dembrane.com/d/v3-errors'
+
       - alert: IngressHighErrorRate
         expr: (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="dembrane-web-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",status=~"5..",namespace="dembrane-web-prod"}[5m]), "svc", "$1", "service", "(.*)") ) ) / (sum by (svc)( label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="dembrane-web-prod"}[5m]), "svc", "$1", "exported_service", "(.*)") or label_replace(rate({__name__=~"nginx_ingress_controller_requests(_total)?",namespace="dembrane-web-prod"}[5m]), "svc", "$1", "service", "(.*)") ) ) > 0.05
         for: 10m
