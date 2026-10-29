@@ -5,7 +5,7 @@
 global:
   # Written by Dembrane/echo's release job; "unreleased" fails to pull, so nothing runs before
   # the first release bump.
-  imageTag: "2992c7034f56d1d3cad7b04b28d7d3bc370f4e87"
+  imageTag: "fa80116e5a5ceca058558de32df827cefe577134"
   registry: registry.digitalocean.com/dbr-cr
   # registry.digitalocean.com/dbr-cr/dembrane-web-{api,worker,media,web,migrate}
   imagePrefix: dembrane-web-
