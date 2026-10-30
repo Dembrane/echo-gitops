@@ -7,7 +7,7 @@ secrets/backend-secrets-<env>.yaml in the format secret-manager.sh expects.
 Secret VALUES are never printed — only key names + count, so the transcript
 stays clean. Run before adding a new key so a reseal won't purge anything.
 
-Usage: python3 scripts/reconstruct-secrets.py <dev|testing|prod> [--comments]
+Usage: python3 scripts/reconstruct-secrets.py <prod> [--comments]
 
 --comments decodes each value and writes it as `# <plaintext>` comment lines
 above the key (matching secret-manager.sh's human-readable format). Multi-line
@@ -20,8 +20,6 @@ import base64
 import subprocess
 
 ENVS = {
-    "dev": ("do-ams3-dbr-echo-dev-k8s-cluster", "echo-dev"),
-    "testing": ("do-ams3-dbr-echo-testing-k8s-cluster", "echo-testing"),
     "prod": ("do-ams3-dbr-echo-prod-k8s-cluster", "echo-prod"),
 }
 
@@ -30,7 +28,7 @@ def main() -> int:
     comments = "--comments" in argv
     argv = [a for a in argv if a != "--comments"]
     if len(argv) != 1 or argv[0] not in ENVS:
-        print("usage: reconstruct-secrets.py <dev|testing|prod> [--comments]")
+        print("usage: reconstruct-secrets.py <prod> [--comments]")
         return 2
     env = argv[0]
     ctx, ns = ENVS[env]
