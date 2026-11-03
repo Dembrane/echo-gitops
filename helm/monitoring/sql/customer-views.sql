@@ -26,30 +26,45 @@ JOIN public.workspace w ON w.id=p.workspace_id AND w.deleted_at IS NULL
 JOIN public.org o ON o.id=w.org_id AND o.deleted_at IS NULL
 WHERE p.deleted_at IS NULL AND NOT p.is_sample;
 
--- One row per product action, bounded to 200 days. An action is not a person.
--- Conversation durations belong to their start date; they can grow as audio arrives.
+-- One row per product action over all retained history (attributed history starts May 2024).
+-- An action is not a person. Panels must filter on occurred_at.
+-- audio_minutes is the stored length only; obs.customer_audio adds an estimate where none is stored.
 CREATE OR REPLACE VIEW obs.customer_activity AS
 SELECT c.created_at AS occurred_at, d.org_id, d.project_id,
        'conversation'::text AS action, c.source::text AS detail,
        coalesce(c.duration, 0)::double precision / 60 AS audio_minutes
 FROM public.conversation c JOIN obs.customer_projects d ON d.project_id=c.project_id::text
-WHERE c.created_at>=now()-interval '200 days' AND c.deleted_at IS NULL AND c.source IS DISTINCT FROM 'CLONE'
+WHERE c.deleted_at IS NULL AND c.source IS DISTINCT FROM 'CLONE'
 UNION ALL
 SELECT m.date_created, d.org_id, d.project_id, 'chat', 'user message', 0::double precision
 FROM public.project_chat_message m
 JOIN public.project_chat pc ON pc.id=m.project_chat_id AND pc.deleted_at IS NULL
 JOIN obs.customer_projects d ON d.project_id=pc.project_id::text
-WHERE m.date_created>=now()-interval '200 days' AND m.message_from='user'
+WHERE m.message_from='user'
 UNION ALL
 SELECT r.date_created, d.org_id, d.project_id,
        CASE WHEN r.status='error' THEN 'report_error' ELSE 'report' END,
        r.kind::text, 0::double precision
 FROM public.project_report r JOIN obs.customer_projects d ON d.project_id=r.project_id::text
-WHERE r.date_created>=now()-interval '200 days' AND r.deleted_at IS NULL
+WHERE r.deleted_at IS NULL
   AND r.status IN ('published','archived','error')
 UNION ALL
 SELECT d.project_created_at, d.org_id, d.project_id, 'project', 'created', 0::double precision
-FROM obs.customer_projects d WHERE d.project_created_at>=now()-interval '200 days';
+FROM obs.customer_projects d;
+
+-- Audio hours per conversation, belonging to its start date; a running recording can grow.
+-- Many recordings, most of them older, have no stored length, so stored lengths alone show
+-- growth that is partly missing data. Recordings arrive in 30-second parts
+-- and stored lengths average 29 seconds per part (within 5% each year), so a recording without
+-- a length counts 29 seconds per part. Uploads without a length stay at zero.
+CREATE OR REPLACE VIEW obs.customer_audio AS
+SELECT c.created_at AS occurred_at, d.org_id, d.project_id, c.source::text AS source,
+       coalesce(c.duration, 0)::double precision / 60 AS measured_minutes,
+       CASE WHEN c.duration IS NULL AND coalesce(c.source, 'PORTAL_AUDIO') IN ('PORTAL_AUDIO','GO_IOS')
+            THEN (SELECT count(*) FROM public.conversation_chunk k WHERE k.conversation_id=c.id) * 29.0 / 60
+            ELSE 0 END::double precision AS estimated_minutes
+FROM public.conversation c JOIN obs.customer_projects d ON d.project_id=c.project_id::text
+WHERE c.deleted_at IS NULL AND c.source IS DISTINCT FROM 'CLONE';
 
 CREATE OR REPLACE VIEW obs.customer_daily_usage AS
 SELECT (occurred_at AT TIME ZONE 'Europe/Amsterdam')::date AS day, org_id,
@@ -127,6 +142,6 @@ LEFT JOIN visitors v USING(project_id) LEFT JOIN actions x USING(project_id)
 WHERE a.project_id IS NOT NULL OR v.project_id IS NOT NULL OR x.project_id IS NOT NULL;
 
 GRANT SELECT ON obs.customer_organisations, obs.customer_projects, obs.customer_activity,
-                obs.customer_daily_usage, obs.customer_live, obs.customer_first_use,
+                obs.customer_audio, obs.customer_daily_usage, obs.customer_live, obs.customer_first_use,
                 obs.customer_attribution_coverage TO grafana_obs;
 COMMIT;
