@@ -18,15 +18,16 @@ monitoring:
 storage:
   # Scaleway Block Storage (SSD), the Kapsule default class.
   storageClassName: "scw-bssd"
+  # About 0.4 GiB a day at 30 days retention: 20 GiB keeps the full month near 60%.
   prometheus:
-    size: "10Gi"
+    size: "20Gi"
   loki:
     size: "10Gi"
   grafana:
     size: "5Gi"
 
 prometheus:
-  # 30 days on a 10 GiB disk; the rule MonitoringStorageFillingSoon warns before it fills.
+  # 30 days on a 20 GiB disk; the rule MonitoringStorageFillingSoon warns before it fills.
   retentionTime: "30d"
   extraArgs:
     - --query.max-concurrency=20
