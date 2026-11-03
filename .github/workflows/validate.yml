@@ -1,0 +1,89 @@
+# Renders every chart the Argo CD apps in argo/ read from this branch, checks the manifests
+# and the alert rules, and parses the dashboards. Read only: no secrets, nothing is applied.
+# Tool images are pinned by digest; bump the digest and the comment together.
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  charts:
+    name: charts (${{ matrix.release }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { release: echo-prod, chart: helm/echo, values: "values-prod.yaml values-extended-env.yaml" }
+          - { release: echo-monitoring-prod, chart: helm/monitoring, values: "values-prod.yaml" }
+          - { release: echo-monitoring-eu-prod, chart: helm/monitoring, values: "values-eu-prod.yaml" }
+    timeout-minutes: 15
+    env:
+      # alpine/helm 3.x
+      HELM: alpine/helm@sha256:e3f8d5c462d75470fbb1fce79ad5c20063657096d1f98c0fcea869e2600e2e5e
+      # kubeconform 0.8.0
+      KUBECONFORM: ghcr.io/yannh/kubeconform@sha256:faffaf43f95aa6425306e1ab8d6fcad72acb9049158f38e574c085ea1ec0f64e
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Lint and render ${{ matrix.release }}, check manifests
+        env:
+          RELEASE: ${{ matrix.release }}
+          CHART: ${{ matrix.chart }}
+          VALUES: ${{ matrix.values }}
+        run: |
+          set -euo pipefail
+          # Same value files as the Argo CD app of that name in argo/.
+          args=()
+          for f in $VALUES; do args+=(-f "$CHART/$f"); done
+          helm() { docker run --rm -v "$PWD:/w:ro" -w /w "$HELM" "$@"; }
+          helm lint "$CHART" "${args[@]}"
+          helm template "$RELEASE" "$CHART" "${args[@]}" |
+            docker run --rm -i "$KUBECONFORM" -strict -ignore-missing-schemas -summary -
+
+
+  alerts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      # prom/prometheus v2.45.0 (promtool)
+      PROMETHEUS: prom/prometheus@sha256:9309deb7c981e8a94584d9ed689fd62f7ac4549d816fd3881550311cf056a237
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Check and test alert rules
+        run: |
+          set -euo pipefail
+          promtool() { docker run --rm -v "$PWD:/w:ro" -w /w --entrypoint promtool "$PROMETHEUS" "$@"; }
+          for r in helm/monitoring/rules/*.yml; do
+            case "$r" in *.test.yml) continue ;; esac
+            promtool check rules "$r"
+          done
+          for t in helm/monitoring/rules/*.test.yml; do
+            promtool test rules "$t"
+          done
+
+  dashboards:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Parse dashboards
+        run: |
+          set -euo pipefail
+          for f in helm/monitoring/dashboards/*.json; do
+            python3 -m json.tool "$f" > /dev/null
+            echo "ok $f"
+          done
