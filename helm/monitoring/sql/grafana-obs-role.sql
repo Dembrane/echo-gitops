@@ -13,6 +13,9 @@ create role grafana_obs login password '<password>';
 alter role grafana_obs set statement_timeout = '30s';
 alter role grafana_obs set default_transaction_read_only = on;
 alter role grafana_obs set search_path = obs;
+-- Dashboard queries are small but their cost estimates are not: JIT compiling costs 5 to 8 s
+-- for 0.1 s of work on the customer tables.
+alter role grafana_obs set jit = off;
 
 grant usage on schema obs to grafana_obs;
 grant select on all tables in schema obs to grafana_obs;
