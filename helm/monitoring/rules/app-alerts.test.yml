@@ -295,3 +295,133 @@ tests:
               impact: "Nobody is affected while the others cope; there is less room for a busy moment and none for another failure."
               action: "Look at its pods: one that cannot be placed needs a node, one that restarts has its reason in its last state."
               link: "https://grafana.dembrane.com/d/v3-errors"
+
+  # Certificates: ten days left is a notice after an hour, two days left is critical, a probe
+  # that failed before the handshake (0) and other addresses are left alone. Series values
+  # are the expiry date in seconds; the clock in the test starts at 0.
+  - interval: 1m
+    input_series:
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox_http", svc="portal", instance="https://portal.dembrane.com/"}'
+        values: '864000+0x80'
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox_http", svc="api", instance="https://api.dembrane.com/api/health"}'
+        values: '172800+0x80'
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox_http", svc="dashboard", instance="https://dashboard.dembrane.com/"}'
+        values: '0+0x80'
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox_http", svc="ready", instance="https://api.dembrane.com/ready"}'
+        values: '172800+0x80'
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: CertificateExpiresSoon
+        exp_alerts: []
+      - eval_time: 70m
+        alertname: CertificateExpiresSoon
+        exp_alerts:
+          - exp_labels:
+              severity: notice
+              job: blackbox_http
+              svc: portal
+              instance: https://portal.dembrane.com/
+            exp_annotations:
+              title: "Production recording page certificate expires soon"
+              summary: "Its certificate expires in 9d 22h 50m 0s."
+              impact: "Nobody is affected yet. After it expires, people see a browser warning and cannot open the recording page."
+              action: "Check that the certificate was renewed and that the ingress serves the new one. Renewal normally happens weeks before, so this means it is stuck."
+              link: "https://grafana.dembrane.com/d/v3-errors"
+      - eval_time: 3m
+        alertname: CertificateAboutToExpire
+        exp_alerts: []
+      - eval_time: 10m
+        alertname: CertificateAboutToExpire
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              job: blackbox_http
+              svc: api
+              instance: https://api.dembrane.com/api/health
+            exp_annotations:
+              title: "Production API certificate is about to expire"
+              summary: "Its certificate expires in 1d 23h 50m 0s."
+              impact: "Once it expires, people see a browser warning and cannot open the app."
+              action: "Check that the certificate was renewed and that the ingress serves the new one. Renew it by hand if it is stuck."
+              link: "https://grafana.dembrane.com/d/v3-errors"
+      # Two days left is past the notice window: only the critical alert speaks, and only for
+      # the address that is near its end. The other addresses stay quiet.
+      - eval_time: 70m
+        alertname: CertificateAboutToExpire
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              job: blackbox_http
+              svc: api
+              instance: https://api.dembrane.com/api/health
+            exp_annotations:
+              title: "Production API certificate is about to expire"
+              summary: "Its certificate expires in 1d 22h 50m 0s."
+              impact: "Once it expires, people see a browser warning and cannot open the app."
+              action: "Check that the certificate was renewed and that the ingress serves the new one. Renew it by hand if it is stuck."
+              link: "https://grafana.dembrane.com/d/v3-errors"
+
+  # A certificate that is already past its end date.
+  - interval: 1m
+    input_series:
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox_http", svc="dashboard", instance="https://dashboard.dembrane.com/"}'
+        values: '300+0x20'
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox_http", svc="api", instance="https://api.dembrane.com/api/health"}'
+        values: '6500000+0x20'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: CertificateAboutToExpire
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              job: blackbox_http
+              svc: dashboard
+              instance: https://dashboard.dembrane.com/
+            exp_annotations:
+              title: "Production app certificate has expired"
+              summary: "Its certificate is past its end date."
+              impact: "People see a browser warning and cannot open the app."
+              action: "Check that the certificate was renewed and that the ingress serves the new one. Renew it by hand if it is stuck."
+              link: "https://grafana.dembrane.com/d/v3-errors"
+      - eval_time: 10m
+        alertname: CertificateExpiresSoon
+        exp_alerts: []
+
+  # One failed probe leaves a gap in the series, longer than the five minutes Prometheus
+  # carries a value: the alerts keep firing through it and the notice does not start its
+  # hour again.
+  - interval: 1m
+    input_series:
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox_http", svc="portal", instance="https://portal.dembrane.com/"}'
+        values: '864000+0x40 _ _ _ _ _ _ _ _ 864000+0x40'
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox_http", svc="api", instance="https://api.dembrane.com/api/health"}'
+        values: '172800+0x10 _ _ _ _ _ _ _ _ 172800+0x70'
+    alert_rule_test:
+      - eval_time: 65m
+        alertname: CertificateExpiresSoon
+        exp_alerts:
+          - exp_labels:
+              severity: notice
+              job: blackbox_http
+              svc: portal
+              instance: https://portal.dembrane.com/
+            exp_annotations:
+              title: "Production recording page certificate expires soon"
+              summary: "Its certificate expires in 9d 22h 55m 0s."
+              impact: "Nobody is affected yet. After it expires, people see a browser warning and cannot open the recording page."
+              action: "Check that the certificate was renewed and that the ingress serves the new one. Renewal normally happens weeks before, so this means it is stuck."
+              link: "https://grafana.dembrane.com/d/v3-errors"
+      - eval_time: 17m
+        alertname: CertificateAboutToExpire
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              job: blackbox_http
+              svc: api
+              instance: https://api.dembrane.com/api/health
+            exp_annotations:
+              title: "Production API certificate is about to expire"
+              summary: "Its certificate expires in 1d 23h 43m 0s."
+              impact: "Once it expires, people see a browser warning and cannot open the app."
+              action: "Check that the certificate was renewed and that the ingress serves the new one. Renew it by hand if it is stuck."
+              link: "https://grafana.dembrane.com/d/v3-errors"
