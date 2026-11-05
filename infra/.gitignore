@@ -1,2 +1,4 @@
 *.tfvars
 .terraform
+# Saved plans hold every input variable, tokens included.
+tfplan
