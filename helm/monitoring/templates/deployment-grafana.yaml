@@ -214,6 +214,8 @@ spec:
               {{- end }}
               - key: v3-ai.json
                 path: v3-ai.json
+              - key: v3-ai-cost.json
+                path: v3-ai-cost.json
               - key: v3-errors.json
                 path: v3-errors.json
 {{- range .Values.obs.environments }}
