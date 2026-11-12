@@ -62,3 +62,8 @@ output "uploads_bucket" {
 output "uploads_endpoint" {
   value = scaleway_object_bucket.uploads.api_endpoint
 }
+
+output "edge_endpoint" {
+  description = "Pipeline endpoint: the CNAME target for the edge hostnames at cutover."
+  value       = "${scaleway_edge_services_pipeline.main.id}.svc.edge.scw.cloud"
+}

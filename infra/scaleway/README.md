@@ -6,6 +6,11 @@ VPC and private network, a Kapsule cluster (Cilium, one autoscaling pool), manag
 registry, a Transactional Email domain, a reserved IP for the ingress load balancer, and the
 Cloudflare records for `*.eu.dembrane.com`.
 
+`edge.tf` puts Scaleway Edge Services in front of the ingress load balancer: a WAF (OWASP CRS,
+log-only, paranoia 1) for the dashboard, portal and api hosts, with a managed certificate. It
+serves traffic only once those hostnames are CNAMEs to `terraform output edge_endpoint`; that DNS
+change is separate, and the certificate is issued after it.
+
 ## State
 
 State lives in the Object Storage bucket `dembrane-eu-tfstate` (versioned, private, `use_lockfile`).
