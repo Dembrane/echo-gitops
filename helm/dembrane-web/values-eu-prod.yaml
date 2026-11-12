@@ -20,7 +20,7 @@
 global:
   # A Dembrane/echo commit sha. The images must exist at
   # <registry>/dembrane-web-{api,worker,media,web,migrate}:<sha> (docs/eu-images.md).
-  imageTag: "e89d7fdbfa9afd4a1511b3855f753f280edccc34"
+  imageTag: "f3c80e51193102450628ada69fe1c464a56e7daf"
   registry: rg.nl-ams.scw.cloud/dembrane-eu-prod
   imagePrefix: dembrane-web-
   # Docker-registry Secret for a private registry namespace, made in dembrane-web-prod on the
