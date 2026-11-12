@@ -33,6 +33,8 @@ data:
 {{- end }}
   v3-ai.json: |
 {{ .Files.Get "dashboards/v3-ai.json" | trim | indent 4 }}
+  v3-ai-cost.json: |
+{{ .Files.Get "dashboards/v3-ai-cost.json" | trim | indent 4 }}
   # What is going wrong: only failures, of every layer and environment. It has no dropdown;
   # __NAMESPACE__ becomes the namespace its production rows read.
   v3-errors.json: |
