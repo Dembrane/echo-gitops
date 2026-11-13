@@ -1,0 +1,58 @@
+{{- range $role, $w := .Values.web.roles }}
+{{- $name := printf "dembrane-web-%s" $role }}
+{{- $c := dict "root" $ "component" $role }}
+---
+# The {{ $role }} (apps/web, WEB_ROLE={{ $role }}): serves the built frontend and forwards /api to
+# the API inside the cluster, so sign-in cookies stay first-party on the {{ $role }} host.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "dw.labels" $c | nindent 4 }}
+spec:
+  {{- if not $w.hpa.enabled }}
+  replicas: {{ $w.replicas }}
+  {{- end }}
+  {{- include "dw.strategy" $ | nindent 2 }}
+  selector:
+    matchLabels:
+      {{- include "dw.selector" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "dw.labels" $c | nindent 8 }}
+    spec:
+      {{- include "dw.podSecurity" $ | nindent 6 }}
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: web
+          image: {{ include "dw.image" (dict "root" $ "app" "web") | quote }}
+          imagePullPolicy: IfNotPresent
+          {{- include "dw.containerSecurity" $ | nindent 10 }}
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            {{- include "dw.baseEnv" $ | nindent 12 }}
+            - name: WEB_ROLE
+              value: {{ $role | quote }}
+            - name: WEB_API_ORIGIN
+              value: "http://dembrane-web-api:8080"
+            {{- include "dw.secretEnv" (dict "root" $ "name" "HTTP_PROXY_SECRET" "key" "HTTP_PROXY_SECRET") | nindent 12 }}
+            {{- include "dw.mapEnv" $.Values.web.env | nindent 12 }}
+          resources:
+            {{- toYaml $w.resources | nindent 12 }}
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 4
+{{ include "dw.service" (dict "root" $ "component" $role "name" $name) }}
+{{ include "dw.hpa" (dict "root" $ "component" $role "name" $name "hpa" $w.hpa) }}
+{{ include "dw.pdb" (dict "root" $ "component" $role "name" $name "minAvailable" $w.pdb.minAvailable) }}
+{{- end }}

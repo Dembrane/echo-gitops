@@ -1,0 +1,64 @@
+{{- if .Values.smoke.enabled }}
+# deploy-env.sh's smoke checks as an Argo CD PostSync hook, against the in-cluster services so
+# it works before DNS points here: the API is ready and serves this release, media answers,
+# the dashboard and portal name their role and forward /api to the API (401 without a
+# session), and, when the worker runs, a worker of this release heartbeats. A failure marks
+# the sync failed.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dembrane-web-smoke
+  labels:
+    {{- include "dw.labels" (dict "root" . "component" "smoke") | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: {{ add 120 .Values.smoke.workerWaitSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "dw.labels" (dict "root" . "component" "smoke") | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: smoke
+          image: {{ .Values.smoke.image | quote }}
+          {{- include "dw.containerSecurity" . | nindent 10 }}
+          env:
+            - name: RELEASE
+              value: {{ .Values.global.imageTag | quote }}
+            - name: CHECK_WORKER
+              value: {{ ternary "1" "0" (gt (int .Values.worker.replicas) 0) | quote }}
+            - name: WORKER_WAIT_S
+              value: {{ .Values.smoke.workerWaitSeconds | quote }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              api=http://dembrane-web-api:8080
+              fail() { echo "smoke: $*" >&2; exit 1; }
+              curl -sf "$api/ready" >/dev/null || fail "api /ready did not answer 200"
+              curl -sf "$api/health" | grep -q "\"release\":\"$RELEASE\"" || fail "api does not serve $RELEASE"
+              curl -sf http://dembrane-web-media:8080/health >/dev/null || fail "media /health did not answer 200"
+              for role in {{ keys .Values.web.roles | sortAlpha | join " " }}; do
+                web=http://dembrane-web-$role:8080
+                curl -sf "$web/runtime-config.js" | grep -q "\"role\":\"$role\"" || fail "$role runtime-config.js does not name role $role"
+                code=$(curl -s -o /dev/null -w '%{http_code}' "$web/api/v2/me")
+                [ "$code" = 401 ] || fail "$role /api proxy answered $code, expected 401"
+              done
+              if [ "$CHECK_WORKER" = 1 ]; then
+                end=$(( $(date +%s) + WORKER_WAIT_S ))
+                until curl -sf "$api/ready/worker?release=$RELEASE" >/dev/null; do
+                  [ "$(date +%s)" -lt "$end" ] || fail "no fresh heartbeat from a worker of $RELEASE within ${WORKER_WAIT_S}s"
+                  sleep 3
+                done
+              fi
+              echo "smoke: $RELEASE passed"
+{{- end }}

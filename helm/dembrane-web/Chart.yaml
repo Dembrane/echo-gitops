@@ -1,0 +1,6 @@
+apiVersion: v2
+name: dembrane-web
+description: dembrane v3 (dembrane/platform in Dembrane/echo) on DigitalOcean Kubernetes. API, worker, media, dashboard and portal, with the migrate job as an Argo CD PreSync hook.
+type: application
+version: 0.1.0
+appVersion: "v3"
