@@ -1,0 +1,84 @@
+# The database backup. Runs on the echo-next cluster (namespace db-backup) and only
+# reads the production database: one snapshot, one pg_dump connection, exact row counts taken
+# in that same snapshot. The dump goes to a private Space and never leaves DigitalOcean.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-backup
+  namespace: db-backup
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: dump
+          emptyDir: {}
+        - name: ca
+          secret:
+            secretName: backup
+            items: [{ key: ca.crt, path: ca.crt }]
+      initContainers:
+        - name: dump
+          image: postgres:16
+          env:
+            - name: DATABASE_URL
+              valueFrom: { secretKeyRef: { name: backup, key: PROD_DATABASE_URL } }
+            - { name: PGSSLROOTCERT, value: /ca/ca.crt }
+            - { name: PGAPPNAME, value: db-backup }
+          command: ["bash", "-ceu"]
+          args:
+            - |
+              start=$(date +%s)
+              coproc PSQL { psql "$DATABASE_URL" -qAt -v ON_ERROR_STOP=1; }
+              echo "begin isolation level repeatable read read only; select pg_export_snapshot();" >&"${PSQL[1]}"
+              read -r snap <&"${PSQL[0]}"
+              echo "snapshot $snap at $(date -u +%FT%TZ)"
+              pg_dump "$DATABASE_URL" --snapshot="$snap" -Fc -Z6 --no-owner --no-acl \
+                --exclude-table-data='public.processing_status' \
+                --exclude-table-data='public.directus_revisions' \
+                --exclude-table-data='public.lightrag_*' \
+                -f /dump/db.dump
+              dumped=$(date +%s)
+              echo "pg_dump took $(( dumped - start ))s, file $(du -h /dump/db.dump | cut -f1) ($(stat -c %s /dump/db.dump) bytes)"
+              echo "select tablename from pg_tables where schemaname='public' and tablename not in ('processing_status','directus_revisions') and tablename not like 'lightrag\_%' order by 1; select '--end--';" >&"${PSQL[1]}"
+              tables=()
+              while read -r t <&"${PSQL[0]}"; do [ "$t" = "--end--" ] && break; tables+=("$t"); done
+              : > /dump/db.rowcounts
+              for t in "${tables[@]}"; do
+                echo "select count(*) from public.\"$t\";" >&"${PSQL[1]}"
+                read -r n <&"${PSQL[0]}"
+                echo "$t $n" >> /dump/db.rowcounts
+              done
+              echo "commit; \\q" >&"${PSQL[1]}"
+              wait "$PSQL_PID" || true
+              pg_restore -l /dump/db.dump > /dump/db.toc
+              sha256sum /dump/db.dump | cut -d' ' -f1 > /dump/db.sha256
+              echo "counted ${#tables[@]} tables in $(( $(date +%s) - dumped ))s; $(grep -c 'TABLE DATA' /dump/db.toc) tables with data in the dump"
+              echo "total $(( $(date +%s) - start ))s"
+          volumeMounts:
+            - { name: dump, mountPath: /dump }
+            - { name: ca, mountPath: /ca, readOnly: true }
+      containers:
+        - name: upload
+          image: amazon/aws-cli:2.17.50
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom: { secretKeyRef: { name: backup, key: AWS_ACCESS_KEY_ID } }
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom: { secretKeyRef: { name: backup, key: AWS_SECRET_ACCESS_KEY } }
+            - { name: AWS_DEFAULT_REGION, value: us-east-1 }
+            - { name: BUCKET, value: dbr-echo-prod-backups }
+          command: ["bash", "-ceu"]
+          args:
+            - |
+              start=$(date +%s)
+              s3="aws --endpoint-url https://ams3.digitaloceanspaces.com s3"
+              stamp=$(date -u +%Y-%m-%dT%H%MZ)
+              for f in db.dump db.toc db.rowcounts db.sha256; do
+                $s3 cp /dump/$f "s3://$BUCKET/postgres/$stamp/$f" --no-progress
+              done
+              $s3 ls "s3://$BUCKET/postgres/$stamp/"
+              echo "uploaded to s3://$BUCKET/postgres/$stamp/ in $(( $(date +%s) - start ))s"
+          volumeMounts:
+            - { name: dump, mountPath: /dump }

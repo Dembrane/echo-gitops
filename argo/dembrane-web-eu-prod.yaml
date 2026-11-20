@@ -1,0 +1,25 @@
+# dembrane v3 on the EU cluster (Scaleway), from the branch production's v3 deploys from.
+# Registered on that cluster with kubectl apply. EU follows main on staging's cadence: each
+# push to Dembrane/echo main sets global.imageTag in helm/dembrane-web/values-eu-prod.yaml
+# (job 61-deploy-dembrane-eu), and Argo CD there syncs by itself, migrate hook first.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dembrane-web-eu-prod
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/dembrane/echo-gitops.git'
+    targetRevision: prod-v3
+    path: helm/dembrane-web
+    helm:
+      valueFiles:
+        - values-eu-prod.yaml
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: dembrane-web-prod
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions:
+      - CreateNamespace=true
