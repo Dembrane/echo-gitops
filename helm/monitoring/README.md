@@ -117,8 +117,9 @@ Other demo/trial organisations may still appear. These are observed product
 actions, not paid-account counts or an inferred churn score.
 
 Before deploying its JSON, apply `sql/customer-views.sql` as the existing
-observability/migration owner. It adds seven `obs.customer_*` views and grants
-only SELECT on them to `grafana_obs`. Do not grant access to the underlying
+observability/migration owner, and `alter role grafana_obs set jit = off` once
+where the role predates that line in `sql/grafana-obs-role.sql`. It adds eight
+`obs.customer_*` views and grants only SELECT on them to `grafana_obs`. Do not grant access to the underlying
 product tables. No customer rows, transcripts, prompts or contact fields change.
 Emails embedded in display names are masked. The fixture function in
 `sql/test-customer-views.py` tests the SQL against session-local temporary
@@ -130,10 +131,13 @@ nor long-lived recording indexes prove a person is still recording. Pageviews
 and idle dashboard tabs are not measured. Samples, clones and deleted content
 are excluded. Attribution gaps and source failures remain visible.
 
-Daily activity covers up to 200 days of retained source rows; first-use
-milestones read the first retained core action, not signup or first-ever use
-of deleted content. Momentum compares equal rolling seven-day windows. Views
-are kept here with the dashboard, independently of the older aggregate views.
+Use over the selected time reads all retained history (attributed activity
+starts May 2024), in days up to 45 days, weeks up to 200 days and months beyond.
+Audio hours count a recording with no stored length at 29 seconds per recorded
+part, which matches stored lengths within 5% each year; the coverage row shows
+the estimated share. First-use milestones read the first retained core action,
+not signup or first-ever use of deleted content. Momentum compares equal
+rolling seven-day windows. Views are kept here with the dashboard, independently of the older aggregate views.
 
 ### Admin password rotation
 

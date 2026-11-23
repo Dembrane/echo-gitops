@@ -26,7 +26,8 @@ def test_views(conn):
             c.execute("INSERT INTO pg_temp.project VALUES(%s,'Project',%s,now(),NULL,%s)",(ident(n),ident(workspace),sample))
         for n,p,src,age,duration in ((30,20,'PORTAL_AUDIO','0d',60),(31,20,'CLONE','0d',600),
                                     (32,21,'PORTAL_AUDIO','0d',600),(33,22,'PORTAL_AUDIO','0d',600),
-                                    (34,20,'PORTAL_AUDIO','250d',120)):
+                                    (34,20,'PORTAL_AUDIO','250d',120),(35,20,'PORTAL_AUDIO','400d',None),
+                                    (36,20,'DASHBOARD_UPLOAD','400d',None)):
             c.execute("INSERT INTO pg_temp.conversation VALUES(%s,%s,now()-%s::interval,NULL,%s,%s)",(ident(n),ident(p),age,src,duration))
         c.execute("INSERT INTO pg_temp.project_chat VALUES(%s,%s,NULL)",(ident(40),ident(20)))
         for who in ('user','assistant'):
@@ -37,12 +38,18 @@ def test_views(conn):
             c.execute("INSERT INTO pg_temp.conversation_chunk VALUES(%s,now(),now())",(ident(cid),))
         # A fresh arrival with an old device timestamp is not live recording.
         c.execute("INSERT INTO pg_temp.conversation_chunk VALUES(%s,now(),now()-interval '1h')",(ident(34),))
+        # A recording without a stored length counts 29 seconds per part; an upload does not.
+        for _ in range(2):
+            c.execute("INSERT INTO pg_temp.conversation_chunk VALUES(%s,now()-interval '400d',now()-interval '400d')",(ident(35),))
+            c.execute("INSERT INTO pg_temp.conversation_chunk VALUES(%s,now()-interval '400d',now()-interval '400d')",(ident(36),))
         c.execute("INSERT INTO pg_temp.platform_presence VALUES('visitor','v',%s,now(),now()+interval '45s')",(ident(20),))
         c.execute("INSERT INTO pg_temp.platform_presence VALUES('visitor','old',%s,now()-interval '1h',now()-interval '1h')",(ident(20),))
         c.execute("INSERT INTO pg_temp.platform_presence VALUES('rec_conv','old-index',%s,now(),now()+interval '1d')",(ident(20),))
         c.execute(test_sql)
-        c.execute('SELECT conversations,recordings,audio_minutes,chat_messages,reports,report_errors FROM pg_temp.customer_daily_usage')
-        assert c.fetchall()==[(1,1,1.0,1,2,1)], 'samples, clones, orphan attribution or assistant messages counted'
+        c.execute('SELECT conversations,recordings,audio_minutes,chat_messages,reports,report_errors FROM pg_temp.customer_daily_usage ORDER BY day DESC')
+        assert c.fetchall()==[(1,1,1.0,1,2,1),(1,1,2.0,0,0,0),(2,1,0.0,0,0,0)], 'samples, clones, orphan attribution, assistant messages or old history wrong'
+        c.execute('SELECT source,measured_minutes,estimated_minutes FROM pg_temp.customer_audio ORDER BY occurred_at,source')
+        assert c.fetchall()==[('DASHBOARD_UPLOAD',0.0,0.0),('PORTAL_AUDIO',0.0,58/60),('PORTAL_AUDIO',2.0,0.0),('PORTAL_AUDIO',1.0,0.0)], 'audio estimate wrong'
         c.execute('SELECT audio_conversations,onboarding_sessions,chats_15m,reports_15m FROM pg_temp.customer_live')
         assert c.fetchall()==[(1,1,1,2)], 'stale audio or long-lived indexes counted as live'
         c.execute("SELECT org_name FROM pg_temp.customer_organisations WHERE org_id=%s",(ident(2),))
@@ -51,5 +58,5 @@ def test_views(conn):
         assert c.fetchone()[0] is True, 'returning organisations misclassified as new'
         c.execute('SELECT eligible_conversations_200d,attributed_conversations_200d,unattributed_conversations_200d FROM pg_temp.customer_attribution_coverage')
         assert c.fetchone()==(2,1,1), 'attribution gaps hidden'
-        print('PASS: samples/clones excluded, fresh-signal guards, user-only chat, report outcomes, email masking, first retained use and attribution coverage')
+        print('PASS: samples/clones excluded, history past 200 days, audio estimate for recordings only, fresh-signal guards, user-only chat, report outcomes, email masking, first retained use and attribution coverage')
     conn.rollback()
