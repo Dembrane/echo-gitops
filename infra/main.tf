@@ -290,6 +290,22 @@ resource "helm_release" "ingress_nginx" {
     value = "true"
   }
 
+  # CVE-2025-1974 (IngressNightmare): v1.8.1 has no fix and the project is retired, so the
+  # admission webhook goes. Cost: a malformed Ingress is no longer rejected at apply time.
+  set {
+    name  = "controller.admissionWebhooks.enabled"
+    value = "false"
+  }
+
+  # NGINX 1.21.6 ngx_http_v2_module CVEs. Cost: browsers open at most 6 connections per host over
+  # HTTP/1.1, shared by all tabs, and each server-sent-events stream holds one. Drop this once
+  # the controller is replaced.
+  set {
+    name  = "controller.config.use-http2"
+    value = "false"
+    type  = "string"
+  }
+
   depends_on = [time_sleep.wait_for_kubernetes]
 }
 
