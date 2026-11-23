@@ -99,3 +99,21 @@ variable "app_key_generation" {
   description = "Bump to replace the app's API key."
   default     = 1
 }
+
+variable "edge_hosts" {
+  type        = list(string)
+  description = "App hostnames under base_domain that the edge serves once DNS points at it."
+  default     = ["dashboard", "portal", "api"]
+}
+
+variable "edge_waf_mode" {
+  type        = string
+  description = "disable, log_only or enable (blocks)."
+  default     = "log_only"
+}
+
+variable "edge_waf_paranoia_level" {
+  type        = number
+  description = "OWASP CRS paranoia level, 1 (fewest false positives) to 4."
+  default     = 1
+}
