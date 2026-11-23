@@ -9,8 +9,3 @@ controller:
   # A malformed Ingress is no longer rejected at apply time.
   admissionWebhooks:
     enabled: false
-  # NGINX 1.21.6 ngx_http_v2_module CVEs. Browsers allow 6 connections per host over HTTP/1.1,
-  # shared by all tabs, and each server-sent-events stream holds one. Drop once the controller
-  # is replaced.
-  config:
-    use-http2: "false"

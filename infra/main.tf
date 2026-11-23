@@ -297,15 +297,6 @@ resource "helm_release" "ingress_nginx" {
     value = "false"
   }
 
-  # NGINX 1.21.6 ngx_http_v2_module CVEs. Cost: browsers open at most 6 connections per host over
-  # HTTP/1.1, shared by all tabs, and each server-sent-events stream holds one. Drop this once
-  # the controller is replaced.
-  set {
-    name  = "controller.config.use-http2"
-    value = "false"
-    type  = "string"
-  }
-
   depends_on = [time_sleep.wait_for_kubernetes]
 }
 
