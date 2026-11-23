@@ -5,3 +5,7 @@ controller:
     externalTrafficPolicy: Local
     annotations:
       service.beta.kubernetes.io/scw-loadbalancer-zone: nl-ams-1
+  # CVE-2025-1974 (IngressNightmare): no fixed v1.8.1 and the project is retired, so no webhook.
+  # A malformed Ingress is no longer rejected at apply time.
+  admissionWebhooks:
+    enabled: false
