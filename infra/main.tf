@@ -105,17 +105,19 @@ resource "digitalocean_kubernetes_cluster" "doks" {
   vpc_uuid = digitalocean_vpc.echo_vpc.id
   version  = "1.34.12-do.0"
 
-  # DigitalOcean patches and upgrades the control plane outside Terraform, and a version change
-  # here forces a full cluster replacement, so the live version wins.
+  # DigitalOcean upgrades the control plane outside Terraform, and a version lower than the live one
+  # forces a full cluster replacement, so the live version wins. prevent_destroy stops any plan that
+  # would still replace the cluster.
   lifecycle {
-    ignore_changes = [version]
+    ignore_changes  = [version]
+    prevent_destroy = true
   }
 
   node_pool {
     name       = "default-pool"
     size       = "s-4vcpu-8gb" # 4vCPU 8GB nodes
     auto_scale = true
-    min_nodes  = local.env == "prod" ? 2 : (local.env == "testing" ? 2 : 1) # prod : testing : dev
+    min_nodes  = local.env == "prod" ? 2 : (local.env == "testing" ? 2 : 1)  # prod : testing : dev
     max_nodes  = local.env == "prod" ? 10 : (local.env == "testing" ? 4 : 3) # prod : testing : dev
     tags       = ["dbr-echo", local.env]
   }
@@ -145,6 +147,12 @@ resource "digitalocean_database_connection_pool" "postgres_pool" {
   mode       = "transaction"
 
   user = digitalocean_database_cluster.postgres.user
+
+  # A size change forces the pool to be recreated, which drops every app connection, and the size
+  # is tuned by hand in the DigitalOcean console.
+  lifecycle {
+    ignore_changes = [size]
+  }
 }
 
 resource "digitalocean_database_cluster" "redis" {
@@ -346,8 +354,8 @@ resource "kubernetes_secret" "do_csi_secret" {
     "access-token" = base64encode(var.do_token)
   }
 
-  # The CSI driver keeps the token it was given. Without this, any apply would swap in the token of
-  # whoever runs Terraform, and volumes stop attaching when that token is scoped or revoked.
+  # Nothing in the cluster reads this secret today, but an apply would write the runner's own
+  # DigitalOcean token into the cluster.
   lifecycle {
     ignore_changes = [data]
   }
