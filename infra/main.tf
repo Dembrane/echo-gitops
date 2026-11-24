@@ -103,13 +103,20 @@ resource "digitalocean_kubernetes_cluster" "doks" {
   name     = "dbr-echo-${local.env}-k8s-cluster"
   region   = var.do_region
   vpc_uuid = digitalocean_vpc.echo_vpc.id
-  version  = "1.32.5-do.5"
+  version  = "1.34.12-do.0"
+
+  # DigitalOcean patches and upgrades the control plane outside Terraform, and a version change
+  # here forces a full cluster replacement, so the live version wins.
+  lifecycle {
+    ignore_changes = [version]
+  }
+
   node_pool {
     name       = "default-pool"
     size       = "s-4vcpu-8gb" # 4vCPU 8GB nodes
     auto_scale = true
     min_nodes  = local.env == "prod" ? 2 : (local.env == "testing" ? 2 : 1) # prod : testing : dev
-    max_nodes  = local.env == "prod" ? 6 : (local.env == "testing" ? 4 : 3) # prod : testing : dev
+    max_nodes  = local.env == "prod" ? 10 : (local.env == "testing" ? 4 : 3) # prod : testing : dev
     tags       = ["dbr-echo", local.env]
   }
 }
@@ -120,7 +127,7 @@ resource "digitalocean_database_cluster" "postgres" {
   private_network_uuid = digitalocean_vpc.echo_vpc.id
   engine               = "pg" # Postgres
   version              = "16" # e.g., Postgres version
-  size                 = local.env == "prod" ? "db-s-2vcpu-4gb" : "db-s-1vcpu-1gb"
+  size                 = local.env == "prod" ? "db-amd-2vcpu-8gb" : "db-s-1vcpu-1gb"
   region               = var.do_region
   node_count           = 1 # single node (for simplicity; prod could use HA with 2+ nodes)
   tags                 = ["dbr-echo", local.env, "postgres"]
@@ -134,7 +141,7 @@ resource "digitalocean_database_connection_pool" "postgres_pool" {
   name       = "dbr-echo-${local.env}-postgres-pool"
   cluster_id = digitalocean_database_cluster.postgres.id
   db_name    = "defaultdb"
-  size       = 10
+  size       = local.env == "prod" ? 150 : 10
   mode       = "transaction"
 
   user = digitalocean_database_cluster.postgres.user
@@ -146,7 +153,7 @@ resource "digitalocean_database_cluster" "redis" {
   engine               = "valkey"
   version              = "8"
   size                 = local.env == "prod" ? "db-s-2vcpu-4gb" : "db-s-1vcpu-1gb"
-  eviction_policy      = local.env == "prod" ? "volatile_lru" : "volatile_lru"
+  eviction_policy      = local.env == "prod" ? "allkeys_lru" : "volatile_lru"
   region               = var.do_region
   node_count           = 1
   tags                 = ["dbr-echo", local.env, "redis"]
@@ -339,6 +346,12 @@ resource "kubernetes_secret" "do_csi_secret" {
     "access-token" = base64encode(var.do_token)
   }
 
+  # The CSI driver keeps the token it was given. Without this, any apply would swap in the token of
+  # whoever runs Terraform, and volumes stop attaching when that token is scoped or revoked.
+  lifecycle {
+    ignore_changes = [data]
+  }
+
   depends_on = [time_sleep.wait_for_kubernetes]
 }
 
@@ -367,6 +380,11 @@ resource "kubectl_manifest" "do_csi_driver" {
 resource "kubernetes_namespace" "monitoring" {
   metadata {
     name = "monitoring"
+  }
+
+  # Argo CD labels this namespace when it syncs the monitoring app.
+  lifecycle {
+    ignore_changes = [metadata[0].labels]
   }
 
   depends_on = [time_sleep.wait_for_kubernetes]
