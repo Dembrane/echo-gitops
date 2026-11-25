@@ -1,0 +1,110 @@
+{{- if .Values.egressPolicy.enabled }}
+{{- /* The hosts the API and the worker may call, read from the same env they are configured
+with, so an endpoint changed there cannot be left out here. */}}
+{{- $env := .Values.env | default dict -}}
+{{- $providers := splitList "," (replace " " "" (toString ($env.LLM_PROVIDERS | default ""))) -}}
+{{- $default := toString ($env.LLM_PROVIDER | default "vertex") -}}
+{{- $google := or (has "google" $providers) (eq $default "vertex") -}}
+{{- $compat := or (has "scaleway" $providers) (eq $default "openai-compatible") -}}
+{{- $hosts := list -}}
+{{- range $key := list "FILES_S3_ENDPOINT" "STORAGE_S3_ENDPOINT" "SAM_INBOX_URL" -}}
+{{- with index $env $key -}}
+{{- $hosts = append $hosts (urlParse (toString .)).hostname -}}
+{{- end -}}
+{{- end -}}
+{{- if and $compat $env.LLM_BASE_URL -}}
+{{- $hosts = append $hosts (urlParse (toString $env.LLM_BASE_URL)).hostname -}}
+{{- end -}}
+{{- if $google -}}
+{{- $hosts = append $hosts "oauth2.googleapis.com" -}}
+{{- range $loc := list ($env.LLM_VERTEX_LOCATION | default "eu") ($env.EMBEDDING_LOCATION | default "europe-west4") -}}
+{{- $loc = toString $loc -}}
+{{- if eq $loc "global" -}}
+{{- $hosts = append $hosts "aiplatform.googleapis.com" -}}
+{{- else if or (eq $loc "eu") (eq $loc "us") -}}
+{{- $hosts = append $hosts (printf "aiplatform.%s.rep.googleapis.com" $loc) -}}
+{{- else -}}
+{{- $hosts = append $hosts (printf "%s-aiplatform.googleapis.com" $loc) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- range .Values.egressPolicy.extraHosts -}}
+{{- $hosts = append $hosts . -}}
+{{- end -}}
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: dembrane-web-egress
+  labels:
+    {{- include "dw.labels" (dict "root" . "component" "egress") | nindent 4 }}
+spec:
+  endpointSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values: [dembrane-web]
+      - key: app.kubernetes.io/component
+        operator: In
+        values: [api, worker]
+  egress:
+    # DNS, answered by kube-dns and visible to Cilium: the FQDN rules below only work from
+    # the names it sees here.
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: ANY
+          rules:
+            dns:
+              - matchPattern: "*"
+    # The media service (templates/media.yaml accepts exactly these two callers).
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: dembrane-web
+            app.kubernetes.io/component: media
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+    # The database.
+    - toCIDRSet:
+        {{- range .Values.egressPolicy.databaseCidrs }}
+        - cidr: {{ . | quote }}
+        {{- end }}
+      toPorts:
+        - ports:
+            - port: {{ .Values.egressPolicy.databasePort | quote }}
+              protocol: TCP
+    {{- if $hosts }}
+    # Named hosts, HTTPS only.
+    - toFQDNs:
+        {{- range $hosts | uniq | sortAlpha }}
+        - matchName: {{ . | quote }}
+        {{- end }}
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    {{- end }}
+    {{- if .Values.egressPolicy.allowPublicWeb }}
+    # Any public address, never a private one.
+    - toCIDRSet:
+        - cidr: 0.0.0.0/0
+          except:
+            - 10.0.0.0/8
+            - 100.64.0.0/10
+            - 127.0.0.0/8
+            - 169.254.0.0/16
+            - 172.16.0.0/12
+            - 192.168.0.0/16
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+            - port: "443"
+              protocol: TCP
+    {{- end }}
+{{- end }}
