@@ -36,8 +36,6 @@ prometheus:
 
 # Grafana settings
 grafana:
-  # This will be overridden by the SealedSecret in production
-  adminPassword: "admin"
   resources:
     requests:
       cpu: "200m"
