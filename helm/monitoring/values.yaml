@@ -29,6 +29,11 @@ prometheus:
 # Grafana settings
 grafana:
   adminPassword: "admin"  # Override this with values-prod.yaml or --set
+  # Sign in with Google. Only people an admin has added can sign in. Needs the keys
+  # grafana-google-client-id and grafana-google-client-secret in monitoring-secrets.
+  googleAuth:
+    enabled: false
+    domain: "dembrane.com"
   resources:
     requests:
       cpu: "100m"
