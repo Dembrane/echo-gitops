@@ -80,6 +80,48 @@ data:
                       config:
                         match_all: true
                         action: inc
+          # One line per model call, written when the call ends: which job made it, how it ended,
+          # whether a second model took over, and how long it took. The job, the outcome and the
+          # fallback are labels only while the metrics are made (a handful of values each, never an
+          # id); the stream that goes to Loki keeps its labels. Because a call is logged at its
+          # end, a call that hangs shows up only when it returns or times out.
+          - match:
+              selector: '{namespace="dembrane-web-prod", container="worker"} |= "\"signal\":\"model.call\""'
+              stages:
+                - json:
+                    expressions:
+                      operation: operation
+                      status: status
+                      fallback: fallback
+                      ms: ms
+                - template:
+                    source: seconds
+                    template: '{{ "{{" }} divf .ms 1000 {{ "}}" }}'
+                - labels:
+                    operation:
+                    status:
+                    fallback:
+                - metrics:
+                    model_calls_total:
+                      type: Counter
+                      description: Model calls that ended, by job, outcome and fallback
+                      prefix: dembrane_
+                      max_idle_duration: 1h
+                      config:
+                        match_all: true
+                        action: inc
+                    model_call_seconds:
+                      type: Histogram
+                      description: How long model calls took, in seconds
+                      prefix: dembrane_
+                      source: seconds
+                      max_idle_duration: 1h
+                      config:
+                        buckets: [1, 5, 10, 30, 60, 120, 180, 300, 600]
+                - labeldrop:
+                    - operation
+                    - status
+                    - fallback
         relabel_configs:
           # Only keep pods that are scheduled on this node (each Promtail scrapes its own host)
           - action: keep

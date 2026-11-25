@@ -98,6 +98,26 @@ groups:
           action: 'Check that the workers are up and not restarting, then look for failed jobs in the worker log.'
           link: 'https://grafana.dembrane.com/d/v3-errors'
 
+      # The worker writes one log line per model call when it ends; promtail turns them into
+      # dembrane_model_call_seconds. The queue rule above cannot see a call that has been picked
+      # up and is slow. The rate is read over 15 minutes and needs at least 5 calls, so a quiet
+      # night does not decide. A call is counted when it ends, so a hung call shows up late.
+      - alert: TranscriptionSlow
+        expr: |
+          histogram_quantile(0.9, sum by (le) (increase(dembrane_model_call_seconds_bucket{operation="conversations.chunk"}[15m]))) > 120
+          and
+          sum(increase(dembrane_model_call_seconds_count{operation="conversations.chunk"}[15m])) >= 5
+        for: 10m
+        labels:
+          severity: notice
+          component: worker
+        annotations:
+          title: 'Production transcription is slow'
+          summary: 'In the last 15 minutes one in ten transcription calls took {{ $value | humanizeDuration }} or longer.'
+          impact: 'Transcripts arrive minutes late. Nothing is lost: the audio is stored and every piece is transcribed.'
+          action: 'Check model latency on the AI dashboard.'
+          link: 'https://grafana.dembrane.com/d/v3-ai'
+
       - alert: JobsWaiting
         expr: max by (queue) (dembrane_queue_oldest_ready_seconds{queue!="conversations.chunk"}) > 900
         for: 5m
