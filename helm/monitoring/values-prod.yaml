@@ -39,6 +39,9 @@ prometheus:
 grafana:
   # This will be overridden by the SealedSecret in production
   adminPassword: "admin"
+  googleAuth:
+    enabled: true
+    domain: "dembrane.com"
   resources:
     requests:
       cpu: "200m"

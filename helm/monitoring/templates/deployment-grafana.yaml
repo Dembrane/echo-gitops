@@ -100,6 +100,36 @@ spec:
               value: "30s"
             - name: GF_METRICS_ENABLED
               value: "true"
+{{- /* Each person signs in with their own Google account, so access is per person and can be
+       removed per person. Sign-up stays off: only accounts an admin has added get in, everyone
+       else at the domain is refused. The admin login stays for emergencies. The client keys
+       are optional, so Grafana starts unchanged until they are in monitoring-secrets. */}}
+{{- if .Values.grafana.googleAuth.enabled }}
+            - name: GF_SERVER_ROOT_URL
+              value: {{ printf "https://grafana.%s/" .Values.domain | quote }}
+            - name: GF_AUTH_GOOGLE_ENABLED
+              value: "true"
+            - name: GF_AUTH_GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: monitoring-secrets
+                  key: grafana-google-client-id
+                  optional: true
+            - name: GF_AUTH_GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: monitoring-secrets
+                  key: grafana-google-client-secret
+                  optional: true
+            - name: GF_AUTH_GOOGLE_SCOPES
+              value: "openid email profile"
+            - name: GF_AUTH_GOOGLE_ALLOWED_DOMAINS
+              value: {{ .Values.grafana.googleAuth.domain | quote }}
+            - name: GF_AUTH_GOOGLE_HOSTED_DOMAIN
+              value: {{ .Values.grafana.googleAuth.domain | quote }}
+            - name: GF_AUTH_GOOGLE_ALLOW_SIGN_UP
+              value: "false"
+{{- end }}
 {{- /* Every part of a product data source comes from the secret; a missing key leaves that
        data source unreachable and Grafana itself untouched. */}}
 {{- range $env := .Values.obs.environments }}
