@@ -6,6 +6,11 @@
 # DigitalOcean, Google or other non-EU setting behind. Every setting that production has and
 # the EU must not have is listed under "Left out on purpose" below.
 #
+# Google is here for one reason: accounts staff enable it per job. Scaleway stays the default
+# for every account (LLM_PROVIDER), and the database can only choose among LLM_PROVIDERS, so
+# an account without the Google choice never reaches Google. Google Cloud project
+# dembrane-echo is used for Vertex AI only.
+#
 # Sized for one or two DEV1-L nodes (4 vCPU, 8 GB, amd64). Requests add up to about 2.2 CPU and
 # 3.5 GiB; with the monitoring stack (helm/monitoring/values-eu-prod.yaml) the autoscaler keeps
 # the second node.
@@ -15,7 +20,9 @@
 # Google: never set imageTag to a commit without them.
 #
 # Secrets: never in this file. The Secret dembrane-web-eu-secrets is read as production reads
-# its own; the keys are in secrets/dembrane-web-eu-secrets.keys.md.
+# its own; the keys are in secrets/dembrane-web-eu-secrets.keys.md. The Google key
+# (GCP_SA_JSON_EU) must exist in that Secret before this file is synced: a mounted key that is
+# missing keeps the api and worker pods from starting.
 
 global:
   # A Dembrane/echo commit sha. The images must exist at
@@ -36,7 +43,7 @@ secretName: dembrane-web-eu-secrets
 # the feature off. The two Scaleway keys are required in practice: without LLM_API_KEY no model
 # answers, without SCALEWAY_MAIL_SECRET_KEY an email is logged and not sent (no sign-up).
 # SAM_INBOX_SECRET signs the support pointers sam gets (sam's sender api.eu.dembrane.com).
-# Not listed, so never read: AUTH_GOOGLE_*, SENDGRID_API_KEY, MOLLIE_API_KEY, the support
+# Not listed, so never read: AUTH_GOOGLE_* (Google sign-in; the Vertex key is a file, below), SENDGRID_API_KEY, MOLLIE_API_KEY, the support
 # webhook, Slack and account-event keys.
 optionalSecretKeys:
   - LLM_API_KEY
@@ -44,8 +51,10 @@ optionalSecretKeys:
   - SAM_INBOX_SECRET
 
 secretFiles:
-  # null: no Google service account key, so no GCP_SA_JSON file and no GOOGLE_APPLICATION_CREDENTIALS.
-  gcpServiceAccountKey: null
+  # Key of dembrane-web-eu-secrets holding a service account key of project dembrane-echo
+  # (roles/aiplatform.user only), mounted as GOOGLE_APPLICATION_CREDENTIALS. Its own key, never
+  # the DigitalOcean production one (GCP_SA_JSON).
+  gcpServiceAccountKey: GCP_SA_JSON_EU
   # Scaleway Managed Database's CA certificate, as production does for its own database.
   databaseCaKey: DATABASE_CA_CERT
 
@@ -81,8 +90,15 @@ env:
   DATABASE_POOL_MAX: "5"
   DATABASE_QUEUE_POOL_MAX: "4"
 
-  # Models: Scaleway Generative APIs, all in the EU.
+  # Models: Scaleway Generative APIs by default, all in the EU. Google Vertex only for the
+  # accounts and projects staff enable it for; the default stays Scaleway for everyone else.
   LLM_PROVIDER: openai-compatible
+  LLM_PROVIDERS: scaleway,google
+  # The one Google Cloud project kept, for Vertex AI. "eu" is Vertex's EU data residency
+  # endpoint; embeddings are regional and not served there.
+  LLM_VERTEX_PROJECT: dembrane-echo
+  LLM_VERTEX_LOCATION: eu
+  EMBEDDING_LOCATION: europe-west4
   LLM_BASE_URL: https://api.scaleway.ai/v1
   LLM_COMPAT_TEXT_FAST: glm-5.3
   LLM_COMPAT_MULTI_MODAL_FAST: glm-5.3
@@ -103,8 +119,10 @@ env:
   # glm-5.3 reasons at length by default, which cost minutes and answer tokens; calls that
   # turn thinking off still send none.
   LLM_REASONING_EFFORT: low
-  # Fact-check grounds claims with Google Search: off.
-  LLM_SEARCH_GROUNDING: "false"
+  # Search grounding is decided per call. On here only lets a project whose AI provider is
+  # Google ground a claim with Google Search; a Scaleway project is refused whatever this says.
+  # Off would refuse every project. PROJECT_SETUP_WEB_SEARCH stays at its default, off.
+  LLM_SEARCH_GROUNDING: "true"
 
   # Email: Scaleway Transactional Email. EMAIL_FROM must be an address on the sending domain
   # verified in that Scaleway project.
@@ -127,12 +145,9 @@ env:
   MEDIA_AUTH: none
 
   # Left out on purpose (null = absent; production sets each of these). Nothing here is read:
-  #   LLM_VERTEX_PROJECT, LLM_VERTEX_LOCATION  Google Vertex AI
   #   SUPPORT_WEBHOOK_URL                      Google Cloud Function proxy to sam
   #   ACCOUNTS_EVENTS_URL                      account events to sam
   #   MOLLIE_WEBHOOK_URL                       Mollie payments (MOLLIE_API_KEY is not in the secret)
-  LLM_VERTEX_PROJECT: null
-  LLM_VERTEX_LOCATION: null
   SUPPORT_WEBHOOK_URL: null
   ACCOUNTS_EVENTS_URL: null
   # Support requests reach the team through sam as pointers only: id, source, time and a link
@@ -221,3 +236,20 @@ ingress:
   # directus.dembrane.com served links from the old stack; the EU has no old links.
   legacyDirectus:
     enabled: false
+
+# Egress: the api and worker pods may reach only the hosts below (CiliumNetworkPolicy,
+# templates/egress-policy.yaml). Dry-run it on the staging cluster first: Cilium drops anything
+# not listed, so a missing host shows up as a failing model call, upload or email, not as an
+# error in the policy. Where each host comes from is in the pull request that added it.
+egressPolicy:
+  enabled: true
+  # Hosts the policy cannot read from env above:
+  #   api.scaleway.com   Transactional Email (MAIL_PROVIDER scaleway, packages/mail/src/scaleway.ts)
+  #   models.dev, www.ecb.europa.eu   the worker's daily price sync (MODELS_DEV_URL, ECB_RATES_URL defaults)
+  # From env, so they follow it: FILES_S3_ENDPOINT, STORAGE_S3_ENDPOINT, LLM_BASE_URL,
+  # SAM_INBOX_URL, and, only while google is in LLM_PROVIDERS, the Vertex hosts of
+  # LLM_VERTEX_LOCATION and EMBEDDING_LOCATION plus oauth2.googleapis.com.
+  extraHosts:
+    - api.scaleway.com
+    - models.dev
+    - www.ecb.europa.eu

@@ -76,6 +76,28 @@ media:
   networkPolicy:
     enabled: true
 
+# Egress allow list for the API and the worker, as a CiliumNetworkPolicy (needs Cilium as the
+# cluster's CNI). Off: the pods reach anything. On: only the database, the media service, DNS
+# and the hosts below. Dry-run on a staging cluster before turning it on anywhere real.
+egressPolicy:
+  enabled: false
+  # Where the Postgres server is. A Scaleway Managed PostgreSQL private endpoint is an address
+  # inside the VPC private network, so it is matched by range: narrow this to the private
+  # network's own subnet. Pods and services of the cluster are not matched by a range.
+  databaseCidrs:
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 192.168.0.0/16
+  databasePort: 5432
+  # Hosts (port 443) the pods need that env does not name. The policy already reads these from
+  # env: FILES_S3_ENDPOINT, STORAGE_S3_ENDPOINT, LLM_BASE_URL, SAM_INBOX_URL; and, while google
+  # is in LLM_PROVIDERS (or LLM_PROVIDER is vertex), Vertex's hosts for LLM_VERTEX_LOCATION and
+  # EMBEDDING_LOCATION plus oauth2.googleapis.com.
+  extraHosts: []
+  # Any public host on 80 and 443, never a private address: project setup reads a web page a
+  # host links to. Off: that read fails softly (the other inputs still make suggestions).
+  allowPublicWeb: false
+
 web:
   # One Deployment and Service per role, same image, WEB_ROLE picks the app.
   roles:
