@@ -11,7 +11,8 @@ monitoring:
 storage:
   storageClassName: "do-block-storage"
   prometheus:
-    size: "40Gi"
+    # About 0.85 GB of metrics a day since the v3 cutover: 80Gi holds roughly 90 days.
+    size: "80Gi"
   loki:
     size: "40Gi"
   grafana:
